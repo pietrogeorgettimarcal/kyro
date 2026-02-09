@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="h-full">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kyro V18.0 - Magnum Opus Lex</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            lime: {
+              700: '#15803d',
+              800: '#166534',
+              900: '#14532d',
+            },
+            slate: {
+              850: '#1e293b', 
+            }
+          },
+          animation: {
+            'slide-in': 'slideIn 0.3s ease-out',
+            'fade-out': 'fadeOut 0.3s ease-in forwards',
+          },
+          keyframes: {
+            slideIn: {
+              '0%': { transform: 'translateX(100%)', opacity: '0' },
+              '100%': { transform: 'translateX(0)', opacity: '1' },
+            },
+            fadeOut: {
+              '0%': { opacity: '1' },
+              '100%': { opacity: '0' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    h1, h2, h3 { font-family: 'Playfair Display', serif; }
+
+    /* Estilos de Scrollbar */
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    /* Toast Container */
+    #toast-container {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        z-index: 100;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    /* ESTILO A4 JURÍDICO - FUNDO ÚNICO E SEM DIVISÕES */
+    .legal-doc {
+        font-family: 'Times New Roman', Times, serif;
+        line-height: 1.5; 
+        text-align: justify;
+        padding: 3cm 2.5cm 3cm 3cm;
+        width: 21cm; 
+        min-height: 29.7cm; 
+        margin: 0 auto;
+        transition: background-color 0.3s ease, color 0.3s ease;
+        background-color: white !important;
+        color: #000 !important;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        font-size: 11pt;
+    }
+    
+    .legal-doc * {
+        background-color: transparent !important;
+    }
+
+    .dark .legal-doc {
+        background-color: #1e293b !important;
+        color: #f1f5f9 !important;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .legal-header-center {
+        text-align: center;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 2cm;
+        line-height: 1.2;
+        font-family: 'Arial', sans-serif;
+        font-size: 10pt;
+        border-bottom: 2px solid currentColor;
+        padding-bottom: 15px;
+    }
+
+    .legal-doc h3 { 
+        font-size: 11pt; 
+        margin-top: 25px; 
+        margin-bottom: 15px; 
+        font-weight: bold; 
+        text-transform: uppercase;
+        font-family: 'Arial', sans-serif;
+        text-align: center;
+        padding: 5px;
+        color: inherit !important;
+        border-bottom: 1px solid currentColor;
+    }
+    
+    .legal-doc h4 { 
+        font-size: 11pt; 
+        margin-top: 20px; 
+        margin-bottom: 10px; 
+        font-weight: bold; 
+        font-style: italic;
+        text-decoration: underline;
+    }
+    
+    .legal-doc p {
+        margin-bottom: 1em;
+        text-indent: 2.5cm;
+    }
+    
+    .legal-doc blockquote {
+        margin: 15px 1.5cm 15px 3cm;
+        font-size: 9pt;
+        text-align: justify;
+        font-style: italic;
+        border-left: 3px solid currentColor;
+        padding-left: 12px;
+        opacity: 0.85;
+    }
+    
+    .legal-doc ol {
+        margin-left: 2cm;
+        margin-bottom: 1em;
+    }
+    
+    .legal-doc li {
+        margin-bottom: 0.8em;
+        list-style-type: decimal;
+    }
+
+    .ementa-box {
+        margin: 0 0 1.5cm 7cm;
+        font-size: 9pt;
+        font-weight: bold;
+        text-transform: uppercase;
+        text-align: justify;
+        line-height: 1.1;
+        border-top: 1px solid currentColor;
+        border-bottom: 1px solid currentColor;
+        padding: 12px 0;
+    }
+
+    .dark #output-container {
+        background-color: #0f172a; 
+    }
+
+    @media print {
+      body * { visibility: hidden; }
+      #printable-area, #printable-area * { visibility: visible; }
+      #printable-area { 
+        position: absolute; left: 0; top: 0; width: 100%; 
+        background: white !important; color: black !important; padding: 0; margin: 0;
+      }
+      .no-print { display: none !important; }
+      .legal-doc { box-shadow: none; margin: 0; width: 100%; background: white !important; color: black !important; }
+      .legal-doc * { background-color: transparent !important; color: black !important; }
+    }
+  </style>
+</head>
+
+<body class="flex flex-col h-screen overflow-hidden text-slate-800 bg-slate-50 dark:bg-slate-900 dark:text-slate-200 transition-colors duration-300">
+
+  <div id="toast-container"></div>
+
+  <!-- HEADER -->
+  <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 h-16 flex-shrink-0 z-20 shadow-sm no-print transition-colors relative">
+    <div class="container mx-auto px-4 h-full flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="bg-lime-800 text-white w-10 h-10 rounded flex items-center justify-center text-lg font-serif font-bold shadow-sm">L</div>
+        <div class="leading-tight">
+          <h1 class="text-lg text-slate-900 dark:text-white tracking-tight">Kyro Suite <span class="text-xs bg-lime-100 dark:bg-lime-900 dark:text-lime-200 text-lime-800 px-1 rounded ml-1 font-bold">V18.0 MAGNUM</span></h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400 font-sans uppercase tracking-wider">PGM Limeira - Dívida Ativa</p>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-4">
+        <button onclick="toggleHistory()" class="text-slate-500 hover:text-lime-700 dark:text-slate-400 dark:hover:text-lime-400 transition-colors p-2" title="Histórico"><i class="fa-solid fa-clock-rotate-left text-lg"></i></button>
+        <button onclick="toggleTheme()" class="text-slate-500 hover:text-yellow-600 dark:text-slate-400 dark:hover:text-yellow-400 transition-colors p-2"><i class="fa-solid fa-moon dark:hidden text-lg"></i><i class="fa-solid fa-sun hidden dark:inline text-lg"></i></button>
+      </div>
+    </div>
+  </header>
+
+  <div class="flex flex-1 overflow-hidden relative">
+    
+    <!-- SIDEBAR HISTÓRICO -->
+    <div id="history-sidebar" class="absolute top-0 right-0 h-full w-80 bg-white dark:bg-slate-800 shadow-2xl border-l border-slate-200 dark:border-slate-700 z-40 transform translate-x-full transition-transform duration-300 flex flex-col no-print">
+        <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-800">
+            <h3 class="font-bold text-slate-700 dark:text-white"><i class="fa-solid fa-clock-rotate-left mr-2"></i> Histórico</h3>
+            <button onclick="toggleHistory()" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <div id="history-list" class="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar"></div>
+        <div class="p-3 border-t border-slate-200 dark:border-slate-700">
+            <button onclick="clearHistory()" class="w-full py-2 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition">Limpar Histórico</button>
+        </div>
+    </div>
+
+    <!-- ÁREA DE TRABALHO -->
+    <main class="flex-1 flex flex-col lg:flex-row overflow-hidden bg-white dark:bg-slate-900 relative transition-colors">
+      
+      <!-- COLUNA DA ESQUERDA: INPUT -->
+      <section class="flex-1 flex flex-col border-r border-slate-200 dark:border-slate-700 min-w-0 no-print">
+        <div class="p-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+          <h3 class="font-semibold text-slate-700 dark:text-slate-200 text-sm flex items-center gap-2">
+            <i class="fa-solid fa-scale-balanced text-lime-700 dark:text-lime-400"></i> Fatos e Argumentos
+          </h3>
+          
+          <div class="flex items-center gap-2">
+              <select onchange="insertTemplate(this.value); this.value=''" class="text-xs border border-slate-300 dark:border-slate-600 rounded px-2 py-1 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 max-w-[150px]">
+                <option value="">📋 Selecionar Caso...</option>
+                <option value="usucapiao">1. Usucapião (Sentença Retroativa)</option>
+                <option value="arrematacao">2. Arrematação (Art. 130 CTN)</option>
+                <option value="prescricao">3. Prescrição Intercorrente</option>
+                <option value="ilegitimidade">4. Ilegitimidade Passiva</option>
+                <option value="multa">5. Multa Ambiental (Defesa)</option>
+              </select>
+          </div>
+        </div>
+        
+        <div class="flex-1 p-0 relative group bg-white dark:bg-slate-900">
+          <textarea id="input-text" spellcheck="true"
+            class="w-full h-full p-6 resize-none focus:outline-none focus:bg-lime-50/20 dark:focus:bg-lime-900/10 transition-colors font-mono text-sm leading-relaxed text-slate-700 dark:text-slate-300 bg-transparent placeholder-slate-400 dark:placeholder-slate-600"
+            placeholder="Descreva o caso com detalhes técnicos. O sistema aplicará o protocolo Magnum Opus de fundamentação densa."></textarea>
+            
+            <div class="absolute bottom-2 right-4 text-[10px] text-slate-400 bg-white/80 dark:bg-slate-800/80 px-2 rounded backdrop-blur-sm pointer-events-none">
+               <span id="input-counter">0 palavras</span>
+            </div>
+        </div>
+
+        <!-- BARRA DE AÇÕES -->
+        <div class="p-3 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+            
+            <button onclick="routeProcess('correcao')" class="flex items-center justify-center gap-2 p-3 rounded border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition active:scale-95 group">
+              <i class="fa-solid fa-spell-check text-blue-600 dark:text-blue-400"></i>
+              <span class="text-xs uppercase font-bold text-slate-600 dark:text-slate-400">Revisar</span>
+            </button>
+
+            <button onclick="routeProcess('rebuscado')" class="flex items-center justify-center gap-2 p-3 rounded border border-slate-200 dark:border-slate-600 hover:bg-amber-50 dark:hover:bg-slate-700 transition active:scale-95 group">
+              <i class="fa-solid fa-scroll text-amber-600 dark:text-amber-500"></i>
+              <span class="text-xs uppercase font-bold text-slate-600 dark:text-slate-400">Solenizar</span>
+            </button>
+            
+            <button onclick="routeProcess('tecnico')" class="col-span-2 flex items-center justify-center gap-3 p-3 rounded border border-lime-200 dark:border-lime-900 bg-lime-600 text-white hover:bg-lime-700 transition shadow-md active:scale-95 group" title="Gerar Parecer Jurídico Especializado da PGM">
+              <i class="fa-solid fa-gavel"></i>
+              <span class="text-xs uppercase font-extrabold tracking-widest">Protocolo Magnum Opus</span>
+            </button>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- COLUNA DA DIREITA: RESULTADO -->
+      <section class="flex-1 flex flex-col min-w-0 bg-slate-100 dark:bg-slate-950">
+        <div class="p-3 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center shadow-sm no-print">
+            <h3 class="font-semibold text-slate-700 dark:text-slate-200 text-sm flex items-center gap-2">
+                <i class="fa-solid fa-file-contract text-lime-700 dark:text-lime-500"></i> Saída Processual
+            </h3>
+            
+            <div class="flex gap-2">
+                <button onclick="exportToWord()" class="text-xs flex items-center gap-1 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-900/20 px-3 py-1 rounded hover:bg-blue-100 transition">
+                    <i class="fa-solid fa-file-word"></i> Word
+                </button>
+                <button onclick="window.print()" class="text-xs flex items-center gap-1 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 px-3 py-1 rounded hover:bg-slate-50 transition">
+                    <i class="fa-solid fa-print"></i> Impressão
+                </button>
+            </div>
+        </div>
+
+        <div class="flex-1 p-0 overflow-y-auto custom-scrollbar relative" id="output-container">
+          <div id="printable-area" class="hidden">
+            <div id="print-content" class="legal-doc"></div>
+          </div>
+
+          <div id="placeholder-state" class="h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-600 opacity-60 no-print">
+            <i class="fa-solid fa-landmark text-6xl mb-4 text-lime-700 dark:text-lime-600"></i>
+            <p class="text-lg font-medium text-slate-500">Kyro Magnum Opus Lex</p>
+            <p class="text-sm mt-2 text-center max-w-sm">Sistema de Redação Institucional de Alta Complexidade.</p>
+          </div>
+
+          <div id="loader-state" class="hidden h-full flex flex-col items-center justify-center no-print">
+            <div class="w-12 h-12 border-4 border-lime-200 border-t-lime-600 rounded-full animate-spin mb-4"></div>
+            <p class="text-sm text-slate-600 dark:text-slate-400 animate-pulse font-bold" id="loader-msg">Compilando Argumentação Jurídica...</p>
+          </div>
+
+          <div id="content-state" class="hidden h-full flex flex-col no-print items-center py-8 overflow-auto">
+            <div id="output-text" class="legal-doc shadow-2xl outline-none" contenteditable="true"></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    let history = JSON.parse(localStorage.getItem('kyro_history_pgm') || '[]');
+
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        let bgClass = type === 'success' ? 'bg-lime-600' : type === 'error' ? 'bg-red-600' : 'bg-slate-800';
+        toast.className = `${bgClass} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 text-sm animate-slide-in min-w-[300px] border border-white/10`;
+        toast.innerHTML = `<span>${message}</span>`;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    function routeProcess(type) {
+        const text = document.getElementById("input-text").value.trim();
+        if (!text) { showToast("Insira o substrato fático antes de prosseguir.", "warning"); return; }
+
+        setOutputState('loading', 'Estruturando Parecer de Alta Complexidade...');
+
+        setTimeout(() => { 
+            let result = "";
+            try {
+                if (type === 'tecnico') result = engineMagnumOpus(text); 
+                else if (type === 'rebuscado') result = `<h3>REDAÇÃO SOLENE</h3><p>${text.toUpperCase()}</p>`;
+                else result = `<h3>REVISÃO TÉCNICA</h3><p>${text}</p>`;
+                
+                if(result) {
+                    renderOutput(result);
+                    addToHistory(type, text, result);
+                    showToast("Documento Consolidado!", "success");
+                }
+            } catch (e) {
+                showToast("Falha na motorização jurídica.", "error");
+                setOutputState('placeholder');
+            }
+        }, 1800); 
+    }
+
+    function engineMagnumOpus(text) {
+        const lowerText = text.toLowerCase();
+        const date = new Date().toLocaleDateString('pt-BR', {day: 'numeric', month: 'long', year: 'numeric'});
+        
+        // Matriz de Teses Avançadas
+        const theses = [
+            {
+                key: ["usucapião", "retroativo", "ex tunc"],
+                ementa: "TRIBUTÁRIO. IPTU. AQUISIÇÃO ORIGINÁRIA DA PROPRIEDADE POR USUCAPIÃO. NATUREZA DECLARATÓRIA DA SENTENÇA. EFEITOS EX TUNC. CONFLITO ENTRE O DOMÍNIO FÁTICO E A PUBLICIDADE REGISTRAL. IMUNIDADE TRIBUTÁRIA DE TEMPLOS RELIGIOSOS (ART. 150, VI, 'B' CF). ANÁLISE DO FATO GERADOR.",
+                fundamentacao: `
+                <h4>A. Da Natureza Declaratória e os Efeitos Retroativos</h4>
+                <p>O instituto da usucapião, como modo originário de aquisição da propriedade, opera mediante sentença judicial de natureza eminentemente declaratória. Doutrina e jurisprudência pátrias (REsp 1.187.337/SP) convergem no sentido de que o reconhecimento do domínio retroage à data em que se completou o lapso temporal da posse <em>ad usucapionem</em>, operando efeitos <em>ex tunc</em>.</p>
+                <p>Nesse diapasão, a titularidade tributária (Art. 32 do CTN) deve ser reavaliada à luz da realidade fática declarada judicialmente. Se o requerente já detinha o <em>animus domini</em> e exercia a posse qualificada durante os exercícios lançados, a responsabilidade tributária do antigo proprietário tabular torna-se juridicamente questionável em face da aquisição originária.</p>
+                <h4>B. Da Imunidade Constitucional e o Destino do Imóvel</h4>
+                <p>Sendo o requerente entidade religiosa, a imunidade prevista no Art. 150, VI, 'b' da Carta Magna goza de presunção de finalidade institucional, conforme entendimento do STF (RE 325.822/SP). A retroatividade da sentença de usucapião, portanto, tem o condão de anular os lançamentos de IPTU desde o momento da consumação da prescrição aquisitiva, desde que comprovada a afetação do bem aos cultos.</p>`
+            },
+            {
+                key: ["arrematação", "leilão", "art. 130"],
+                ementa: "EXECUÇÃO FISCAL. ARREMATAÇÃO EM HASTA PÚBLICA. AQUISIÇÃO ORIGINÁRIA. SUB-ROGAÇÃO DOS DÉBITOS NO PREÇO (ART. 130, PARÁGRAFO ÚNICO, CTN). PROTEÇÃO AO TERCEIRO ARREMATANTE DE BOA-FÉ. SEGURANÇA JURÍDICA.",
+                fundamentacao: `
+                <h4>A. Da Sub-rogação Real pelo Preço</h4>
+                <p>A arrematação judicial constitui modo originário de aquisição da propriedade, rompendo-se o liame obrigacional entre o antigo devedor e o bem. O Art. 130, parágrafo único do CTN estabelece norma de eficácia plena: os créditos tributários sub-rogam-se no preço da arrematação. Trata-se de ficção jurídica que visa garantir a atratividade das hastas públicas e a segurança jurídica do sistema de execuções.</p>
+                <p>Precedentes vinculantes do Superior Tribunal de Justiça (REsp 1.059.100/RS) asseveram que o arrematante não responde por débitos anteriores à alienação judicial que não constassem expressamente do edital. A transferência deve ocorrer livre de quaisquer ônus fiscais, devendo a Fazenda Pública buscar a satisfação do seu crédito no produto da arrecadação ou em face do executado original.</p>`
+            },
+            {
+                key: ["prescrição", "intercorrente", "5 anos", "art. 40"],
+                ementa: "PROCESSO CIVIL E TRIBUTÁRIO. EXECUÇÃO FISCAL. PRESCRIÇÃO INTERCORRENTE. SISTEMÁTICA DO ART. 40 DA LEF. TEMA 566 STJ. INÉRCIA DA EXEQUENTE POR PRAZO SUPERIOR AO QUINQUÊNIO LEGAL.",
+                fundamentacao: `
+                <h4>A. Dos Critérios de Fluência da Prescrição</h4>
+                <p>A sistemática da prescrição intercorrente nas execuções fiscais foi pacificada pelo C. STJ no REsp 1.340.553/RS (Repetitivo). O termo inicial da contagem do prazo prescricional quinquenal é automático e ocorre após o transcurso de 1 (um ano) da suspensão do feito por não localização do devedor ou de bens.</p>
+                <p>No caso em tela, verifica-se que a pretensão executiva estatal quedou-se inerte por período superior ao lapso de 5 (cinco) anos após o período de suspensão. A ausência de diligências úteis por parte da exequente atrai a incidência do Art. 156, V do CTN, operando-se a extinção definitiva do crédito tributário pela via da prescrição, restando inviável a manutenção do nome do contribuinte no cadastro de inadimplentes.</p>`
+            }
+        ];
+
+        let selectedThesis = theses.find(t => t.key.some(k => lowerText.includes(k)));
+        
+        if (!selectedThesis) {
+            selectedThesis = {
+                ementa: "ADMINISTRATIVO E TRIBUTÁRIO. REVISÃO DE LANÇAMENTO EM DÍVIDA ATIVA. PRESUNÇÃO DE CERTEZA E LIQUIDEZ DA CDA. ART. 3º DA LEI 6.830/80. PRINCÍPIO DA LEGALIDADE ESTRITA.",
+                fundamentacao: `
+                <h4>A. Da Presunção de Legitimidade da CDA</h4>
+                <p>A Certidão de Dívida Ativa (CDA) é título executivo administrativo que goza de presunção juris tantum de certeza, liquidez e exigibilidade, conforme o Art. 204 do CTN. Tal presunção só pode ser ilidida por prova inequívoca a cargo do contribuinte ou de terceiro interessado.</p>
+                <p>A análise administrativa limita-se à verificação de vícios formais ou erros materiais no lançamento. Argumentos de ordem fática desprovidos de lastro documental robusto não possuem o condão de suspender ou extinguir o crédito tributário, sob pena de responsabilidade funcional do agente público em face da indisponibilidade do interesse público e do patrimônio municipal.</p>`
+            };
+        }
+
+        return `
+            <div class="legal-header-center">
+                PREFEITURA MUNICIPAL DE LIMEIRA<br>
+                PROCURADORIA GERAL DO MUNICÍPIO<br>
+                DIVISÃO DE GESTÃO DA DÍVIDA ATIVA E EXECUÇÃO FISCAL
+            </div>
+            
+            <h3 style="border: none;">PARECER TÉCNICO-JURÍDICO Nº ${Math.floor(Math.random() * 5000)}/2025-PGM/DA</h3>
+            
+            <p style="text-indent: 0;"><strong>EXPEDIENTE:</strong> [Protocolo Externo/SIF]<br>
+            <strong>ASSUNTO:</strong> Pedido de Revisão de Inscrição em Dívida Ativa.<br>
+            <strong>INTERESSADO:</strong> [Identificado no contexto dos fatos].</p>
+
+            <div class="ementa-box">
+                <p style="text-indent: 0; margin: 0;"><strong>EMENTA:</strong> ${selectedThesis.ementa}</p>
+            </div>
+
+            <h3>I. RELATÓRIO CIRCUNSTANCIADO</h3>
+            <p>Vieram os autos a esta Assistência Jurídica após tramitação pelos órgãos de arrecadação e fiscalização imobiliária. Trata-se de requerimento fundamentado no qual a parte interessada insurge-se contra os lançamentos tributários inscritos sob a égide da Dívida Ativa Municipal.</p>
+            <p>O cerne do inconformismo reside na seguinte tese fática, ora colacionada <em>ipsis litteris</em>:</p>
+            <blockquote>"${text}"</blockquote>
+            <p>É o breve e necessário relatório. Passa-se ao exame de admissibilidade e mérito.</p>
+
+            <h3>II. JUÍZO DE ADMISSIBILIDADE E PRELIMINARES</h3>
+            <p>Compulsando os autos, verifica-se que o requerimento é tempestivo e foi subscrito por parte legítima, apresentando os documentos essenciais à identificação do imóvel (Inscrição Cadastral) e do sujeito passivo. Não se verificam nulidades processuais administrativas que impeçam a análise meritória da pretensão.</p>
+
+            <h3>III. FUNDAMENTAÇÃO JURÍDICA E ANÁLISE DO CASO</h3>
+            ${selectedThesis.fundamentacao}
+            
+            <h4>C. Da Análise Probatória e Documental</h4>
+            <p>Conforme o regramento do Código Tributário Municipal de Limeira, a alteração de dados cadastrais retroativa exige a apresentação de título translativo de domínio ou sentença judicial com trânsito em julgado. No caso em tela, a análise técnica dos documentos acostados sugere a conformidade com as teses acima expostas, demandando a atuação imediata da Administração para evitar o prosseguimento de execuções fiscais indevidas.</p>
+
+            <h3>IV. CONCLUSÃO E VOTO DO RELATOR</h3>
+            <p>Diante de todo o exposto, em estrita observância ao princípio da moralidade administrativa e da eficiência, esta Coordenadoria de Dívida Ativa manifesta-se pelo <strong>ENCAMINHAMENTO</strong> dos autos à Secretaria de Finanças para a imediata:</p>
+            <ol>
+                <li>Retificação do Cadastro Imobiliário conforme a nova realidade jurídica declarada;</li>
+                <li>Baixa das inscrições em Dívida Ativa cujos fatos geradores foram alcançados pela fundamentação aqui exposta;</li>
+                <li>Peticionamento judicial, se necessário, para informar a extinção do débito nas execuções fiscais em curso.</li>
+            </ol>
+            
+            <p>É o parecer que submeto à homologação superior.</p>
+
+            <br><br>
+            <p style="text-align: right;">Limeira, ${date}.</p>
+            
+            <br>
+            <div style="text-align: center;">
+                __________________________________________<br>
+                <strong>PROCURADORIA GERAL DO MUNICÍPIO</strong><br>
+                Assistente Jurídico Oficial - Dívida Ativa
+            </div>
+        `;
+    }
+
+    function renderOutput(html) { 
+        document.getElementById('output-text').innerHTML = html; 
+        document.getElementById('print-content').innerHTML = html; 
+        setOutputState('content'); 
+    }
+
+    function setOutputState(state, msg) {
+        document.getElementById('placeholder-state').classList.add('hidden');
+        document.getElementById('loader-state').classList.add('hidden');
+        document.getElementById('content-state').classList.add('hidden');
+        if (state === 'loading') { 
+            document.getElementById('loader-state').classList.remove('hidden'); 
+            document.getElementById('loader-msg').innerText = msg; 
+        }
+        else if (state === 'content') document.getElementById('content-state').classList.remove('hidden');
+        else document.getElementById('placeholder-state').classList.remove('hidden');
+    }
+
+    function addToHistory(type, input, output) {
+        history.unshift({id: Date.now(), date: new Date().toLocaleTimeString(), type, inputSnippet: input.substring(0,40), output});
+        if (history.length > 15) history.pop();
+        localStorage.setItem('kyro_history_pgm', JSON.stringify(history));
+    }
+
+    function renderHistory() {
+        const list = document.getElementById('history-list'); list.innerHTML = '';
+        if (history.length === 0) list.innerHTML = '<div class="text-center text-slate-400 text-xs mt-10">Histórico de pareceres vazio.</div>';
+        history.forEach(item => {
+            const el = document.createElement('div');
+            el.className = "bg-white dark:bg-slate-700 p-2 rounded border border-slate-200 dark:border-slate-600 text-xs hover:border-lime-500 cursor-pointer mb-2 transition";
+            el.onclick = () => { renderOutput(item.output); toggleHistory(); };
+            el.innerHTML = `<b>${item.type.toUpperCase()}</b> - ${item.date}<br><span class="opacity-60">"${item.inputSnippet}..."</span>`;
+            list.appendChild(el);
+        });
+    }
+
+    function clearHistory() { history = []; localStorage.removeItem('kyro_history_pgm'); renderHistory(); }
+    function toggleHistory() { document.getElementById('history-sidebar').classList.toggle('translate-x-full'); renderHistory(); }
+    function toggleTheme() { document.documentElement.classList.toggle('dark'); }
+    
+    function insertTemplate(v) {
+        const templates = {
+            'usucapiao': 'Requerimento de baixa de IPTU. Entidade religiosa comprovou posse ad usucapionem com sentença transitada em julgado reconhecendo domínio desde 2012. Alega imunidade tributária retroativa.',
+            'arrematacao': 'Arrematação judicial de imóvel em leilão da 3ª Vara Cível de Limeira. O edital silenciou sobre débitos de IPTU pretéritos. Requer a sub-rogação no preço conforme Art. 130 do CTN.',
+            'prescricao': 'Execução fiscal referente a débitos de 2015. Processo suspenso em 2017 e sem nova movimentação útil da Fazenda até a data presente. Requer reconhecimento de prescrição intercorrente.',
+            'ilegitimidade': 'Cobrança de multa de terreno. Contribuinte apresenta Escritura de Venda e Compra datada de 2018 com registro posterior. Alega ausência de nexo causal no momento da infração.',
+            'multa': 'Defesa contra multa ambiental por falta de roçada. Requerente alega que o imóvel foi invadido e que há processo de reintegração de posse em curso, impossibilitando a manutenção.'
+        };
+        if(v) document.getElementById('input-text').value = templates[v];
+    }
+
+    function updateCounters() { 
+        const c = document.getElementById('input-text').value.trim().split(/\s+/).filter(w=>w).length; 
+        document.getElementById('input-counter').innerText = c + ' palavras'; 
+    }
+
+    document.getElementById('input-text').addEventListener('input', updateCounters);
+
+    function exportToWord() { 
+        const content = document.getElementById('output-text').innerText;
+        const blob = new Blob(['\ufeff', content], {type: 'application/msword'});
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'Parecer_MagnumOpus.doc'; a.click(); 
+    }
+
+    if (localStorage.getItem('kyro_theme') === 'dark') document.documentElement.classList.add('dark');
+  </script>
+</body>
+</html>
