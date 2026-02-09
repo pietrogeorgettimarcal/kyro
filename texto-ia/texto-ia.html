@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="h-full">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kyro V5.4 - Suite Profissional</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            slate: {
+              850: '#1e293b', 
+            }
+          },
+          animation: {
+            'slide-in': 'slideIn 0.3s ease-out',
+            'fade-out': 'fadeOut 0.3s ease-in forwards',
+          },
+          keyframes: {
+            slideIn: {
+              '0%': { transform: 'translateX(100%)', opacity: '0' },
+              '100%': { transform: 'translateX(0)', opacity: '1' },
+            },
+            fadeOut: {
+              '0%': { opacity: '1' },
+              '100%': { opacity: '0' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    h1, h2, h3 { font-family: 'Playfair Display', serif; }
+
+    /* Estilos de Scrollbar */
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    /* Toggle Switch */
+    .toggle-checkbox:checked {
+      right: 0;
+      border-color: #10b981;
+    }
+    .toggle-checkbox:checked + .toggle-label {
+      background-color: #10b981;
+    }
+
+    /* Toast Container */
+    #toast-container {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        z-index: 100;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    @media print {
+      body * { visibility: hidden; }
+      #printable-area, #printable-area * { visibility: visible; }
+      #printable-area { 
+        position: absolute; left: 0; top: 0; width: 100%; 
+        background: white; padding: 40px; color: black; 
+      }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+
+<body class="flex flex-col h-screen overflow-hidden text-slate-800 bg-slate-50 dark:bg-slate-900 dark:text-slate-200 transition-colors duration-300">
+
+  <!-- TOAST CONTAINER -->
+  <div id="toast-container"></div>
+
+  <!-- HEADER -->
+  <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 h-16 flex-shrink-0 z-20 shadow-sm no-print transition-colors relative">
+    <div class="container mx-auto px-4 h-full flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="bg-blue-900 text-white w-10 h-10 rounded flex items-center justify-center text-lg font-serif font-bold shadow-sm">
+          K
+        </div>
+        <div class="leading-tight">
+          <h1 class="text-lg text-slate-900 dark:text-white tracking-tight">Kyro Suite <span class="text-xs bg-indigo-100 text-indigo-800 px-1 rounded ml-1 font-bold">PRO v5.4</span></h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400 font-sans uppercase tracking-wider">Jurídico Inteligente</p>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-4">
+        
+        <!-- Toggle Modo IA / Offline -->
+        <div class="flex items-center gap-2 mr-4 border-r border-slate-200 dark:border-slate-700 pr-4">
+            <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Offline</span>
+            <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                <input type="checkbox" name="toggle" id="ai-mode-toggle" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-slate-300 left-0 transition-all duration-300" onclick="handleToggleClick()">
+                <label for="ai-mode-toggle" class="toggle-label block overflow-hidden h-5 rounded-full bg-slate-300 cursor-pointer transition-colors duration-300"></label>
+            </div>
+            <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400" id="mode-label">Modo Offline</span>
+        </div>
+
+        <!-- Botão Histórico -->
+        <button onclick="toggleHistory()" class="text-slate-500 hover:text-blue-700 dark:text-slate-400 dark:hover:text-blue-400 transition-colors p-2" title="Histórico">
+            <i class="fa-solid fa-clock-rotate-left text-lg"></i>
+        </button>
+
+        <!-- Botão Configuração -->
+        <button onclick="toggleConfigModal()" class="text-slate-500 hover:text-blue-700 dark:text-slate-400 dark:hover:text-blue-400 transition-colors p-2 relative" title="Configurar API Key">
+            <i class="fa-solid fa-gear text-lg"></i>
+            <span id="config-badge" class="hidden absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+        </button>
+
+        <!-- Botão Dark Mode -->
+        <button onclick="toggleTheme()" class="text-slate-500 hover:text-yellow-600 dark:text-slate-400 dark:hover:text-yellow-400 transition-colors p-2">
+            <i class="fa-solid fa-moon dark:hidden text-lg"></i>
+            <i class="fa-solid fa-sun hidden dark:inline text-lg"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="flex flex-1 overflow-hidden relative">
+    
+    <!-- SIDEBAR HISTÓRICO -->
+    <div id="history-sidebar" class="absolute top-0 right-0 h-full w-80 bg-white dark:bg-slate-800 shadow-2xl border-l border-slate-200 dark:border-slate-700 z-40 transform translate-x-full transition-transform duration-300 flex flex-col no-print">
+        <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-800">
+            <h3 class="font-bold text-slate-700 dark:text-white"><i class="fa-solid fa-clock-rotate-left mr-2"></i> Histórico</h3>
+            <button onclick="toggleHistory()" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <div id="history-list" class="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
+            <!-- Itens inseridos via JS -->
+            <div class="text-center text-slate-400 text-xs mt-10">Nenhum histórico recente.</div>
+        </div>
+        <div class="p-3 border-t border-slate-200 dark:border-slate-700">
+            <button onclick="clearHistory()" class="w-full py-2 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition">Limpar Histórico</button>
+        </div>
+    </div>
+
+    <!-- MODAL DE CONFIGURAÇÃO -->
+    <div id="config-modal" class="hidden absolute top-4 right-4 w-96 bg-white dark:bg-slate-800 shadow-2xl rounded-lg border border-slate-200 dark:border-slate-600 z-50 p-6 animate-fade-in no-print">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-bold text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-robot text-blue-600"></i> Configuração Google Gemini</h3>
+          <button onclick="toggleConfigModal()" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-times"></i></button>
+        </div>
+        
+        <p class="text-xs text-blue-600 dark:text-blue-400 mb-3 bg-blue-50 dark:bg-blue-900/20 p-2 rounded border border-blue-200 dark:border-blue-800">
+            <i class="fa-solid fa-circle-info"></i> <b>Nota:</b> Chave compartilhada com o módulo de Processos.
+        </p>
+
+        <div id="manual-input-area">
+            <p class="text-xs text-slate-600 dark:text-slate-300 mb-2 font-semibold">Chave API Google Gemini:</p>
+            <input type="password" id="api-key-input" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded p-2 text-sm mb-2 focus:ring-2 focus:ring-blue-500 outline-none font-mono" placeholder="Cole aqui (começa com AIzaSy...)">
+            
+            <div class="flex gap-2 mb-3">
+                <button onclick="testApiKey()" class="flex-1 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 py-2 rounded text-xs font-medium transition">
+                    <i class="fa-solid fa-plug"></i> Testar
+                </button>
+                <button onclick="saveApiKey()" class="flex-1 bg-blue-700 hover:bg-blue-800 text-white font-medium py-2 rounded text-xs transition shadow-sm">
+                    <i class="fa-solid fa-check"></i> Salvar
+                </button>
+            </div>
+            
+            <div id="test-result" class="hidden mb-3 p-2 rounded text-xs"></div>
+            <button onclick="clearApiKey()" class="w-full text-red-500 text-xs hover:underline text-center">Remover Chave</button>
+        </div>
+    </div>
+
+    <!-- ÁREA DE TRABALHO -->
+    <main class="flex-1 flex flex-col md:flex-row overflow-hidden bg-white dark:bg-slate-900 relative transition-colors">
+      
+      <!-- COLUNA DA ESQUERDA: INPUT -->
+      <section class="flex-1 flex flex-col border-r border-slate-200 dark:border-slate-700 min-w-0 no-print">
+        <div class="p-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+          <h3 class="font-semibold text-slate-700 dark:text-slate-200 text-sm flex items-center gap-2">
+            <i class="fa-regular fa-pen-to-square text-blue-600 dark:text-blue-400"></i> Entrada
+          </h3>
+          
+          <div class="flex items-center gap-2">
+              <button onclick="toggleDictation()" id="mic-btn" class="text-xs border border-slate-300 dark:border-slate-600 rounded px-2 py-1 bg-white dark:bg-slate-700 hover:text-red-500 transition" title="Ditado"><i class="fa-solid fa-microphone"></i></button>
+              
+              <select onchange="insertTemplate(this.value); this.value=''" class="text-xs border border-slate-300 dark:border-slate-600 rounded px-2 py-1 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 max-w-[120px]">
+                <option value="">📋 Modelos...</option>
+                <option value="deferimento">Deferimento</option>
+                <option value="citacao">Citação Edital</option>
+                <option value="prescricao">Prescrição</option>
+              </select>
+          </div>
+        </div>
+        
+        <div class="flex-1 p-0 relative group bg-white dark:bg-slate-900">
+          <textarea id="input-text" spellcheck="true"
+            class="w-full h-full p-6 resize-none focus:outline-none focus:bg-blue-50/20 dark:focus:bg-blue-900/10 transition-colors font-mono text-sm leading-relaxed text-slate-700 dark:text-slate-300 bg-transparent placeholder-slate-400 dark:placeholder-slate-600"
+            placeholder="Digite aqui seu texto..." oninput="updateCounters('input')"></textarea>
+            
+            <div class="absolute bottom-2 right-4 text-[10px] text-slate-400 bg-white/80 dark:bg-slate-800/80 px-2 rounded backdrop-blur-sm pointer-events-none">
+               <span id="input-counter">0 palavras</span>
+            </div>
+        </div>
+
+        <!-- BARRA DE AÇÕES -->
+        <div class="p-3 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10">
+          <div class="grid grid-cols-2 md:grid-cols-6 gap-2">
+            
+            <button onclick="routeProcess('correcao')" class="flex flex-col items-center justify-center p-2 rounded border border-slate-200 dark:border-slate-600 hover:bg-blue-50 dark:hover:bg-slate-700 transition active:scale-95 group" title="Corrigir gramática">
+              <i class="fa-solid fa-spell-check text-blue-600 dark:text-blue-400 mb-1"></i>
+              <span class="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">Correção</span>
+            </button>
+
+            <button onclick="routeProcess('rebuscado')" class="flex flex-col items-center justify-center p-2 rounded border border-slate-200 dark:border-slate-600 hover:bg-amber-50 dark:hover:bg-slate-700 transition active:scale-95 group" title="Tornar mais formal">
+              <i class="fa-solid fa-scroll text-amber-600 dark:text-amber-500 mb-1"></i>
+              <span class="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">Erudito</span>
+            </button>
+            
+            <!-- NOVA FERRAMENTA: SIMPLIFICAR -->
+            <button onclick="routeProcess('simplificar')" class="flex flex-col items-center justify-center p-2 rounded border border-slate-200 dark:border-slate-600 hover:bg-cyan-50 dark:hover:bg-slate-700 transition active:scale-95 group" title="Traduzir Juridiquês">
+              <i class="fa-solid fa-language text-cyan-600 dark:text-cyan-500 mb-1"></i>
+              <span class="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">Simplificar</span>
+            </button>
+
+            <button onclick="routeProcess('tecnico')" class="flex flex-col items-center justify-center p-2 rounded border border-slate-200 dark:border-slate-600 bg-emerald-50/50 dark:bg-emerald-900/20 hover:bg-emerald-50 dark:hover:bg-slate-700 transition active:scale-95 col-span-2 md:col-span-1 border-b-2 border-b-emerald-500" title="Gerar Despacho Completo">
+              <i class="fa-solid fa-gavel text-emerald-700 dark:text-emerald-500 mb-1"></i>
+              <span class="text-[10px] uppercase font-bold text-slate-800 dark:text-slate-200">Despacho</span>
+            </button>
+
+            <button onclick="routeProcess('resumo')" class="flex flex-col items-center justify-center p-2 rounded border border-slate-200 dark:border-slate-600 hover:bg-purple-50 dark:hover:bg-slate-700 transition active:scale-95 group">
+              <i class="fa-solid fa-compress-arrows-alt text-purple-600 dark:text-purple-400 mb-1"></i>
+              <span class="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">Resumir</span>
+            </button>
+
+            <button onclick="routeProcess('extracao')" class="flex flex-col items-center justify-center p-2 rounded border border-slate-200 dark:border-slate-600 hover:bg-pink-50 dark:hover:bg-slate-700 transition active:scale-95 group">
+              <i class="fa-solid fa-magnifying-glass-chart text-pink-600 dark:text-pink-400 mb-1"></i>
+              <span class="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">Extrair</span>
+            </button>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- COLUNA DA DIREITA: RESULTADO -->
+      <section class="flex-1 flex flex-col min-w-0 bg-slate-50/50 dark:bg-slate-900/50">
+        <div class="p-3 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center shadow-sm no-print">
+            <h3 class="font-semibold text-slate-700 dark:text-slate-200 text-sm flex items-center gap-2">
+                <i class="fa-solid fa-file-signature text-amber-600 dark:text-amber-500"></i> Resultado
+                <span id="badge-mode" class="text-[10px] bg-gray-200 text-gray-600 px-2 rounded-full ml-2">Aguardando</span>
+            </h3>
+            
+            <div class="flex gap-2">
+                <button onclick="exportToWord()" class="text-xs flex items-center gap-1 text-blue-700 border border-blue-200 bg-blue-50 px-3 py-1 rounded hover:bg-blue-100 transition">
+                    <i class="fa-solid fa-file-word"></i> Word
+                </button>
+                <button onclick="copyToClipboard()" id="btn-copy" class="text-xs flex items-center gap-1 text-slate-600 border border-slate-200 px-3 py-1 rounded hover:bg-slate-50 transition">
+                    <i class="fa-regular fa-copy"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Container do Documento -->
+        <div class="flex-1 p-6 overflow-y-auto custom-scrollbar relative" id="output-container">
+          
+          <!-- Área de Impressão -->
+          <div id="printable-area" class="hidden">
+            <div class="border-b-2 border-black mb-6 pb-2 text-center">
+                <h1 class="text-xl font-bold font-serif uppercase">Prefeitura Municipal de Limeira</h1>
+                <h2 class="text-sm font-sans uppercase">Secretaria de Assuntos Jurídicos</h2>
+            </div>
+            <div id="print-content" class="text-justify font-serif text-lg leading-relaxed"></div>
+          </div>
+
+          <!-- UI de Estado -->
+          <div id="placeholder-state" class="h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-600 opacity-60 no-print">
+            <i class="fa-solid fa-scale-balanced text-5xl mb-4 text-slate-200 dark:text-slate-700"></i>
+            <p class="text-sm font-medium">Selecione uma ferramenta para iniciar.</p>
+            <p class="text-xs mt-2">Dica: Use "Simplificar" para traduzir termos difíceis.</p>
+          </div>
+
+          <div id="loader-state" class="hidden h-full flex flex-col items-center justify-center no-print">
+            <div class="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+            <p class="text-sm text-slate-600 animate-pulse" id="loader-msg">Processando com Gemini 2.5...</p>
+          </div>
+
+          <div id="content-state" class="hidden h-full flex flex-col no-print">
+            <div id="output-text" class="prose prose-slate dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 leading-relaxed text-justify whitespace-pre-wrap font-serif text-lg flex-1 outline-none focus:ring-0" contenteditable="true"></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    // --- CONFIGURAÇÃO ---
+    let userApiKey = ""; 
+    let useAI = false; 
+    let history = JSON.parse(localStorage.getItem('kyro_history') || '[]');
+
+    // --- TOAST NOTIFICATIONS (Substituto Moderno do Alert) ---
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        
+        let icon = '<i class="fa-solid fa-info-circle"></i>';
+        let bgClass = 'bg-slate-800';
+        
+        if (type === 'success') { icon = '<i class="fa-solid fa-check-circle"></i>'; bgClass = 'bg-emerald-600'; }
+        if (type === 'error') { icon = '<i class="fa-solid fa-triangle-exclamation"></i>'; bgClass = 'bg-red-600'; }
+        if (type === 'warning') { icon = '<i class="fa-solid fa-exclamation-circle"></i>'; bgClass = 'bg-amber-500'; }
+
+        toast.className = `${bgClass} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 text-sm animate-slide-in min-w-[300px] border border-white/10`;
+        toast.innerHTML = `${icon} <span>${message}</span>`;
+        
+        container.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.classList.add('animate-fade-out');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    // --- TOGGLE SWITCH ---
+    function handleToggleClick() {
+        const checkbox = document.getElementById('ai-mode-toggle');
+        if (checkbox.checked) {
+            const sharedKey = localStorage.getItem('kyro_gemini_api_key');
+            
+            if (!sharedKey || sharedKey.length < 5) {
+                checkbox.checked = false; 
+                document.getElementById('config-badge').classList.remove('hidden');
+                showToast("Configure sua Chave API (Gemini) primeiro.", "warning");
+                toggleConfigModal(); 
+                return;
+            }
+            userApiKey = sharedKey;
+            useAI = true;
+            updateModeUI(true);
+            showToast("Modo IA Ativado", "success");
+        } else {
+            useAI = false;
+            updateModeUI(false);
+            showToast("Modo Offline Ativado", "info");
+        }
+    }
+    
+    function updateModeUI(isAI) {
+        const label = document.getElementById('mode-label');
+        if(isAI) {
+            label.innerText = "IA (Gemini 2.5)";
+            label.className = "text-xs font-bold text-blue-600 dark:text-blue-400";
+        } else {
+            label.innerText = "Modo Offline";
+            label.className = "text-xs font-bold text-emerald-600 dark:text-emerald-400";
+        }
+    }
+
+    // --- ROTEAMENTO ---
+    function routeProcess(type) {
+        const text = document.getElementById("input-text").value.trim();
+        if (!text) { showToast("Digite algo na caixa de entrada primeiro.", "warning"); return; }
+
+        if (useAI) {
+            if(!userApiKey) {
+                userApiKey = localStorage.getItem('kyro_gemini_api_key');
+                if(!userApiKey) {
+                    showToast("Chave API perdida. Mudando para Offline.", "error");
+                    document.getElementById('ai-mode-toggle').checked = false;
+                    handleToggleClick(); 
+                    processOffline(type, text);
+                    return;
+                }
+            }
+            processWithAI(type, text);
+        } else {
+            processOffline(type, text);
+        }
+    }
+
+    // --- HISTÓRICO ---
+    function toggleHistory() {
+        const sidebar = document.getElementById('history-sidebar');
+        sidebar.classList.toggle('translate-x-full');
+        renderHistory();
+    }
+
+    function addToHistory(type, input, output) {
+        const item = {
+            id: Date.now(),
+            date: new Date().toLocaleString(),
+            type: type,
+            inputSnippet: input.substring(0, 30) + (input.length > 30 ? '...' : ''),
+            output: output
+        };
+        history.unshift(item);
+        if (history.length > 20) history.pop(); // Mantém apenas os últimos 20
+        localStorage.setItem('kyro_history', JSON.stringify(history));
+    }
+
+    function renderHistory() {
+        const list = document.getElementById('history-list');
+        list.innerHTML = '';
+        
+        if(history.length === 0) {
+            list.innerHTML = '<div class="text-center text-slate-400 text-xs mt-10">Nenhum histórico recente.</div>';
+            return;
+        }
+
+        history.forEach(item => {
+            const el = document.createElement('div');
+            el.className = "bg-white dark:bg-slate-700 p-2 rounded border border-slate-200 dark:border-slate-600 text-xs hover:shadow-md transition cursor-pointer group";
+            el.onclick = () => {
+                document.getElementById('output-text').innerText = item.output;
+                document.getElementById('print-content').innerHTML = item.output.replace(/\n/g, '<br>');
+                setOutputState('content');
+                toggleHistory();
+                showToast("Histórico restaurado!", "success");
+            };
+            el.innerHTML = `
+                <div class="flex justify-between text-slate-500 dark:text-slate-400 mb-1">
+                    <span class="uppercase font-bold text-[10px]">${item.type}</span>
+                    <span class="text-[10px]">${item.date.split(' ')[1]}</span>
+                </div>
+                <div class="text-slate-700 dark:text-slate-200 truncate font-medium">"${item.inputSnippet}"</div>
+                <div class="text-blue-500 opacity-0 group-hover:opacity-100 text-[10px] mt-1 text-right">Clique para restaurar</div>
+            `;
+            list.appendChild(el);
+        });
+    }
+
+    function clearHistory() {
+        if(confirm("Limpar todo o histórico?")) {
+            history = [];
+            localStorage.removeItem('kyro_history');
+            renderHistory();
+            showToast("Histórico limpo.", "info");
+        }
+    }
+
+    // --- MODO OFFLINE ---
+    function processOffline(type, text) {
+        setOutputState('loading', 'Processando localmente...');
+        updateBadge('Offline (Local)');
+
+        setTimeout(() => { 
+            let result = "";
+            switch(type) {
+                case 'simplificar':
+                    // Simulação simples offline
+                    result = text.replace(/outrossim/gi, "além disso")
+                                 .replace(/destarte/gi, "dessa forma")
+                                 .replace(/data vênia/gi, "com todo respeito")
+                                 .replace(/adimplir/gi, "pagar");
+                    result += "\n\n(Nota: A simplificação Offline é limitada a vocabulário básico. Ative a IA para traduções completas de 'juridiquês'.)";
+                    break;
+                case 'extracao':
+                    const monies = text.match(/R\$\s?[\d.,]+/gi) || [];
+                    const dates = text.match(/\d{2}\/\d{2}\/\d{4}/g) || [];
+                    const processes = text.match(/\d{4}\.\d{3}\.\d{6}-\d/g) || ["Nenhum padrão encontrado"];
+                    result = `📌 DADOS (OFFLINE):\n\n💰: ${monies.join(', ') || '-'}\n📅: ${dates.join(', ') || '-'}\n⚖️: ${processes.join(', ')}`;
+                    break;
+                case 'tecnico':
+                    result = `DESPACHO (Offline)\n\nAnálise referente a: ${text.substring(0, 50)}...\n\nCONSIDERANDO os fatos: "${text}"\n\nCONCLUSÃO:\nEncaminhe-se para providências.\n\nLimeira, ${new Date().toLocaleDateString()}.`;
+                    break;
+                case 'rebuscado':
+                    const dictionary = { "pedido": "pleito", "pedir": "requerer", "diz": "aduz", "fala": "relata", "dinheiro": "pecúnia", "pagar": "adimplir", "não": "negativo", "sim": "positivo" };
+                    result = text;
+                    for (const [key, value] of Object.entries(dictionary)) {
+                        const regex = new RegExp(`\\b${key}\\b`, 'gi');
+                        result = result.replace(regex, value.toUpperCase());
+                    }
+                    break;
+                case 'resumo':
+                    result = `RESUMO OFFLINE:\n\n${text.split(/[.!?]/).slice(0, 2).join('. ') + '.'}`;
+                    break;
+                case 'correcao':
+                    result = text;
+                    showToast("Use o corretor do navegador no modo Offline.", "info");
+                    break;
+            }
+            
+            if(result) {
+                renderOutput(result);
+                addToHistory(type + ' (Off)', text, result);
+            }
+        }, 500);
+    }
+
+    // --- MODO IA ---
+    async function processWithAI(type, text) {
+        setOutputState('loading', 'Consultando Gemini 2.5...');
+        updateBadge('IA (Gemini 2.5)');
+
+        const baseContext = "Você é um Assistente Jurídico Oficial na Prefeitura de Limeira.";
+        let prompt = "";
+
+        switch (type) {
+            case 'correcao': prompt = `${baseContext} Corrija formalmente, mantendo o tom jurídico, apenas o texto: "${text}"`; break;
+            case 'rebuscado': prompt = `${baseContext} Reescreva com tom jurídico erudito e culto: "${text}"`; break;
+            case 'simplificar': prompt = `${baseContext} Você é especialista em Linguagem Simples (Plain Language) e Legal Design. Traduza o texto jurídico abaixo para uma linguagem clara, direta e acessível a um cidadão sem conhecimento jurídico, mantendo o sentido original mas removendo o excesso de formalidade e termos em latim: "${text}"`; break;
+            case 'tecnico': prompt = `${baseContext} Elabore um despacho técnico jurídico de alta complexidade e profundidade. Utilize vocabulário rebuscado, terminologia técnica avançada, latim forense se cabível, e mantenha um tom de autoridade e engajamento institucional. O texto deve ser denso e extremamente formal. Baseie-se nisto: "${text}"`; break;
+            case 'resumo': prompt = `${baseContext} Resuma os fatos principais e pontos chave em tópicos: "${text}"`; break;
+            case 'extracao': prompt = `${baseContext} Liste datas, valores monetários, nomes e números de processo em formato de lista simples: "${text}"`; break;
+        }
+
+        try {
+            const apiKey = userApiKey || localStorage.getItem('kyro_gemini_api_key');
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { temperature: 0.3 }
+                })
+            });
+
+            if (!response.ok) throw new Error("Erro na API Gemini: " + response.status);
+            
+            const data = await response.json();
+            const resultText = data.candidates[0].content.parts[0].text;
+
+            renderOutput(resultText);
+            addToHistory(type, text, resultText);
+            showToast("Processamento concluído!", "success");
+
+        } catch (error) {
+            console.error(error);
+            showToast(`Erro IA: ${error.message}`, "error");
+            document.getElementById('ai-mode-toggle').checked = false;
+            handleToggleClick();
+        }
+    }
+
+    // --- FUNÇÕES AUXILIARES ---
+    async function testApiKey() {
+        const key = document.getElementById('api-key-input').value.trim();
+        const resultDiv = document.getElementById('test-result');
+        
+        if(key.length < 10) {
+            showToast("Chave muito curta.", "error");
+            return;
+        }
+
+        resultDiv.innerHTML = '<span class="text-blue-500"><i class="fa-solid fa-spinner fa-spin"></i> Testando...</span>';
+        resultDiv.className = "mb-3 p-2 rounded text-xs bg-blue-50 dark:bg-blue-900/20 block";
+        resultDiv.classList.remove('hidden');
+
+        try {
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`;
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: "OK" }] }] })
+            });
+
+            if (response.ok) {
+                resultDiv.innerHTML = '<span class="text-green-600 font-bold"><i class="fa-solid fa-check"></i> Conexão OK!</span>';
+                resultDiv.className = "mb-3 p-2 rounded text-xs bg-green-50 dark:bg-green-900/20 block border border-green-200";
+                showToast("Conexão estabelecida com sucesso!", "success");
+            } else {
+                throw new Error(response.status);
+            }
+        } catch (e) {
+            resultDiv.innerHTML = `<span class="text-red-600 font-bold">Falha: ${e.message || "Erro de Rede"}</span>`;
+            resultDiv.className = "mb-3 p-2 rounded text-xs bg-red-50 dark:bg-red-900/20 block border border-red-200";
+            showToast("Falha na verificação da chave.", "error");
+        }
+    }
+
+    function renderOutput(text) {
+        document.getElementById('output-text').innerText = text;
+        document.getElementById('print-content').innerHTML = text.replace(/\n/g, '<br>');
+        setOutputState('content');
+    }
+
+    function setOutputState(state, msg = "Processando...") {
+        document.getElementById('placeholder-state').classList.add('hidden');
+        document.getElementById('loader-state').classList.add('hidden');
+        document.getElementById('content-state').classList.add('hidden');
+        
+        if (state === 'loading') {
+            document.getElementById('loader-state').classList.remove('hidden');
+            document.getElementById('loader-msg').innerText = msg;
+        }
+        else if (state === 'content') document.getElementById('content-state').classList.remove('hidden');
+        else document.getElementById('placeholder-state').classList.remove('hidden');
+    }
+
+    function updateBadge(text) {
+        document.getElementById('badge-mode').innerText = text;
+    }
+
+    function saveApiKey() {
+        const key = document.getElementById('api-key-input').value.trim();
+        if(key && key.length > 10) {
+            localStorage.setItem('kyro_gemini_api_key', key);
+            userApiKey = key;
+            toggleConfigModal();
+            showToast("Chave salva e integrada!", "success");
+            const checkbox = document.getElementById('ai-mode-toggle');
+            checkbox.checked = true;
+            useAI = true;
+            updateModeUI(true);
+            document.getElementById('config-badge').classList.add('hidden');
+        } else {
+            showToast("Chave inválida.", "error");
+        }
+    }
+
+    function clearApiKey() {
+        if(confirm("Remover chave de TODA a suite?")) {
+            localStorage.removeItem('kyro_gemini_api_key');
+            userApiKey = "";
+            document.getElementById('api-key-input').value = "";
+            document.getElementById('test-result').classList.add('hidden');
+            const checkbox = document.getElementById('ai-mode-toggle');
+            checkbox.checked = false;
+            useAI = false;
+            updateModeUI(false);
+            toggleConfigModal();
+            showToast("Chave removida.", "info");
+        }
+    }
+    
+    // Init 
+    window.onload = () => {
+        const savedKey = localStorage.getItem('kyro_gemini_api_key');
+        const checkbox = document.getElementById('ai-mode-toggle');
+        
+        if(savedKey) {
+            userApiKey = savedKey;
+            document.getElementById('api-key-input').value = savedKey;
+            checkbox.checked = true;
+            useAI = true;
+            updateModeUI(true);
+        } else {
+            userApiKey = "";
+            checkbox.checked = false;
+            useAI = false;
+            updateModeUI(false);
+            document.getElementById('config-badge').classList.remove('hidden');
+        }
+        
+        if (localStorage.getItem('kyro_theme') === 'dark') document.documentElement.classList.add('dark');
+    }
+
+    function toggleConfigModal() { document.getElementById('config-modal').classList.toggle('hidden'); }
+    function toggleTheme() { 
+        document.documentElement.classList.toggle('dark'); 
+        localStorage.setItem('kyro_theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    }
+    function updateCounters(id) {
+        const text = document.getElementById(id + '-text').value;
+        const count = text.trim() === '' ? 0 : text.split(/\s+/).filter(w=>w).length;
+        document.getElementById(id + '-counter').innerText = `${count} palavras`;
+    }
+    
+    function toggleDictation() {
+        showToast("Ditado requer permissão do navegador.", "info");
+    }
+
+    function insertTemplate(v) { 
+        const templates = {
+            'deferimento': 'Defiro o pedido de parcelamento em 36x, com base na Lei Complementar nº...',
+            'citacao': 'Certifico que o réu está em local incerto e não sabido, necessitando citação via edital...',
+            'prescricao': 'O crédito tributário encontra-se prescrito conforme art. 174 do CTN...'
+        };
+        if(v) document.getElementById('input-text').value += templates[v];
+    }
+    function copyToClipboard() {
+        navigator.clipboard.writeText(document.getElementById('output-text').innerText);
+        showToast("Copiado com sucesso!", "success");
+    }
+    function exportToWord() {
+        const content = document.getElementById('output-text').innerText;
+        const blob = new Blob(['\ufeff', content], {type: 'application/msword'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'Documento_Kyro.doc';
+        a.click();
+        showToast("Download iniciado!", "success");
+    }
+  </script>
+</body>
+</html>

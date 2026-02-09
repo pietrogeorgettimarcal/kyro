@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kyro Fluxo Inteligente + Life OS</title>
+    <link rel="shortcut icon" href="https://placehold.co/32x32/003366/FFFFFF?text=K" type="image/x-icon">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Configuração Unificada do Tailwind -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        'kyro-blue': {
+                            700: '#1f2b57',
+                            800: '#1a244a',
+                            900: '#151d3d',
+                        },
+                        'kyro-purple': '#4b0082',
+                    },
+                    animation: { 
+                        'fade-in': 'fadeIn 0.5s ease-out forwards', 
+                        'slide-up': 'slideUp 0.5s ease-out forwards',
+                        'slide-in-up': 'slideInUp 0.6s ease-out forwards'
+                    },
+                    keyframes: {
+                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+                        slideUp: { '0%': { transform: 'translateY(20px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } },
+                        slideInUp: {
+                            '0%': { transform: 'translateY(30px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        
+        /* Estilos suaves para transição dark mode */
+        body { transition: background-color 0.3s, color 0.3s; }
+        .card-service { transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="font-sans bg-gray-50 text-gray-800 antialiased dark:bg-slate-900 dark:text-gray-100">
+
+    <!-- ========================================= -->
+    <!-- LANDING PAGE KYRO                         -->
+    <!-- ========================================= -->
+    <div id="landing-page">
+        <!-- Cabeçalho e Navegação -->
+        <header class="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md shadow-md sticky top-0 z-50 transition-colors duration-300">
+            <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <!-- Logo -->
+                    <div class="flex-shrink-0">
+                        <a href="#" class="text-3xl font-bold text-kyro-blue-800 dark:text-white flex items-center gap-2">
+                            <i data-lucide="layers" class="text-kyro-blue-700 dark:text-blue-400"></i> Kyro
+                        </a>
+                    </div>
+                    
+                    <!-- Links Desktop e Ações -->
+                    <div class="hidden md:flex md:items-center md:space-x-6">
+                        <a href="#sobre" class="text-gray-600 dark:text-gray-300 hover:text-kyro-blue-700 dark:hover:text-white font-medium transition-colors duration-200">Sobre</a>
+                        <a href="#servicos" class="text-gray-600 dark:text-gray-300 hover:text-kyro-blue-700 dark:hover:text-white font-medium transition-colors duration-200">Serviços</a>
+                        
+                        <!-- Toggle Dark Mode -->
+                        <button id="theme-toggle" class="p-2 rounded-full text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors focus:outline-none">
+                            <i data-lucide="moon" id="theme-toggle-dark-icon" class="hidden w-5 h-5"></i>
+                            <i data-lucide="sun" id="theme-toggle-light-icon" class="hidden w-5 h-5"></i>
+                        </button>
+
+                        <a href="#login" class="bg-kyro-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-kyro-blue-800 transition-colors duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                            Login
+                        </a>
+                    </div>
+                    
+                    <!-- Mobile Menu Button -->
+                    <div class="md:hidden flex items-center gap-4">
+                         <!-- Toggle Dark Mode Mobile -->
+                         <button id="theme-toggle-mobile" class="p-2 rounded-full text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
+                            <i data-lucide="sun-moon" class="w-6 h-6"></i>
+                        </button>
+
+                        <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700">
+                            <i data-lucide="menu" id="menu-icon-open"></i>
+                            <i data-lucide="x" id="menu-icon-close" class="hidden"></i>
+                        </button>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Menu Mobile -->
+            <div id="mobile-menu" class="hidden md:hidden bg-white dark:bg-slate-800 shadow-lg absolute w-full border-t dark:border-slate-700">
+                <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                    <a href="#sobre" class="text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700 block px-3 py-2 rounded-md text-base font-medium">Sobre</a>
+                    <a href="#servicos" class="text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700 block px-3 py-2 rounded-md text-base font-medium">Serviços</a>
+                    <a href="#login" class="bg-kyro-blue-700 text-white block w-full text-left px-3 py-2 rounded-md text-base font-medium hover:bg-kyro-blue-800 mt-2">Login</a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Hero -->
+        <section class="relative overflow-hidden bg-gradient-to-r from-kyro-blue-800 to-kyro-purple text-white py-20 md:py-32">
+            <!-- Background Decoration -->
+            <div class="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+                <div class="absolute right-0 top-0 w-96 h-96 bg-white rounded-full mix-blend-overlay filter blur-3xl animate-pulse"></div>
+                <div class="absolute left-0 bottom-0 w-72 h-72 bg-blue-400 rounded-full mix-blend-overlay filter blur-3xl opacity-50"></div>
+            </div>
+
+            <div class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center animate-fade-in z-10">
+                <span class="inline-block py-1 px-3 rounded-full bg-white/10 text-blue-200 text-sm font-semibold mb-4 backdrop-blur-sm border border-white/20">Versão 3.0 Live</span>
+                <h1 class="text-4xl md:text-6xl font-extrabold mb-6 animate-slide-up tracking-tight">
+                    Seu Fluxo de Trabalho, <br/> <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-indigo-200">Reinventado.</span>
+                </h1>
+                <p class="text-xl text-blue-100 leading-relaxed animate-slide-up max-w-2xl mx-auto" style="animation-delay: 100ms; animation-fill-mode: both;">
+                    Um sistema inovador que unifica Gestão Corporativa e Life OS em uma plataforma impulsionada por IA.
+                </p>
+                
+                <div class="mt-10 flex flex-col sm:flex-row gap-4 justify-center animate-slide-up" style="animation-delay: 200ms; animation-fill-mode: both;">
+                    <a href="../calendar/calendar.html" class="inline-block">
+                        <button class="w-full sm:w-auto bg-white text-kyro-blue-800 px-8 py-3.5 rounded-xl font-bold text-lg shadow-xl hover:shadow-2xl hover:bg-blue-50 transition-all hover:-translate-y-1 flex items-center justify-center gap-2">
+                            <i data-lucide="rocket"></i> Acessar SmartPlanner
+                        </button>
+                    </a>
+                    <a href="#servicos" class="inline-block">
+                        <button class="w-full sm:w-auto bg-white/10 backdrop-blur-sm border border-white/30 text-white px-8 py-3.5 rounded-xl font-bold text-lg hover:bg-white/20 transition-all hover:-translate-y-1 flex items-center justify-center gap-2">
+                            <i data-lucide="grid"></i> Explorar Apps
+                        </button>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sobre -->
+        <section id="sobre" class="py-16 bg-white dark:bg-slate-900 transition-colors duration-300">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid md:grid-cols-2 gap-12 items-center">
+                    <div class="space-y-6">
+                        <h2 class="text-3xl font-bold text-kyro-blue-900 dark:text-white">Mais que software, um <span class="text-kyro-purple dark:text-purple-400">Sistema de Vida</span>.</h2>
+                        <p class="text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
+                            A <strong>Kyro</strong> foi criada para ser sua parceira no dia a dia. Integramos o módulo <strong>Life OS 3.0</strong>, permitindo gerenciar trabalho, saúde, finanças e hábitos em um único hub centralizado.
+                        </p>
+                        <ul class="space-y-3 mt-4">
+                            <li class="flex items-center gap-3 text-gray-700 dark:text-gray-300">
+                                <i data-lucide="check-circle-2" class="text-green-500"></i> Automação de processos repetitivos
+                            </li>
+                            <li class="flex items-center gap-3 text-gray-700 dark:text-gray-300">
+                                <i data-lucide="check-circle-2" class="text-green-500"></i> Inteligência Artificial generativa
+                            </li>
+                            <li class="flex items-center gap-3 text-gray-700 dark:text-gray-300">
+                                <i data-lucide="check-circle-2" class="text-green-500"></i> Gestão integrada de equipes
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="bg-gray-100 dark:bg-slate-800 rounded-2xl p-6 shadow-inner relative overflow-hidden">
+                        <!-- Ilustração abstrata/placeholder -->
+                        <div class="absolute top-0 right-0 p-4 opacity-10">
+                            <i data-lucide="cpu" width="120" height="120"></i>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-white dark:bg-slate-700 p-4 rounded-lg shadow-sm">
+                                <i data-lucide="bar-chart" class="text-blue-500 mb-2"></i>
+                                <div class="h-2 w-16 bg-gray-200 dark:bg-slate-600 rounded"></div>
+                                <div class="h-2 w-10 bg-gray-200 dark:bg-slate-600 rounded mt-2"></div>
+                            </div>
+                            <div class="bg-white dark:bg-slate-700 p-4 rounded-lg shadow-sm mt-8">
+                                <i data-lucide="users" class="text-purple-500 mb-2"></i>
+                                <div class="h-2 w-16 bg-gray-200 dark:bg-slate-600 rounded"></div>
+                                <div class="h-2 w-10 bg-gray-200 dark:bg-slate-600 rounded mt-2"></div>
+                            </div>
+                             <div class="bg-white dark:bg-slate-700 p-4 rounded-lg shadow-sm">
+                                <i data-lucide="zap" class="text-yellow-500 mb-2"></i>
+                                <div class="h-2 w-16 bg-gray-200 dark:bg-slate-600 rounded"></div>
+                            </div>
+                             <div class="bg-white dark:bg-slate-700 p-4 rounded-lg shadow-sm mt-8">
+                                <i data-lucide="heart" class="text-red-500 mb-2"></i>
+                                <div class="h-2 w-16 bg-gray-200 dark:bg-slate-600 rounded"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Serviços -->
+        <section id="servicos" class="py-20 bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                
+                <div class="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+                    <div>
+                        <h2 class="text-3xl md:text-4xl font-bold text-kyro-blue-900 dark:text-white mb-2">Ecossistema de Apps</h2>
+                        <p class="text-gray-600 dark:text-gray-400">Ferramentas poderosas para cada aspecto do seu dia.</p>
+                    </div>
+                    
+                    <!-- Barra de Pesquisa -->
+                    <div class="relative w-full md:w-72 group">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i data-lucide="search" class="h-5 w-5 text-gray-400 group-focus-within:text-kyro-blue-600 transition-colors"></i>
+                        </div>
+                        <input type="text" id="service-search" placeholder="Buscar ferramenta..." 
+                            class="block w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-slate-700 rounded-lg leading-5 bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-kyro-blue-600 focus:border-transparent transition-all shadow-sm">
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="services-grid">
+                    
+                    <!-- Card 1: SmartPlanner -->
+                    <a href="../calendar/calendar.html" class="service-card opacity-0 animate-slide-in-up block" data-category="produtividade">
+                        <div class="h-full bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 dark:border-slate-700 hover:border-kyro-blue-700 group relative overflow-hidden">
+                            <div class="absolute top-0 right-0 mt-4 mr-4 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-bold px-2 py-1 rounded-md">PRO</div>
+                            <div class="text-kyro-purple dark:text-purple-400 mb-4 group-hover:scale-110 transition-transform duration-300">
+                                <i data-lucide="calendar-days" width="40" height="40"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">SmartPlanner</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Agendamento inteligente onde a IA gerencia suas reuniões e tarefas.</p>
+                        </div>
+                    </a>
+
+                    <!-- Card 2: Processos IA -->
+                    <a href="../processo/processo.html" class="service-card opacity-0 animate-slide-in-up block" style="animation-delay: 100ms;" data-category="automacao">
+                        <div class="h-full bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 dark:border-slate-700 hover:border-kyro-blue-700 group">
+                            <div class="text-blue-600 dark:text-blue-400 mb-4 group-hover:scale-110 transition-transform duration-300">
+                                <i data-lucide="file-search" width="40" height="40"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Processos com IA</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Automação para extração de dados de débitos e BICs.</p>
+                        </div>
+                    </a>
+
+                    <!-- Card 3: Comparador -->
+                    <a href="../simulacoes/simulacoes.html" class="service-card opacity-0 animate-slide-in-up block" style="animation-delay: 150ms;" data-category="ferramentas">
+                        <div class="h-full bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 dark:border-slate-700 hover:border-kyro-blue-700 group">
+                            <div class="text-emerald-600 dark:text-emerald-400 mb-4 group-hover:scale-110 transition-transform duration-300"><i data-lucide="bar-chart-2" width="40" height="40"></i></div>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Simulações</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Compare cenários para gerir a melhor opção de parcelamento.</p>
+                        </div>
+                    </a>
+                    
+                    <!-- Card 4: Texto IA -->
+                    <a href="../texto-ia/texto-ia.html" class="service-card opacity-0 animate-slide-in-up block" style="animation-delay: 200ms;" data-category="ia">
+                         <div class="h-full bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 dark:border-slate-700 hover:border-kyro-blue-700 group">
+                            <div class="text-amber-500 dark:text-amber-400 mb-4 group-hover:scale-110 transition-transform duration-300"><i data-lucide="sparkles" width="40" height="40"></i></div>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Redator IA</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Aprimore sua escrita, corrija ortografia e crie e-mails.</p>
+                        </div>
+                    </a>
+
+                    <!-- Card 5: Escalonamento -->
+                    <a href="../escala/escala.html" class="service-card opacity-0 animate-slide-in-up block" style="animation-delay: 250ms;" data-category="rh">
+                        <div class="h-full bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 dark:border-slate-700 hover:border-kyro-blue-700 group">
+                            <div class="text-cyan-500 dark:text-cyan-400 mb-4 group-hover:scale-110 transition-transform duration-300"><i data-lucide="calendar-clock" width="40" height="40"></i></div>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Escalas de Trabalho</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Organize turnos de forma prática e automática.</p>
+                        </div>
+                    </a>
+
+                    <!-- Card 6: Ponto -->
+                    <a href="../ponto/ponto.html" class="service-card opacity-0 animate-slide-in-up block" style="animation-delay: 300ms;" data-category="rh">
+                         <div class="h-full bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 dark:border-slate-700 hover:border-kyro-blue-700 group">
+                            <div class="text-rose-500 dark:text-rose-400 mb-4 group-hover:scale-110 transition-transform duration-300"><i data-lucide="fingerprint" width="40" height="40"></i></div>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Ponto Digital</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Registro seguro de entrada e saída de colaboradores.</p>
+                        </div>
+                    </a>
+
+                    <!-- Card 7: Funcionários -->
+                    <a href="../funcionarios/funcionarios.html" class="service-card opacity-0 animate-slide-in-up block" style="animation-delay: 350ms;" data-category="rh">
+                        <div class="h-full bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 dark:border-slate-700 hover:border-kyro-blue-700 group">
+                            <div class="text-indigo-500 dark:text-indigo-400 mb-4 group-hover:scale-110 transition-transform duration-300">
+                                 <i data-lucide="users-2" width="40" height="40"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Portal RH</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Gestão completa de colaboradores e benefícios.</p>
+                        </div>
+                    </a>
+                    
+                    <!-- Card 8: Power BI -->
+                    <a href="../powerBI/powerbi.html" class="service-card opacity-0 animate-slide-in-up block" style="animation-delay: 400ms;" data-category="dados">
+                        <div class="h-full bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 dark:border-slate-700 hover:border-kyro-blue-700 group">
+                            <div class="text-yellow-500 dark:text-yellow-400 mb-4 group-hover:scale-110 transition-transform duration-300"><i data-lucide="pie-chart" width="40" height="40"></i></div>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Dashboards BI</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Transforme Planilhas em gráficos de decisão.</p>
+                        </div>
+                    </a>
+
+                    <!-- SUGESTÃO 2: RESERVAS DE SALAS -->
+                    <a href="../reserva/reserva.html" class="service-card opacity-0 animate-slide-in-up block" style="animation-delay: 500ms;" data-category="agenda">
+                        <div class="h-full bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 dark:border-slate-700 hover:border-teal-500 group">
+                            <div class="text-teal-500 dark:text-teal-400 mb-4 group-hover:scale-110 transition-transform duration-300"><i data-lucide="door-open" width="40" height="40"></i></div>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Reserva de Salas</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Garanta o espaço para sua reunião ou equipamento compartilhado.</p>
+                        </div>
+                    </a>
+
+                    <!-- NOVO 1: LISTA DE RAMAIS -->
+                    <a href="../ramais/ramais.html" class="service-card opacity-0 animate-slide-in-up block" style="animation-delay: 550ms;" data-category="comunicacao">
+                        <div class="h-full bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 dark:border-slate-700 hover:border-sky-500 group">
+                            <div class="text-sky-500 dark:text-sky-400 mb-4 group-hover:scale-110 transition-transform duration-300"><i data-lucide="phone-call" width="40" height="40"></i></div>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Lista de Ramais</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Encontre rapidamente o telefone ou e-mail de qualquer colaborador.</p>
+                        </div>
+                    </a>
+
+                </div>
+            </div>
+        </section>
+        
+        <!-- Login -->
+        <section id="login" class="py-24 bg-white dark:bg-slate-900 transition-colors duration-300 relative border-t dark:border-slate-800">
+             <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <div class="inline-flex items-center justify-center p-3 bg-blue-50 dark:bg-slate-800 rounded-full mb-6">
+                    <i data-lucide="lock" class="text-kyro-blue-700 dark:text-blue-400 w-6 h-6"></i>
+                </div>
+                <h2 class="text-3xl font-bold text-kyro-blue-900 dark:text-white mb-4">Acesse sua Área Kyro</h2>
+                <p class="text-gray-600 dark:text-gray-400 mb-10 max-w-lg mx-auto">
+                    Centralize sua vida e seu trabalho. Seus dados estão sincronizados e seguros.
+                </p>
+                
+                <div class="flex justify-center">
+                    <button id="btn-login-google" class="flex items-center justify-center gap-3 bg-white dark:bg-slate-800 text-gray-700 dark:text-white border border-gray-200 dark:border-slate-600 rounded-xl px-8 py-4 shadow-sm hover:bg-gray-50 dark:hover:bg-slate-700 transition-all font-medium group hover:shadow-md w-full sm:w-auto">
+                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-6 h-6..." alt="Google Logo">
+                    <span>Entrar com Google</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <footer class="bg-gray-900 text-gray-400 w-full py-10 border-t border-gray-800">
+            <div class="container mx-auto px-6">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div class="text-center md:text-left">
+                         <a href="#" class="text-2xl font-bold text-white flex items-center gap-2 justify-center md:justify-start">
+                            <i data-lucide="layers" class="text-blue-500"></i> Kyro
+                        </a>
+                        <p class="mt-2 text-sm text-gray-500">Tecnologia para o fluxo da vida.</p>
+                    </div>
+                    <div class="flex space-x-6">
+                         <a href="#" class="hover:text-white transition-colors"><i data-lucide="instagram" class="w-5 h-5"></i></a>
+                         <a href="#" class="hover:text-white transition-colors"><i data-lucide="linkedin" class="w-5 h-5"></i></a>
+                         <a href="#" class="hover:text-white transition-colors"><i data-lucide="mail" class="w-5 h-5"></i></a>
+                    </div>
+                </div>
+                <div class="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center text-sm">
+                    <p>&copy; <span id="current-year"></span> Kyro Tecnologia.</p>
+                    <p class="mt-2 md:mt-0">Desenvolvido com <span class="text-blue-400">Inteligência</span></p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+        lucide.createIcons();
+
+        // === Menu Mobile Toggle ===
+        const menuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const menuIconOpen = document.getElementById('menu-icon-open');
+        const menuIconClose = document.getElementById('menu-icon-close');
+
+        if(menuButton) {
+            menuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+                menuIconOpen.classList.toggle('hidden');
+                menuIconClose.classList.toggle('hidden');
+            });
+        }
+
+        // === Dark Mode Logic ===
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+        const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+        const themeToggleMobile = document.getElementById('theme-toggle-mobile');
+
+        // Check Local Storage or System Preference
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+            themeToggleLightIcon.classList.remove('hidden');
+        } else {
+            document.documentElement.classList.remove('dark');
+            themeToggleDarkIcon.classList.remove('hidden');
+        }
+
+        function toggleTheme() {
+            // Toggle icons
+            themeToggleDarkIcon.classList.toggle('hidden');
+            themeToggleLightIcon.classList.toggle('hidden');
+
+            // If is set in localstorage
+            if (localStorage.getItem('color-theme')) {
+                if (localStorage.getItem('color-theme') === 'light') {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('color-theme', 'dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('color-theme', 'light');
+                }
+            } else {
+                if (document.documentElement.classList.contains('dark')) {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('color-theme', 'light');
+                } else {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('color-theme', 'dark');
+                }
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', toggleTheme);
+        if(themeToggleMobile) themeToggleMobile.addEventListener('click', toggleTheme);
+
+        // === Search Logic ===
+        const searchInput = document.getElementById('service-search');
+        const serviceCards = document.querySelectorAll('.service-card');
+
+        searchInput.addEventListener('keyup', (e) => {
+            const term = e.target.value.toLowerCase();
+            
+            serviceCards.forEach(card => {
+                const title = card.querySelector('h3').textContent.toLowerCase();
+                const desc = card.querySelector('p').textContent.toLowerCase();
+                
+                if(title.includes(term) || desc.includes(term)) {
+                    card.classList.remove('hidden');
+                    card.classList.add('block');
+                    card.classList.add('animate-fade-in'); // Re-trigger animation nicely
+                } else {
+                    card.classList.add('hidden');
+                    card.classList.remove('block');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

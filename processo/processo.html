@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kyro - Processos com IA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="shortcut icon" href="https://placehold.co/32x32/003366/FFFFFF?text=K" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>
+        // Configuração obrigatória para o PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;
+    </script>
+    <style>
+        :root {
+            /* Paleta de cores principal mantida, pois é uma boa base */
+            --cor-principal: #004a91; /* Azul corporativo, sério */
+            --cor-secundaria: #007bff; /* Azul mais vibrante para links/ações */
+            --cor-sucesso: #28a745;
+            --cor-perigo: #dc3545;
+            --cor-aviso: #ffc107;
+            --cor-fundo: #f4f7fa; /* Um cinza/azul bem claro para o fundo */
+            --cor-borda: #ccc;
+            --cor-texto: #333;
+            --cor-destaque: #e9ecef;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Estilos para replicar layout do BIC */
+        .bic-section-title {
+            @apply text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 pb-1 border-b border-slate-200;
+        }
+        .bic-label {
+            @apply text-slate-500 text-[10px] uppercase font-medium;
+        }
+        .bic-value {
+            @apply text-slate-800 font-semibold text-xs sm:text-sm;
+        }
+        .bic-value-mono {
+            @apply font-mono;
+        }
+        .bic-grid-item {
+             @apply bg-slate-50 p-2 rounded border border-slate-100;
+        }
+         /* Simplificando details para checkbox */
+         .bic-section {
+             @apply border border-slate-200 rounded-lg overflow-hidden;
+         }
+         .bic-section-header {
+              @apply font-semibold text-slate-700 p-2 bg-slate-100 text-sm border-b border-slate-200 flex items-center space-x-2;
+         }
+         .bic-section-content {
+              @apply p-3;
+         }
+
+
+         /* Estilo linha do tempo Histórico */
+         .timeline { @apply relative; }
+         .timeline-item { @apply relative pl-6 pb-4 border-l-2 border-slate-300; }
+         .timeline-dot { @apply absolute -left-[7px] top-0.5 w-3 h-3 bg-white border-2 border-slate-400 rounded-full; }
+
+         /* Checkbox Styling */
+         .bic-checkbox, .debt-checkbox {
+             @apply h-4 w-4 rounded border-gray-300 text-slate-600 focus:ring-slate-500 cursor-pointer flex-shrink-0;
+         }
+         label.bic-checkbox-label {
+             @apply flex-grow cursor-pointer;
+         }
+
+         nav {
+            display: flex;
+            justify-content: center;
+            background-color: transparent; /* Remove fundo antigo */
+            padding: 0;
+            animation: none; /* Remove animação antiga */
+            position: static; /* Reseta posição */
+    }
+    nav a {
+            margin: 0 15px;
+            text-decoration: none;
+            color: var(--cor-secundaria); /* Link em azul */
+            font-weight: bold;
+            transition: color 0.3s;
+            font-size: 1.1rem;
+    }
+    nav a:hover {
+            color: var(--cor-principal); /* Azul escuro no hover */
+    }
+
+    </style>
+</head>
+<body class="bg-slate-50 text-gray-800">
+
+    <div id="alertModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-11/12 md:w-1/3 fade-in">
+            <h3 id="modalTitle" class="text-xl font-bold text-gray-900 mb-4">Aviso</h3>
+            <p id="modalMessage" class="text-gray-700 mb-6"></p>
+            <div class="text-right">
+                <button onclick="closeModal()" class="bg-slate-600 text-white px-4 py-2 rounded-lg hover:bg-slate-700 transition duration-300">Entendi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Configurações (API Key) -->
+    <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-11/12 md:w-1/3 fade-in relative">
+            <button onclick="closeSettingsModal()" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-xl font-bold">&times;</button>
+            <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <i class="fas fa-cog text-slate-600"></i> Configurações
+            </h3>
+            <div class="mb-4">
+                <label for="apiKeyInput" class="block text-sm font-medium text-gray-700 mb-1">Chave API do Google (Gemini)</label>
+                <input type="password" id="apiKeyInput" placeholder="Cole sua chave aqui (AIza...)" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <p class="text-xs text-gray-500 mt-1">Sua chave será salva localmente no seu navegador.</p>
+            </div>
+            <div class="text-right">
+                <button onclick="saveApiKey()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300">Salvar Configuração</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="iaAssistantModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-11/12 md:w-2/3 lg:w-1/2 max-h-[90vh] overflow-y-auto fade-in">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-900 flex items-center space-x-3">
+                    <i class="fas fa-robot text-slate-600"></i>
+                    <span>Assistente IA para Montagem de Processo</span>
+                </h3>
+                <button onclick="closeIaModal()" class="text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
+            </div>
+            
+            <div class="space-y-6">
+                <div>
+                    <h4 class="font-semibold text-lg mb-2 text-gray-700">1. Anexar Documentos</h4>
+                    <div id="drop-zone" class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-slate-500 bg-gray-50 transition">
+                        <input type="file" id="file-input" class="hidden" accept=".pdf" multiple>
+                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                        <p class="text-gray-600">Arraste e solte os documentos aqui ou <span class="text-slate-600 font-semibold">clique para selecionar</span>.</p>
+                        <p class="text-xs text-gray-500 mt-2">Arquivos PDF são aceitos.</p>
+                    </div>
+                    <div id="file-list" class="mt-4 space-y-2"></div>
+                </div>
+
+                <div>
+                    <button id="analyze-button" class="w-full bg-slate-600 text-white px-6 py-3 rounded-lg hover:bg-slate-700 transition duration-300 font-semibold flex items-center justify-center space-x-2 disabled:bg-slate-300 disabled:cursor-not-allowed">
+                        <i class="fas fa-cogs"></i>
+                        <span>Analisar e Extrair com IA</span>
+                    </button>
+                </div>
+
+                <div id="analysis-results" class="hidden">
+                     <h4 class="font-semibold text-lg mb-2 text-gray-700">2. Informações Extraídas dos Documentos</h4>
+                     <div id="loader" class="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600"></div>
+                        <p class="text-gray-700">Analisando documentos... A IA está extraindo as informações para montar o processo.</p>
+                     </div>
+                     <div id="results-content" class="hidden mt-4 space-y-6 p-4 border rounded-lg bg-green-50/50 border-green-200">
+                        </div>
+                     <div class="flex flex-col sm:flex-row justify-end gap-3 mt-6">
+                         <button onclick="closeIaModal()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition">Cancelar</button>
+                         <button id="protocol-button" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition flex items-center justify-center space-x-2">
+                            <i class="fas fa-stamp"></i>
+                            <span>Protocolar Processo com Dados Extraídos</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="min-h-screen">
+        <header class="bg-white shadow-md w-full h-24 flex-shrink-0">
+    <div class="container mx-auto px-4 md:px-6 h-full flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <!-- Logo Placeholder - Substitua pela imagem real se disponível -->
+        <div class="bg-blue-800 text-white w-12 h-12 rounded-lg flex items-center justify-center font-bold text-xl">
+          P
+        </div>
+        <div>
+          <h1 class="text-xl font-bold text-gray-800">Prefeitura de Limeira</h1>
+          <p class="text-sm text-gray-600">Departamento de Dívida Ativa</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-2">
+            <span class="text-sm text-gray-500">Powered by</span>
+            <!-- Logo Kyro Placeholder -->
+            <span class="text-lg font-bold text-blue-700">KYRO</span>
+        </div>
+        <button onclick="openSettingsModal()" class="text-gray-400 hover:text-gray-600 transition-colors" title="Configurações (API Key)">
+            <i class="fas fa-cog text-xl"></i>
+        </button>
+      </div>
+      <nav>
+        <div class="nav-links" id="navLinks">
+                  <a href="../kyro/kyro.html">Início</a>
+                  <!-- Você pode adicionar mais links aqui, como "Ajuda" ou "Sair" -->
+        </div>
+      </nav>
+    </div>
+  </header>
+
+        <main class="container mx-auto px-6 py-8">
+            <div class="bg-white p-8 rounded-xl shadow-sm mb-8 fade-in">
+                <h2 class="text-2xl font-bold text-slate-800">Bem-vindo, Servidor.</h2>
+                <p class="text-slate-500 mb-6">Inicie um novo processo ou busque por um existente abaixo.</p>
+                <div class="relative">
+                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" placeholder="Digite o CPF/CNPJ, nº do processo ou nome" class="w-full pl-12 pr-4 py-4 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 transition-all">
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 space-y-8">
+                    
+                    <div class="fade-in" style="animation-delay: 0.1s;">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div id="start-ia" class="group relative bg-slate-800 p-6 rounded-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden">
+                                <div class="absolute -top-8 -right-8 text-slate-700 text-8xl opacity-50 group-hover:scale-110 group-hover:opacity-100 transition-all duration-300">
+                                    <i class="fas fa-robot"></i>
+                                </div>
+                                <div class="relative z-10">
+                                    <h3 class="font-bold text-xl text-white">Novo Processo (Assistente IA)</h3>
+                                    <p class="text-sm text-slate-300 mt-1">Deixe a IA extrair dados de extratos de débitos para montar o processo.</p>
+                                </div>
+                            </div>
+
+                            <div class="group relative bg-white border border-slate-200 p-6 rounded-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden">
+                                 <div class="absolute -top-8 -right-8 text-slate-200 text-8xl opacity-80 group-hover:scale-110 group-hover:text-slate-300 transition-all duration-300">
+                                    <i class="fas fa-folder-open"></i>
+                                </div>
+                                 <div class="relative z-10">
+                                    <h3 class="font-bold text-xl text-slate-800">Consultar Processos</h3>
+                                    <p class="text-sm text-slate-500 mt-1">Visualize e acompanhe processos físicos e digitais em andamento ou finalizados.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white p-6 rounded-xl shadow-sm fade-in" style="animation-delay: 0.2s;">
+                        <h2 class="text-xl font-semibold mb-4 text-slate-800">Últimos Processos Movimentados</h2>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead>
+                                    <tr class="border-b border-slate-200 text-slate-500 text-sm">
+                                        <th class="p-4 font-medium">Nº Processo</th>
+                                        <th class="p-4 font-medium">Contribuinte</th>
+                                        <th class="p-4 font-medium">Status</th>
+                                        <th class="p-4 font-medium">Última Atualização</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="[&>tr]:border-b [&>tr]:border-slate-100 [&>tr:last-child]:border-0 [&>tr:odd]:bg-slate-50">
+                                    <tr class="hover:bg-slate-100 transition-colors">
+                                        <td class="p-4 font-medium text-slate-700">2025/11/4587-DIG</td>
+                                        <td class="p-4 text-slate-600">Empresa Exemplo LTDA</td>
+                                        <td class="p-4">
+                                            <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-semibold flex items-center w-fit">
+                                                <i class="fas fa-hourglass-half mr-2"></i>Em Análise
+                                            </span>
+                                        </td>
+                                        <td class="p-4 text-slate-500 text-sm">19/10/2025 19:03</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-100 transition-colors">
+                                        <td class="p-4 font-medium text-slate-700">2024/03/1023-FIS</td>
+                                        <td class="p-4 text-slate-600">João da Silva</td>
+                                        <td class="p-4">
+                                            <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold flex items-center w-fit">
+                                                <i class="fas fa-check-circle mr-2"></i>Deferido
+                                            </span>
+                                        </td>
+                                        <td class="p-4 text-slate-500 text-sm">15/10/2025 10:15</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-100 transition-colors">
+                                        <td class="p-4 font-medium text-slate-700">2025/07/3341-DIG</td>
+                                        <td class="p-4 text-slate-600">Maria Oliveira</td>
+                                        <td class="p-4">
+                                            <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-semibold flex items-center w-fit">
+                                                <i class="fas fa-times-circle mr-2"></i>Indeferido
+                                            </span>
+                                        </td>
+                                        <td class="p-4 text-slate-500 text-sm">12/10/2025 17:55</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-8">
+                    <div class="bg-white p-6 rounded-xl shadow-sm fade-in" style="animation-delay: 0.3s;">
+                        <h2 class="text-xl font-semibold mb-4 text-slate-800">Minhas Contas Vinculadas</h2>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <img src="https://limeira.sp.gov.br/sitenovo/images/brasao_limeira.png" class="h-8 w-auto" onerror="this.onerror=null; this.src='https://placehold.co/32x32/f1f5f9/94a3b8?text=L';">
+                                    <span class="font-medium">Prefeitura Limeira</span>
+                                </div>
+                                <span class="text-green-600 font-bold flex items-center space-x-1"><i class="fas fa-check-circle"></i><span>Conectado</span></span>
+                            </div>
+                             <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                                 <div class="flex items-center space-x-3">
+                                    <i class="fas fa-landmark text-2xl text-blue-800"></i>
+                                    <span class="font-medium">I.I. Brasil</span>
+                                 </div>
+                                <span class="text-green-600 font-bold flex items-center space-x-1"><i class="fas fa-check-circle"></i><span>Conectado</span></span>
+                            </div>
+                             <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                                 <div class="flex items-center space-x-3">
+                                    <i class="fas fa-file-alt text-2xl text-red-600"></i>
+                                    <span class="font-medium">1Doc Gestão</span>
+                                 </div>
+                                <span class="text-green-600 font-bold flex items-center space-x-1"><i class="fas fa-check-circle"></i><span>Conectado</span></span>
+                            </div>
+                        </div>
+                        <button class="w-full mt-6 bg-slate-200 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-300 transition duration-300">Gerenciar Conexões</button>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm fade-in" style="animation-delay: 0.4s;">
+                        <h2 class="text-xl font-semibold mb-4 text-slate-800">Notificações</h2>
+                        <div class="space-y-3">
+                            <div class="text-sm border-l-4 border-yellow-500 pl-3">
+                                <p class="font-semibold">Prazo vencendo</p>
+                                <p class="text-gray-600">Processo 2025/11/4587-DIG necessita de documento complementar.</p>
+                            </div>
+                            <div class="text-sm border-l-4 border-green-500 pl-3">
+                                <p class="font-semibold">Processo Atualizado</p>
+                                <p class="text-gray-600">Seu processo 2024/03/1023-FIS foi deferido.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <footer class="bg-gray-800 text-gray-400 w-full h-16 flex-shrink-0">
+    <div class="container mx-auto px-6 h-full flex items-center justify-between">
+      <p class="text-sm">&copy; 2025 Prefeitura de Limeira. Todos os direitos reservados.</p>
+      <p class="text-sm">Desenvolvido com <span class="text-blue-400 font-medium">Kyro Tecnologia</span></p>
+    </div>
+  </footer>
+
+    <script>
+        // --- MODAL DE ALERTA GERAL ---
+        const alertModal = document.getElementById('alertModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalMessage = document.getElementById('modalMessage');
+
+        function showAlert(title, message) {
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            alertModal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            alertModal.classList.add('hidden');
+        }
+
+        window.addEventListener('click', (event) => {
+            if (event.target == alertModal) closeModal();
+        });
+
+        // --- LÓGICA DO MODAL DE CONFIGURAÇÕES (API KEY) ---
+        const settingsModal = document.getElementById('settingsModal');
+        const apiKeyInput = document.getElementById('apiKeyInput');
+
+        function openSettingsModal() {
+            // Carrega a chave salva, se houver
+            apiKeyInput.value = localStorage.getItem('kyro_gemini_api_key') || '';
+            settingsModal.classList.remove('hidden');
+        }
+
+        function closeSettingsModal() {
+            settingsModal.classList.add('hidden');
+        }
+
+        function saveApiKey() {
+            const key = apiKeyInput.value.trim();
+            if (key) {
+                localStorage.setItem('kyro_gemini_api_key', key);
+                showAlert('Sucesso', 'Chave API salva com sucesso!');
+                closeSettingsModal();
+            } else {
+                showAlert('Atenção', 'Por favor, insira uma chave API válida.');
+            }
+        }
+
+        window.addEventListener('click', (event) => {
+            if (event.target == settingsModal) closeSettingsModal();
+        });
+
+        // --- LÓGICA DO ASSISTENTE DE IA ---
+        const iaAssistantModal = document.getElementById('iaAssistantModal');
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const fileList = document.getElementById('file-list');
+        const analyzeButton = document.getElementById('analyze-button');
+        const analysisResults = document.getElementById('analysis-results');
+        const loader = document.getElementById('loader');
+        const resultsContent = document.getElementById('results-content');
+        const protocolButton = document.getElementById('protocol-button');
+        
+        let uploadedFiles = [];
+
+        function openIaModal() { 
+            iaAssistantModal.classList.remove('hidden'); 
+        }
+        function closeIaModal() { iaAssistantModal.classList.add('hidden'); resetIaModalState(); }
+        function resetIaModalState() {
+            uploadedFiles = [];
+            updateFileList();
+            analysisResults.classList.add('hidden');
+            resultsContent.classList.add('hidden');
+            loader.classList.remove('hidden');
+            resultsContent.innerHTML = '';
+        }
+
+        document.getElementById('start-ia').addEventListener('click', openIaModal);
+        protocolButton.addEventListener('click', () => {
+            showAlert('Função em Desenvolvimento', 'A funcionalidade de protocolar o processo diretamente ainda está sendo implementada.');
+        });
+
+        // Lógica de Upload
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-slate-500', 'bg-slate-50'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-slate-500', 'bg-slate-50'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-slate-500', 'bg-slate-50');
+            if (e.dataTransfer.files.length > 0) handleFiles(e.dataTransfer.files);
+        });
+        fileInput.addEventListener('change', () => { if (fileInput.files.length > 0) handleFiles(fileInput.files); });
+
+        function handleFiles(files) {
+            [...files].forEach(file => {
+                if (!uploadedFiles.some(f => f.name === file.name && f.size === file.size)) {
+                    uploadedFiles.push(file);
+                }
+            });
+            updateFileList();
+        }
+
+        function updateFileList() {
+            fileList.innerHTML = '';
+            analyzeButton.disabled = uploadedFiles.length === 0;
+            if (uploadedFiles.length === 0) return;
+            
+            uploadedFiles.forEach((file, index) => {
+                fileList.innerHTML += `
+                    <div class="flex items-center justify-between p-2 bg-gray-100 rounded-lg text-sm">
+                        <div class="flex items-center space-x-2 overflow-hidden">
+                            <i class="fas fa-file-pdf text-red-500"></i>
+                            <span class="truncate" title="${file.name}">${file.name}</span>
+                        </div>
+                        <button onclick="removeFile(${index})" class="text-red-500 hover:text-red-700 font-bold px-2">&times;</button>
+                    </div>`;
+            });
+        }
+
+        function removeFile(index) {
+            uploadedFiles.splice(index, 1);
+            fileInput.value = '';
+            updateFileList();
+        }
+
+        // --- FUNÇÃO DE EXTRAÇÃO UNIFICADA COM IA (v11) ---
+        async function analyzeDocumentWithGemini(text) {
+            // Tenta recuperar a chave do localStorage
+            const apiKey = localStorage.getItem('kyro_gemini_api_key');
+            
+            // Verifica se a chave existe
+            if (!apiKey) {
+                showAlert('Chave API Não Configurada', 'Por favor, clique no ícone de engrenagem no cabeçalho e configure sua Chave API do Google para utilizar a IA.');
+                return { documentType: 'DESCONHECIDO' };
+            }
+
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            
+            // Schema Atualizado para incluir todos os campos do BIC
+            const schema = {
+                 type: "OBJECT",
+                 properties: {
+                     documentType: { type: "STRING", enum: ["EXTRATO_DEBITOS", "BIC", "DESCONHECIDO"] },
+                     debtData: { type: "ARRAY", items: {
+                             type: "OBJECT", properties: {
+                                 idLancamento: { type: "STRING", description: "Número identificador único do lançamento, geralmente na primeira coluna '#'" },
+                                 nome: { type: "STRING", description: "Nome do contribuinte ou Razão Social" }, 
+                                 cpfCnpj: { type: "STRING", description: "CPF ou CNPJ do contribuinte" }, 
+                                 natureza: { type: "STRING", description: "O valor da coluna 'NATUREZA', ex: IMOB, MOBIL, IMOE" },
+                                 origem: { type: "STRING", description: "O valor da coluna 'ORIGEM', ex: IMPOSTO PREDIAL TERR, AI/NL" },
+                                 ic: { type: "STRING", description: "Inscrição Cadastral Imobiliária (somente se Natureza for IMOB/IMOE)" },
+                                 icReduzido: { type: "STRING", description: "Inscrição Cadastral Imobiliária Reduzida (somente se Natureza for IMOB/IMOE)" }, 
+                                 otherId: { type: "STRING", description: "Identificador Mobiliário ou outro (somente se Natureza NÃO for IMOB/IMOE)" }, 
+                                 ano: { type: "STRING" },
+                                 parcela: { type: "STRING" },
+                                 processoJudicial: { type: "STRING", description: "VALOR DA COLUNA 'N° PROCESSO FÓRUM'. Regra: SÓ PREENCHER SE o campo 'Situação da Dívida' para este mesmo débito for 'AJUIZADO'." },
+                                 processoAdministrativo: { type: "STRING", description: "VALOR DA COLUNA 'N° PROCESSO DA'." },
+                                 numeroCDA: { type: "STRING", description: "VALOR DA COLUNA 'CDA'." },
+                                 numeroNegociacao: { type: "STRING", description: "VALOR DA COLUNA OU ETIQUETA 'N° NEGO'." },
+                                 dataVencimento: { type: "STRING" },
+                                 situacaoLancamento: { type: "STRING" }, situacaoDivida: { type: "STRING" }, valorPrincipal: { type: "STRING" },
+                                 valorMulta: { type: "STRING" }, valorJuros: { type: "STRING" }, valorCorrecao: { type: "STRING" },
+                                 valorHonorarios: { type: "STRING" }, valorTotal: { type: "STRING" },
+                                 outrosDetalhes: { type: "ARRAY", items: { type: "OBJECT", properties: { chave: { type: "STRING" }, valor: { type: "STRING" } } } }
+                             }
+                         }
+                     },
+                     bicData: { // Schema do BIC expandido
+                         type: "OBJECT",
+                         properties: {
+                            statusImovel: { type: "OBJECT", properties: { status: {type: "STRING"}, anoInicio: {type: "STRING"}, anoFim: {type: "STRING"} }, description: "Status atual do imóvel (ATIVO, etc.) e período" },
+                            inscricaoCadastral: { type: "STRING", description:"Número completo da Inscrição Cadastral" },
+                            inscricaoCadastralReduzida: { type: "STRING", description: "Número reduzido da Inscrição Cadastral" },
+                            enderecoPrincipal: { type: "OBJECT", properties: { tipoLogradouro: { type: "STRING" }, logradouro: { type: "STRING" }, numero: {type: "STRING"}, complemento: {type:"STRING"}, bairro: { type: "STRING" }, cep: { type: "STRING" }, cidade: {type:"STRING"} }, description: "Endereço principal de localização do imóvel" },
+                            enderecoCorrespondencia: { type: "OBJECT", properties: { tipoLogradouro: { type: "STRING" }, logradouro: { type: "STRING" }, numero: { type: "STRING" }, bairro: { type: "STRING" }, complemento: {type:"STRING"}, cidade: { type: "STRING" }, estado: {type:"STRING"}, cep: { type: "STRING" } }, description: "Endereço de entrega/correspondência" },
+                            responsaveis: { type: "ARRAY", items: { 
+                                type: "OBJECT", properties: { 
+                                    nome: { type: "STRING", description: "Nome do responsável" }, 
+                                    cpfCnpj: { type: "STRING", description: "CPF ou CNPJ do responsável" }, 
+                                    principal: { type: "STRING", description: "Indica se é o responsável principal (SIM/NAO)" }, 
+                                    tipo: { type: "STRING", description: "Tipo de responsabilidade (PROPRIETARIO, etc)" }, 
+                                    participacao: { type: "STRING", description: "Percentual de participação, se houver"},
+                                    anoInicio: { type: "STRING" }, anoFim: {type:"STRING"}
+                                } }, description: "Lista de responsáveis pelo imóvel" 
+                            },
+                            dadosTerreno: { type: "OBJECT", properties: { 
+                                area: { type: "STRING" }, 
+                                testadaPrincipal: { type: "STRING", description:"Testada Frente" }, 
+                                testadaTotal: { type: "STRING" }, 
+                                quadra: { type: "STRING" }, 
+                                lote: { type: "STRING" }, 
+                                bairro: { type: "STRING" }, 
+                                loteamento: { type: "STRING" }, 
+                                condominio: { type: "STRING"},
+                                fatorProfundidade: { type: "STRING" }, 
+                                fatorTestada: { type: "STRING"},
+                                testadaDireita: { type: "STRING" }, testadaEsquerda: { type: "STRING" }, testadaFundos: { type: "STRING" },
+                                testadaCurvaDirFrt: { type: "STRING" }, testadaCurvaEsqFrt: { type: "STRING" }, testadaCurvaDirFds: { type: "STRING" }, testadaCurvaEsqFds: { type: "STRING" },
+                                numeroImovel: { type: "STRING", description:"Número do imóvel na localização principal"}
+                                }, description: "Detalhes físicos do terreno"
+                            },
+                            fracaoIdeal: { type: "OBJECT", properties: { fracao: {type:"STRING"}, anoInicio: {type:"STRING"}, anoFim: {type:"STRING"}}, description: "Fração ideal do imóvel e período" },
+                            plantaGenericaValores: { type:"ARRAY", items:{ type:"OBJECT", properties: { nomePgv: {type:"STRING"}, valorM2: {type:"STRING"}, anoAplicacao: {type:"STRING"}, anoInicio: {type:"STRING"}, anoFim: {type:"STRING"}}}, description: "Informações da Planta Genérica de Valores (PGV)"},
+                            dadosConstrucao: { type: "ARRAY", items: { type: "OBJECT", properties: { 
+                                areaConstruida: { type: "STRING" }, 
+                                areaRegistrada: { type: "STRING", description: "Área de construção registrada" }, 
+                                anoConstrucao: { type: "STRING" }, 
+                                padraoConstrutivo: { type: "STRING" },
+                                anoInicio: { type: "STRING" }, anoFim: {type:"STRING"}
+                                } }, description: "Detalhes da(s) construção(ões) no imóvel" 
+                            },
+                            valoresVenais: { type: "OBJECT", properties: { 
+                                exercicio: { type: "STRING", description: "Ano de exercício dos valores" }, 
+                                venalTerreno: { type: "STRING" }, 
+                                venalPredial: { type: "STRING" }, 
+                                venalPredialEspecial: { type: "STRING" }, 
+                                venalTotal: { type: "STRING", description: "Valor Venal Total do Imóvel" }, 
+                                comercialTerreno: { type: "STRING" }, 
+                                comercialPredial: { type: "STRING" }, 
+                                comercialTotal: { type: "STRING", description: "Valor Comercial Total do Imóvel" }
+                                } , description:"Valores venais e comerciais do imóvel para um exercício"},
+                            registro: { type: "OBJECT", properties: { 
+                                tipoCartorio: { type: "STRING" }, 
+                                cartorio: { type: "STRING" }, 
+                                matricula: { type: "STRING" }, 
+                                dataMatricula: { type: "STRING" }, 
+                                dataRegistro: { type: "STRING" }, 
+                                dataAverbacao: { type: "STRING" }, 
+                                observacao: { type: "STRING" }
+                                }, description:"Informações de registro do imóvel no cartório"},
+                            historico: { type: "ARRAY", items: { type: "OBJECT", properties: { 
+                                data: { type: "STRING" }, 
+                                tipo: { type: "STRING", description:"Tipo de histórico (MANUAL, AUTOMATICO)" }, 
+                                assunto: { type: "STRING", description:"Assunto do histórico"},
+                                descricao: { type: "STRING" }, 
+                                processo: { type: "STRING", description:"Número do processo associado ao histórico, se houver"},
+                                status: { type: "STRING"}
+                                } }, description: "Histórico de alterações e eventos do imóvel" 
+                            }
+                        }
+                     }
+                 }
+            };
+            
+            // PROMPT MELHORADO (v11 - Corrigindo confusão DA vs. CDA e N° Nego)
+            const userPrompt = `Você é um assistente de IA especialista em análise de documentos fiscais e cadastrais da prefeitura. Sua tarefa é analisar o texto fornecido e extrair TODAS as informações solicitadas no formato JSON, seguindo rigorosamente o schema. Você foi treinado para lidar com **qualquer variação** de "Extrato de Débitos" ou "Boletim de Informação Cadastral (BIC)", **mesmo que o layout seja diferente dos exemplos anteriores**.
+
+1.  **Identifique o Tipo do Documento (Regra Flexível)**:
+    * Analise o conteúdo. Se o texto contiver frases como "BOLETIM DE INFORMAÇÃO CADASTRAL", "BIC", "ESPELHO CADASTRAL" ou "FIC - Ficha de Informação Cadastral", defina \`documentType\` como "BIC".
+    * Se o texto contiver frases como "RELATÓRIOS DE LANÇAMENTOS DE DÉBITOS", "EXTRATO DE DÉBITOS", "DÉBITOS DO CONTRIBUINTE" ou uma tabela com colunas-chave como "SIT. DIVIDA", "PROCESSO DA", e "CDA", defina \`documentType\` como "EXTRATO_DEBITOS".
+    * Se não for claramente nenhum dos dois, defina como "DESCONHECIDO".
+
+2.  **Execute a Extração Correta com Base no Tipo**:
+    * **Se for "BIC"**: Preencha **apenas** o objeto \`bicData\` com o máximo de detalhes possível. Seja extremamente minucioso e capture **TODOS** os dados, mesmo que o layout do BIC seja diferente. Procure especificamente por (usando os campos exatos do schema):
+        -   \`statusImovel\`: Status, anoInicio, anoFim.
+        -   \`inscricaoCadastral\` e \`inscricaoCadastralReduzida\`.
+        -   \`enderecoPrincipal\`: tipoLogradouro, logradouro, numero, complemento, bairro, cep, cidade.
+        -   \`enderecoCorrespondencia\`: tipoLogradouro, logradouro, numero, bairro, complemento, cidade, estado, cep.
+        -   \`responsaveis\` (para CADA um): nome, cpfCnpj, principal (SIM/NAO), tipo, participacao (%), anoInicio, anoFim. Use a regra "Nome vs. CPF/CNPJ" se necessário.
+        -   \`dadosTerreno\`: area, testadaPrincipal, testadaTotal, quadra, lote, bairro, loteamento, condominio, fatorProfundidade, fatorTestada, testadaDireita, testadaEsquerda, testadaFundos, todas as testadasCurva, numeroImovel.
+        -   \`fracaoIdeal\`: fracao, anoInicio, anoFim.
+        -   \`plantaGenericaValores\` (para CADA entrada): nomePgv, valorM2, anoAplicacao, anoInicio, anoFim.
+        -   \`dadosConstrucao\` (para CADA construção): areaConstruida, areaRegistrada, anoConstrucao, padraoConstrutivo, anoInicio, anoFim.
+        -   \`valoresVenais\`: exercicio, venalTerreno, venalPredial, venalPredialEspecial, venalTotal, comercialTerreno, comercialPredial, comercialTotal.
+        -   \`registro\`: tipoCartorio, cartorio, matricula, dataMatricula, dataRegistro, dataAverbacao, observacao.
+        -   \`historico\` (para CADA evento): data, tipo, assunto, descricao, processo, status.
+        -   **REGRA DE OURO (Nome vs. CPF/CNPJ - Responsáveis):** Frequentemente, os responsáveis aparecem como "NUMERO | NOME". Separe o número (CPF/CNPJ) para o campo \`cpfCnpj\` e o texto após o "|" para o campo \`nome\`.
+
+    * **Se for "EXTRATO_DEBITOS"**: Assuma o papel de um analista de dados forense. O seu objetivo é extrair **cada linha de débito** com precisão absoluta, seguindo TODAS as regras definidas abaixo:
+        -   **REGRA DE OURO (ID do Lançamento - Coluna '#'):** Extraia o número da primeira coluna ("#") para \`idLancamento\`.
+        -   **REGRA DE OURO (Nome vs. CPF/CNPJ - Contribuinte):** Separe "NUMERO | NOME" em \`cpfCnpj\` e \`nome\`.
+        -   **REGRA DE OURO (Natureza vs. Origem):** Capture "NATUREZA" para \`natureza\` e "ORIGEM" para \`origem\`.
+        -   **REGRA DE OURO (Identificadores - I.C. vs. OtherId):** Mapeie corretamente para \`ic\`, \`icReduzido\` ou \`otherId\` com base na \`natureza\`. NUNCA coloque ID mobiliário em \`ic\`/\`icReduzido\`.
+        
+        -   **REGRA DE OURO (N° PROCESSO DA vs. CDA - CRÍTICA E OBRIGATÓRIA):** Esta é a regra mais importante. Os campos \`processoAdministrativo\` (N° PROCESSO DA) e \`numeroCDA\` (CDA) são mutuamente exclusivos e devem ser preenchidos *exclusivamente* com os valores das suas respectivas colunas.
+            * Se a coluna "NO PROCESSO DA" tiver um valor (ex: "48650/2009"), preencha \`processoAdministrativo\` com esse valor.
+            * Se a coluna "CDA" tiver um valor (ex: "959415/2007"), preencha \`numeroCDA\` com esse valor.
+            * **REGRA DE ANTI-CONFUSÃO (LER OBRIGATORIAMENTE):** Se a coluna "NO PROCESSO DA" estiver VAZIA, o campo \`processoAdministrativo\` DEVE OBRIGATORIAMENTE ficar vazio. NUNCA, SOB NENHUMA HIPÓTESE, utilize o valor da coluna "CDA" (ex: "3795771/2013") para preencher o campo \`processoAdministrativo\` que está vazio. Os campos são independentes.
+            
+        -   **REGRA DE OURO (Número de Negociação - CRÍTICA):** Preencha \`numeroNegociacao\` SOMENTE se houver uma coluna ou etiqueta "N° NEGO." com um valor associado. O documento de exemplo ('varios parcelamentos.pdf') tem a coluna 'NO NEGO.' VAZIA para todas as linhas. Portanto, para esse documento, \`numeroNegociacao\` DEVE ser VAZIO para todas as linhas. NUNCA, em nenhuma circunstância, use o valor da Inscrição Cadastral (I.C. ou I.C. Reduzida) ou qualquer outro ID (como Proc. DA, CDA) para preencher \`numeroNegociacao\`.
+            
+        -   **REGRA DE OURO (Processo Judicial / Fórum):** Capture o número flutuante APÓS "AJUIZADA" e ANTES de "NO PROCESSO DA" para \`processoJudicial\`, somente se \`situacaoDivida\` for 'AJUIZADA'.
+
+    * **Se for "DESCONHECIDO"**: Não preencha \`bicData\` nem \`debtData\`.
+
+--- INÍCIO DO TEXTO DO DOCUMENTO ---
+${text}
+--- FIM DO TEXTO DO DOCUMENTO ---`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userPrompt }] }],
+                generationConfig: { responseMimeType: "application/json", responseSchema: schema, temperature: 0.0 }
+            };
+
+            try {
+                const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (!response.ok) { 
+                    const errorData = await response.json().catch(() => ({ error: { message: response.statusText } }));
+                    console.error("API Error (Unificado):", JSON.stringify(errorData, null, 2));
+                    showAlert('Erro de Análise', `A IA não conseguiu processar o documento. Detalhes: ${errorData.error?.message || response.statusText}`);
+                    return { documentType: 'DESCONHECIDO' }; 
+                }
+                const result = await response.json();
+                const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                const parsedData = jsonText ? JSON.parse(jsonText) : { documentType: 'DESCONHECIDO' };
+                
+                return parsedData;
+
+            } catch (error) {
+                console.error("Error calling Gemini API (Unificado):", error);
+                showAlert('Erro de Conexão', 'Não foi possível conectar à API de análise. Verifique sua conexão e tente novamente.');
+                return { documentType: 'DESCONHECIDO' };
+            }
+        }
+
+        // --- FUNÇÕES DE RENDERIZAÇÃO E INTERAÇÃO ---
+        // Função renderBicResult atualizada para layout similar ao PDF e checkboxes
+        function renderBicResult(bicData, fileName) {
+            if (!bicData) return renderUnknownResult(fileName);
+            
+            // Gerador de ID único para checkboxes do BIC
+            const bicFileId = fileName.replace(/[^a-zA-Z0-9]/g, '') + Date.now(); 
+
+             const responsaveisHtml = bicData.responsaveis?.map((r, index) => `
+                <tr class="text-xs border-b border-slate-200 last:border-b-0 hover:bg-slate-50" data-bic-section="responsavel-${index}">
+                    <td class="px-2 py-1.5 align-top"><input type="checkbox" id="bic-${bicFileId}-resp-${index}" value="responsavel-${index}" class="bic-checkbox"></td>
+                    <td class="px-2 py-1.5"><label for="bic-${bicFileId}-resp-${index}" class="cursor-pointer">${r.anoInicio || '?'} - ${r.anoFim || 'Indef.'}</label></td>
+                    <td class="px-2 py-1.5">${r.principal === 'SIM' ? '<span class="font-bold text-green-700">SIM</span>' : 'NÃO'}</td>
+                    <td class="px-2 py-1.5">${r.tipo || '?'}</td>
+                    <td class="px-2 py-1.5 font-mono">${r.cpfCnpj || '-'}</td>
+                    <td class="px-2 py-1.5">${r.nome || '-'}</td>
+                    <td class="px-2 py-1.5 text-right">${r.participacao ? `${r.participacao}%` : '-'}</td>
+                </tr>
+            `).join('') || `<tr><td colspan="7" class="text-center text-sm text-gray-500 py-4">Nenhum responsável encontrado.</td></tr>`;
+            
+             const historicoHtml = bicData.historico?.map((h, index) => `
+                 <li class="timeline-item text-xs" data-bic-section="historico-${index}">
+                     <div class="timeline-dot"></div>
+                      <div class="flex items-start space-x-2">
+                        <input type="checkbox" id="bic-${bicFileId}-hist-${index}" value="historico-${index}" class="bic-checkbox mt-0.5">
+                        <label for="bic-${bicFileId}-hist-${index}" class="flex-grow cursor-pointer">
+                            <p class="text-slate-500 text-[10px] mb-0.5">${h.data || '?'} (${h.tipo || '?'}) ${h.status ? `[${h.status}]` : ''}</p>
+                            <p class="font-semibold text-slate-800 leading-tight">
+                                ${h.assunto || 'Evento'}
+                                ${h.processo ? `<span class="font-normal text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full ml-1">${h.processo}</span>` : ''}
+                            </p>
+                            <p class="text-slate-600 mt-0.5">${h.descricao || '-'}</p>
+                        </label>
+                      </div>
+                 </li>
+             `).join('') || '<li class="pl-6"><p class="text-sm text-gray-500">Nenhum histórico encontrado.</p></li>';
+
+            const construcaoHtml = bicData.dadosConstrucao?.map((c, index) => `
+                 <tr class="text-xs border-b border-slate-200 last:border-b-0 hover:bg-slate-50" data-bic-section="construcao-${index}">
+                    <td class="px-2 py-1.5 align-top"><input type="checkbox" id="bic-${bicFileId}-const-${index}" value="construcao-${index}" class="bic-checkbox"></td>
+                    <td class="px-2 py-1.5"><label for="bic-${bicFileId}-const-${index}" class="cursor-pointer">${c.anoInicio || '?'} - ${c.anoFim || 'Indef.'}</label></td>
+                    <td class="px-2 py-1.5 text-right font-mono">${c.areaConstruida || '-'} m²</td>
+                    <td class="px-2 py-1.5 text-right font-mono">${c.areaRegistrada || '-'} m²</td>
+                    <td class="px-2 py-1.5">${c.padraoConstrutivo || '-'}</td>
+                    <td class="px-2 py-1.5 text-center">${c.anoConstrucao || '-'}</td>
+                 </tr>
+            `).join('') || '<tr><td colspan="6" class="text-center text-sm text-gray-500 py-4">Nenhuma construção encontrada.</td></tr>';
+
+             const pgvHtml = bicData.plantaGenericaValores?.map((p, index) => `
+                  <tr class="text-xs border-b border-slate-200 last:border-b-0 hover:bg-slate-50" data-bic-section="pgv-${index}">
+                    <td class="px-2 py-1.5 align-top"><input type="checkbox" id="bic-${bicFileId}-pgv-${index}" value="pgv-${index}" class="bic-checkbox"></td>
+                    <td class="px-2 py-1.5"><label for="bic-${bicFileId}-pgv-${index}" class="cursor-pointer">${p.anoInicio || '?'} - ${p.anoFim || 'Indef.'}</label></td>
+                    <td class="px-2 py-1.5">${p.nomePgv || '?'}</td>
+                    <td class="px-2 py-1.5 text-center">${p.anoAplicacao || '?'}</td>
+                    <td class="px-2 py-1.5 text-right font-mono">R$ ${p.valorM2 || '-'}</td>
+                 </tr>
+             `).join('') || '<tr><td colspan="5" class="text-center text-sm text-gray-500 py-4">Nenhuma PGV encontrada.</td></tr>';
+
+
+            // Função auxiliar para formatar endereço
+            const formatAddress = (addr, type, fileId) => {
+                if (!addr) return `<div class="flex items-start space-x-2"><input type="checkbox" id="bic-${fileId}-addr-${type}" value="addr-${type}" class="bic-checkbox" disabled><label for="bic-${fileId}-addr-${type}" class="bic-value text-slate-500">Não informado</label></div>`;
+                let line1 = `${addr.tipoLogradouro || ''} ${addr.logradouro || ''}, ${addr.numero || 'S/N'}`;
+                if (type === 'principal' && !addr.numero && bicData.dadosTerreno?.numeroImovel) {
+                     line1 = `${addr.tipoLogradouro || ''} ${addr.logradouro || ''}, ${bicData.dadosTerreno.numeroImovel}`;
+                }
+                const line2 = `${addr.bairro || ''} - ${addr.cidade || (type === 'principal' ? 'Limeira' : '')} ${addr.estado ? `- ${addr.estado}` : ''} - CEP: ${addr.cep || ''}`;
+                const line3 = addr.complemento ? `Compl.: ${addr.complemento}` : '';
+                
+                return `
+                    <div class="flex items-start space-x-2" data-bic-section="addr-${type}">
+                         <input type="checkbox" id="bic-${fileId}-addr-${type}" value="addr-${type}" class="bic-checkbox mt-0.5">
+                         <label for="bic-${fileId}-addr-${type}" class="flex-grow cursor-pointer">
+                            <p class="bic-value">${line1}</p> 
+                            ${line3 ? `<p class="bic-value text-slate-600">${line3}</p>` : ''} 
+                            <p class="bic-value text-slate-600">${line2}</p>
+                         </label>
+                     </div>`;
+            };
+
+            return `
+            <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm bic-container" data-file-id="${bicFileId}"> 
+                <div class="flex items-center justify-between mb-3 pb-2 border-b">
+                     <div>
+                        <h6 class="font-bold text-lg text-slate-800">Boletim de Informação Cadastral (BIC)</h6>
+                        <p class="text-xs text-gray-500"><strong>Arquivo:</strong> <span data-field="fileName">${fileName}</span></p>
+                        <p class="text-xs text-gray-500">Exercício: <span class="font-semibold" data-field="exercicio">${bicData.valoresVenais?.exercicio || 'N/A'}</span></p>
+                     </div>
+                     <div class="flex items-center space-x-3 bg-slate-100 p-2 rounded-lg">
+                        <div class="flex items-center space-x-1.5">
+                           <input type="checkbox" id="select-all-bic-${bicFileId}" onchange="toggleSelectAllBic(this)" class="bic-checkbox">
+                           <label for="select-all-bic-${bicFileId}" class="text-xs font-semibold text-slate-700 cursor-pointer">Selecionar Todos</label>
+                        </div>
+                        <button onclick="copySelectedBicData(this)" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition text-xs inline-flex items-center space-x-1 disabled:bg-blue-300 bic-copy-button" disabled>
+                           <i class="fas fa-copy"></i><span>Copiar Seleção</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="space-y-3">
+                    <div class="bic-section">
+                         <div class="bic-section-header">
+                              <input type="checkbox" id="bic-${bicFileId}-status" value="status" class="bic-checkbox">
+                              <label for="bic-${bicFileId}-status" class="bic-checkbox-label">Status do Imóvel</label>
+                         </div>
+                         <div class="bic-section-content" data-bic-section="status">
+                             <div class="bic-grid-item flex items-center justify-between text-sm">
+                                 <div>
+                                     <span class="bic-label block">Status</span>
+                                     <span class="bic-value" data-field="statusImovel.status">${bicData.statusImovel?.status || '-'}</span>
+                                 </div>
+                                 <div class="text-right">
+                                      <span class="bic-label block">Período</span>
+                                      <span class="bic-value text-xs" data-field="statusImovel.periodo">${bicData.statusImovel?.anoInicio || '?'} - ${bicData.statusImovel?.anoFim || 'Indef.'}</span>
+                                 </div>
+                             </div>
+                         </div>
+                    </div>
+
+                    <div class="bic-section">
+                         <div class="bic-section-header">
+                            <input type="checkbox" id="bic-${bicFileId}-inscricoes" value="inscricoes" class="bic-checkbox">
+                            <label for="bic-${bicFileId}-inscricoes" class="bic-checkbox-label">Inscrição Cadastral</label>
+                        </div>
+                         <div class="bic-section-content grid grid-cols-1 sm:grid-cols-2 gap-2" data-bic-section="inscricoes">
+                             <div class="bic-grid-item">
+                                 <span class="bic-label block">Inscrição Cadastral</span>
+                                 <span class="bic-value bic-value-mono text-base" data-field="inscricaoCadastral">${bicData.inscricaoCadastral || '-'}</span>
+                             </div>
+                             <div class="bic-grid-item">
+                                  <span class="bic-label block">Inscrição Reduzida</span>
+                                  <span class="bic-value bic-value-mono text-base" data-field="inscricaoCadastralReduzida">${bicData.inscricaoCadastralReduzida || '-'}</span>
+                             </div>
+                        </div>
+                     </div>
+
+                    <div class="bic-section">
+                         <div class="bic-section-header">
+                            <input type="checkbox" id="bic-${bicFileId}-enderecos" value="enderecos" class="bic-checkbox">
+                            <label for="bic-${bicFileId}-enderecos" class="bic-checkbox-label">Endereços</label>
+                         </div>
+                         <div class="bic-section-content grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                             <div class="bic-grid-item space-y-0.5">
+                                 <p class="bic-label">Localização Principal</p>
+                                 ${formatAddress(bicData.enderecoPrincipal, 'principal', bicFileId)}
+                             </div>
+                             <div class="bic-grid-item space-y-0.5">
+                                 <p class="bic-label">Correspondência (Entrega)</p>
+                                  ${formatAddress(bicData.enderecoCorrespondencia, 'correspondencia', bicFileId)}
+                             </div>
+                        </div>
+                    </div>
+
+                     <div class="bic-section">
+                         <div class="bic-section-header">
+                             <input type="checkbox" id="bic-${bicFileId}-responsaveis" value="responsaveis" class="bic-checkbox">
+                             <label for="bic-${bicFileId}-responsaveis" class="bic-checkbox-label">Responsáveis</label>
+                         </div>
+                         <div class="bic-section-content overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="text-left text-[10px] uppercase text-slate-500">
+                                        <th class="px-2 py-1 font-medium w-6"></th> <th class="px-2 py-1 font-medium">Período</th>
+                                        <th class="px-2 py-1 font-medium">Principal</th>
+                                        <th class="px-2 py-1 font-medium">Tipo</th>
+                                        <th class="px-2 py-1 font-medium">CPF/CNPJ</th>
+                                        <th class="px-2 py-1 font-medium">Nome/Razão Social</th>
+                                        <th class="px-2 py-1 font-medium text-right">Participação</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${responsaveisHtml}
+                                </tbody>
+                            </table>
+                         </div>
+                     </div>
+
+                    <div class="bic-section">
+                          <div class="bic-section-header">
+                             <input type="checkbox" id="bic-${bicFileId}-terreno" value="terreno" class="bic-checkbox">
+                             <label for="bic-${bicFileId}-terreno" class="bic-checkbox-label">Dados do Terreno</label>
+                         </div>
+                         <div class="bic-section-content">
+                             <div class="bic-grid-item grid grid-cols-2 md:grid-cols-4 gap-x-3 gap-y-2 text-xs" data-bic-section="terreno">
+                                 <div><span class="bic-label">Área:</span> <span class="bic-value block">${bicData.dadosTerreno?.area || '-'} m²</span></div>
+                                 <div><span class="bic-label">Testada Principal:</span> <span class="bic-value block">${bicData.dadosTerreno?.testadaPrincipal || '-'} m</span></div>
+                                 <div><span class="bic-label">Testada Total:</span> <span class="bic-value block">${bicData.dadosTerreno?.testadaTotal || '-'} m</span></div>
+                                 <div><span class="bic-label">Quadra / Lote:</span> <span class="bic-value block">${bicData.dadosTerreno?.quadra || '-'}/${bicData.dadosTerreno?.lote || '-'}</span></div>
+                                 <div><span class="bic-label">Fração Ideal:</span> <span class="bic-value block">${bicData.fracaoIdeal?.fracao || '-'} (${bicData.fracaoIdeal?.anoInicio || '?'} - ${bicData.fracaoIdeal?.anoFim || 'Indef.'})</span></div>
+                                 <div><span class="bic-label">Fator Profund.:</span> <span class="bic-value block">${bicData.dadosTerreno?.fatorProfundidade || '-'}</span></div>
+                                  <div><span class="bic-label">Fator Testada:</span> <span class="bic-value block">${bicData.dadosTerreno?.fatorTestada || '-'}</span></div>
+                                 <div class="col-span-2 md:col-span-1"><span class="bic-label">Número Imóvel:</span> <span class="bic-value block">${bicData.dadosTerreno?.numeroImovel || '-'}</span></div>
+                                 <div class="col-span-2"><span class="bic-label">Loteamento:</span> <span class="bic-value block">${bicData.dadosTerreno?.loteamento || '-'}</span></div>
+                                 <div class="col-span-2"><span class="bic-label">Bairro:</span> <span class="bic-value block">${bicData.dadosTerreno?.bairro || '-'}</span></div>
+                                 ${bicData.dadosTerreno?.condominio ? `<div class="col-span-full"><span class="bic-label">Condomínio:</span> <span class="bic-value block">${bicData.dadosTerreno.condominio}</span></div>` : ''}
+                             </div>
+                             <div class="mt-2" data-section="pgv-section"> <h5 class="text-[11px] font-semibold text-slate-600 mb-1 pl-1 flex items-center space-x-2">
+                                      <input type="checkbox" id="bic-${bicFileId}-pgv" value="pgv" class="bic-checkbox">
+                                      <label for="bic-${bicFileId}-pgv" class="cursor-pointer">Planta Genérica de Valores (PGV)</label>
+                                  </h5>
+                                 <div class="overflow-x-auto bic-grid-item" data-bic-section="pgv">
+                                     <table class="w-full">
+                                         <thead>
+                                             <tr class="text-left text-[10px] uppercase text-slate-500">
+                                                  <th class="px-2 py-1 font-medium w-6"></th> <th class="px-2 py-1 font-medium">Período</th>
+                                                 <th class="px-2 py-1 font-medium">Nome PGV</th>
+                                                 <th class="px-2 py-1 font-medium text-center">Ano Aplic.</th>
+                                                 <th class="px-2 py-1 font-medium text-right">Valor M²</th>
+                                             </tr>
+                                         </thead>
+                                         <tbody>
+                                             ${pgvHtml}
+                                         </tbody>
+                                     </table>
+                                 </div>
+                             </div>
+                         </div>
+                    </div>
+
+                     <div class="bic-section">
+                         <div class="bic-section-header">
+                            <input type="checkbox" id="bic-${bicFileId}-construcao" value="construcao" class="bic-checkbox">
+                            <label for="bic-${bicFileId}-construcao" class="bic-checkbox-label">Construção do Imóvel</label>
+                        </div>
+                         <div class="bic-section-content overflow-x-auto">
+                              <table class="w-full">
+                                 <thead>
+                                     <tr class="text-left text-[10px] uppercase text-slate-500">
+                                          <th class="px-2 py-1 font-medium w-6"></th> <th class="px-2 py-1 font-medium">Período</th>
+                                         <th class="px-2 py-1 font-medium text-right">Área Constr.</th>
+                                         <th class="px-2 py-1 font-medium text-right">Área Reg.</th>
+                                         <th class="px-2 py-1 font-medium">Padrão</th>
+                                         <th class="px-2 py-1 font-medium text-center">Ano</th>
+                                     </tr>
+                                 </thead>
+                                 <tbody>
+                                     ${construcaoHtml}
+                                 </tbody>
+                             </table>
+                         </div>
+                     </div>
+
+                     <div class="bic-section">
+                         <div class="bic-section-header">
+                             <input type="checkbox" id="bic-${bicFileId}-valores" value="valores" class="bic-checkbox">
+                             <label for="bic-${bicFileId}-valores" class="bic-checkbox-label">Valor Venal e Comercial (<span data-field="valoresVenais.exercicio">${bicData.valoresVenais?.exercicio || 'N/A'}</span>)</label>
+                         </div>
+                        <div class="bic-section-content grid grid-cols-1 md:grid-cols-2 gap-2">
+                            <div class="bic-grid-item space-y-1" data-bic-section="valorVenal">
+                                <p class="text-xs text-green-800 font-semibold mb-1">Valor Venal</p>
+                                <div class="flex justify-between text-xs"><span class="text-green-700">Terreno:</span><span class="font-mono font-semibold">R$ ${bicData.valoresVenais?.venalTerreno || '-'}</span></div>
+                                <div class="flex justify-between text-xs"><span class="text-green-700">Predial:</span><span class="font-mono font-semibold">R$ ${bicData.valoresVenais?.venalPredial || '-'}</span></div>
+                                ${bicData.valoresVenais?.venalPredialEspecial && bicData.valoresVenais?.venalPredialEspecial !== '0,00' ? `<div class="flex justify-between text-xs"><span class="text-green-700">Predial Especial:</span><span class="font-mono font-semibold">R$ ${bicData.valoresVenais.venalPredialEspecial}</span></div>` : ''}
+                                <div class="flex justify-between border-t mt-1 pt-1"><span class="text-green-800 font-bold text-xs">Total:</span><span class="font-bold text-sm font-mono">R$ ${bicData.valoresVenais?.venalTotal || '-'}</span></div>
+                            </div>
+                            <div class="bic-grid-item space-y-1" data-bic-section="valorComercial">
+                                <p class="text-xs text-indigo-800 font-semibold mb-1">Valor Comercial</p>
+                                <div class="flex justify-between text-xs"><span class="text-indigo-700">Terreno:</span><span class="font-mono font-semibold">R$ ${bicData.valoresVenais?.comercialTerreno || '-'}</span></div>
+                                <div class="flex justify-between text-xs"><span class="text-indigo-700">Predial:</span><span class="font-mono font-semibold">R$ ${bicData.valoresVenais?.comercialPredial || '-'}</span></div>
+                                <div class="flex justify-between border-t mt-1 pt-1"><span class="text-indigo-800 font-bold text-xs">Total:</span><span class="font-bold text-sm font-mono">R$ ${bicData.valoresVenais?.comercialTotal || '-'}</span></div>
+                            </div>
+                        </div>
+                     </div>
+
+                    <div class="bic-section">
+                         <div class="bic-section-header">
+                            <input type="checkbox" id="bic-${bicFileId}-registro" value="registro" class="bic-checkbox">
+                            <label for="bic-${bicFileId}-registro" class="bic-checkbox-label">Informações de Registro</label>
+                         </div>
+                         <div class="bic-section-content text-xs space-y-1" data-bic-section="registro">
+                             <p><span class="bic-label">Cartório:</span> <span class="bic-value">${bicData.registro?.cartorio || '-'} (${bicData.registro?.tipoCartorio || '?'})</span></p>
+                             <p><span class="bic-label">Matrícula:</span> <span class="bic-value bic-value-mono">${bicData.registro?.matricula || '-'}</span> <span class="text-slate-500">(Data: ${bicData.registro?.dataMatricula || '-'})</span></p>
+                             <p><span class="bic-label">Registro:</span> <span class="text-slate-500">Data: ${bicData.registro?.dataRegistro || '-'}</span></p>
+                             <p><span class="bic-label">Averbação:</span> <span class="text-slate-500">Data: ${bicData.registro?.dataAverbacao || '-'}</span></p>
+                             ${bicData.registro?.observacao ? `<p class="mt-1 pt-1 border-t"><span class="bic-label">Obs:</span> <span class="bic-value">${bicData.registro.observacao}</span></p>`: ''}
+                         </div>
+                     </div>
+
+                    <div class="bic-section">
+                         <div class="bic-section-header">
+                            <input type="checkbox" id="bic-${bicFileId}-historico" value="historico" class="bic-checkbox">
+                            <label for="bic-${bicFileId}-historico" class="bic-checkbox-label">Histórico do Imóvel</label>
+                         </div>
+                         <div class="bic-section-content" data-bic-section="historico">
+                             <ul class="timeline max-h-60 overflow-y-auto pr-2">${historicoHtml}</ul>
+                         </div>
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+        
+        function renderDebtResults(debtData, fileName) {
+             // --- Conteúdo da função renderDebtResults (inalterado) ---
+             if (!debtData || debtData.length === 0) {
+                 return `<div class="bg-white p-4 rounded-lg border shadow-sm"><h6 class="font-bold text-lg text-slate-800">Extrato de Débitos</h6><p class="text-sm text-gray-500 mb-2"><strong>Arquivo:</strong> ${fileName}</p><div class="text-center p-4 mt-2 bg-yellow-50 border border-yellow-200 rounded-lg"><i class="fas fa-exclamation-triangle text-yellow-500 text-2xl mb-2"></i><p class="font-semibold text-yellow-800">Nenhuma dívida encontrada neste documento.</p></div></div>`;
+            }
+
+            const debtFileId = fileName.replace(/[^a-zA-Z0-9]/g, '') + Date.now(); // ID único para checkboxes deste extrato
+
+            const debtCardsHtml = debtData.map(debt => {
+                 const outrosDetalhesHtml = debt.outrosDetalhes?.map(detalhe => `
+                    <p>${detalhe.chave || 'Detalhe'}:</p><p class="text-right font-mono">${detalhe.valor || ''}</p>
+                `).join('') || '';
+
+                // Construir HTML do Identificador Corretamente
+                let idDisplayHtml = '';
+                const naturezaUpper = debt.natureza?.trim().toUpperCase() || '';
+                if (['IMOB', 'IMOE', 'IPTU'].includes(naturezaUpper)) {
+                    if (debt.icReduzido) idDisplayHtml += `<p><strong>I.C. Reduzido:</strong> <span data-field="icReduzido">${debt.icReduzido}</span></p>`;
+                    if (debt.ic) idDisplayHtml += `<p><strong>I.C.:</strong> <span data-field="ic">${debt.ic}</span></p>`;
+                } else if (debt.otherId) { // Prioriza otherId se não for Imobiliário
+                    let idLabel = ['ISS', 'ISSQN', 'MOBIL', 'TFA'].includes(naturezaUpper) ? 'Inscrição Mobiliária' : 'Identificador';
+                    idDisplayHtml += `<p><strong>${idLabel}:</strong> <span data-field="otherId">${debt.otherId}</span></p>`;
+                }
+
+                return `
+                <div class="debt-card bg-slate-50 p-4 rounded-lg border border-gray-200">
+                    <div class="flex items-start justify-between border-b pb-2 mb-3">
+                         <div>
+                             <h6 class="font-bold text-md text-slate-800">Ano: <span class="font-semibold" data-field="ano">${debt.ano || ''}</span> ${debt.parcela ? `<span class="text-slate-500 font-medium">| Parcela: <span class="font-semibold" data-field="parcela">${debt.parcela}</span></span>` : ''}</h6>
+                             ${debt.idLancamento ? `<p class="text-xs text-slate-500 mt-1">ID Lanç.: <span class="font-mono" data-field="idLancamento">${debt.idLancamento}</span></p>` : ''}
+                         </div>
+                         <input type="checkbox" class="debt-checkbox h-5 w-5"> </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                        <div class="col-span-1 sm:col-span-2 mb-2 pb-2 border-b">
+                            ${debt.nome || debt.cpfCnpj ? `<p><strong>Contribuinte:</strong> ${debt.nome ? `<span data-field="nome">${debt.nome}</span>` : ''} ${debt.cpfCnpj ? `(<span data-field="cpfCnpj">${debt.cpfCnpj}</span>)` : ''}</p>` : ''}
+                            ${idDisplayHtml}
+                            ${debt.natureza ? `<p><strong>Natureza:</strong> <span class="font-semibold" data-field="natureza">${debt.natureza}</span></p>` : ''}
+                            ${debt.origem ? `<p><strong>Origem:</strong> <span data-field="origem">${debt.origem}</span></p>` : ''}
+                        </div>
+                        ${debt.situacaoLancamento ? `<p><strong>Sit. Lançamento:</strong> <span class="font-semibold" data-field="situacaoLancamento">${debt.situacaoLancamento}</span></p>`: ''}
+                        ${debt.situacaoDivida ? `<p><strong>Sit. Dívida:</strong> <span class="font-semibold text-red-600" data-field="situacaoDivida">${debt.situacaoDivida}</span></p>`: ''}
+                        ${debt.numeroCDA ? `<p><strong>Número CDA:</strong> <span class="font-mono" data-field="numeroCDA">${debt.numeroCDA}</span></p>`: ''}
+                        ${debt.processoAdministrativo ? `<p><strong>Proc. Administrativo:</strong> <span class="font-mono" data-field="processoAdministrativo">${debt.processoAdministrativo}</span></p>`: ''}
+                        ${debt.processoJudicial ? `<p><strong>Proc. Judicial (Fórum):</strong> <span class="font-mono" data-field="processoJudicial">${debt.processoJudicial}</span></p>`: ''}
+                        ${debt.numeroNegociacao ? `<p><strong>N° Negociação:</strong> <span class="font-mono" data-field="numeroNegociacao">${debt.numeroNegociacao}</span></p>`: ''}
+                    </div>
+                    <details class="mt-3 pt-3 border-t">
+                        <summary class="cursor-pointer text-sm font-medium text-slate-600 hover:text-slate-800">Ver Detalhes dos Valores</summary>
+                        <div class="grid grid-cols-2 gap-x-4 gap-y-1 mt-2 pl-4 text-xs">
+                            <p>Principal:</p><p class="text-right font-mono" data-field="valorPrincipal">${debt.valorPrincipal || 'R$ 0,00'}</p>
+                            ${debt.valorCorrecao ? `<p>Correção:</p><p class="text-right font-mono" data-field="valorCorrecao">${debt.valorCorrecao}</p>`: ''}
+                            ${debt.valorJuros ? `<p>Juros:</p><p class="text-right font-mono" data-field="valorJuros">${debt.valorJuros}</p>`: ''}
+                            ${debt.valorMulta ? `<p>Multa:</p><p class="text-right font-mono" data-field="valorMulta">${debt.valorMulta}</p>`: ''}
+                            ${debt.valorHonorarios ? `<p>Honorários:</p><p class="text-right font-mono" data-field="valorHonorarios">${debt.valorHonorarios}</p>`: ''}
+                            ${outrosDetalhesHtml ? '<p class="col-span-2 border-t mt-2 pt-2 font-semibold text-slate-600">Detalhes Adicionais</p>' + outrosDetalhesHtml : ''}
+                        </div>
+                    </details>
+                    <div class="mt-3 pt-3 border-t text-right"><strong>Total:</strong> <span class="font-bold text-base text-green-700" data-field="valorTotal">${debt.valorTotal || 'R$ 0,00'}</span></div>
+                </div>
+            `}).join('');
+
+            // Container principal do Extrato
+            return `<div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm debt-container" data-file-id="${debtFileId}"> 
+                        <h6 class="font-bold text-lg text-slate-800">Extrato de Débitos</h6>
+                        <p class="text-sm text-gray-500 mb-3"><strong>Arquivo:</strong> ${fileName}</p>
+                        <div class="flex items-center justify-between mb-4 p-3 bg-slate-100 rounded-lg">
+                            <div class="flex items-center space-x-3">
+                                <input type="checkbox" id="select-all-debt-${debtFileId}" onchange="toggleSelectAllDebts(this)" class="debt-checkbox">
+                                <label for="select-all-debt-${debtFileId}" class="font-semibold text-slate-700 cursor-pointer text-sm">Selecionar Todos</label>
+                            </div>
+                            <button onclick="copySelectedDebts(this)" class="bg-slate-600 text-white px-3 py-1 rounded-lg hover:bg-slate-700 transition text-sm inline-flex items-center space-x-2 disabled:bg-slate-300 debt-copy-button" disabled>
+                                <i class="fas fa-copy"></i><span>Copiar Seleção</span>
+                            </button>
+                        </div>
+                        <div class="space-y-3">${debtCardsHtml}</div>
+                    </div>`;
+        }
+
+
+        function renderUnknownResult(fileName) {
+            return `<div class="bg-white p-4 rounded-lg border shadow-sm"><h6 class="font-bold text-lg text-slate-800">Documento Não Reconhecido</h6><p class="text-sm text-gray-500 mb-2"><strong>Arquivo:</strong> ${fileName}</p><div class="text-center p-4 mt-2 bg-red-50 border border-red-200 rounded-lg"><i class="fas fa-question-circle text-red-500 text-2xl mb-2"></i><p class="font-semibold text-red-800">A IA não conseguiu identificar o tipo deste documento.</p></div></div>`;
+        }
+
+        // --- Funções de Seleção e Cópia (Débitos) ---
+        function updateDebtCopyButtonState(container) {
+            const copyButton = container.querySelector('.debt-copy-button');
+            if (!copyButton) return;
+            const anyChecked = container.querySelector('.debt-checkbox:checked');
+            copyButton.disabled = !anyChecked;
+        }
+
+        function toggleSelectAllDebts(selectAllCheckbox) {
+            const parentContainer = selectAllCheckbox.closest('.debt-container');
+            parentContainer.querySelectorAll('.debt-card .debt-checkbox').forEach(checkbox => checkbox.checked = selectAllCheckbox.checked);
+            updateDebtCopyButtonState(parentContainer);
+        }
+        
+        function copySelectedDebts(button) {
+            const parentContainer = button.closest('.debt-container');
+            const fileName = parentContainer.querySelector('p > strong').nextSibling.textContent.trim();
+            const selectedCards = parentContainer.querySelectorAll('.debt-card .debt-checkbox:checked');
+            if (selectedCards.length === 0) return;
+            
+            let fullTextToCopy = `Resumo de Débitos Selecionados (${fileName})\n=================================\n\n`;
+            
+            selectedCards.forEach((checkbox, index) => {
+                const card = checkbox.closest('.debt-card');
+                const getText = (selector) => card.querySelector(`[data-field="${selector}"]`)?.textContent || null;
+                
+                let textLines = [];
+                textLines.push(`Débito #${index + 1} (Ano: ${getText('ano') || ''} | Parcela: ${getText('parcela') || ''})`);
+                if(getText('idLancamento')) textLines.push(`ID Lançamento: ${getText('idLancamento')}`); 
+                textLines.push(`-------------------------`);
+                if(getText('nome') || getText('cpfCnpj')) textLines.push(`Contribuinte: ${getText('nome') || ''} (${getText('cpfCnpj') || ''})`);
+                if(getText('natureza')) textLines.push(`Natureza: ${getText('natureza')}`);
+                if(getText('origem')) textLines.push(`Origem: ${getText('origem')}`);
+                
+                const naturezaUpper = getText('natureza')?.trim().toUpperCase() || '';
+                if (['IMOB', 'IMOE', 'IPTU'].includes(naturezaUpper)) {
+                    if (getText('icReduzido')) textLines.push(`I.C. Reduzido: ${getText('icReduzido')}`);
+                    if (getText('ic')) textLines.push(`I.C.: ${getText('ic')}`);
+                } else if (getText('otherId')) {
+                    let idLabel = ['ISS', 'ISSQN', 'MOBIL', 'TFA'].includes(naturezaUpper) ? 'Inscrição Mobiliária' : 'Identificador';
+                     textLines.push(`${idLabel}: ${getText('otherId')}`);
+                }
+
+                if(getText('situacaoLancamento')) textLines.push(`Situação Lançamento: ${getText('situacaoLancamento')}`);
+                if(getText('situacaoDivida')) textLines.push(`Situação Dívida: ${getText('situacaoDivida')}`);
+                if(getText('numeroCDA')) textLines.push(`Número CDA: ${getText('numeroCDA')}`);
+                if(getText('processoAdministrativo')) textLines.push(`Processo Administrativo: ${getText('processoAdministrativo')}`);
+                if(getText('processoJudicial')) textLines.push(`Processo Judicial (Fórum): ${getText('processoJudicial')}`);
+                if(getText('numeroNegociacao')) textLines.push(`N° Negociação: ${getText('numeroNegociacao')}`);
+                textLines.push(`\n--- Valores ---`);
+                textLines.push(`Principal:    ${getText('valorPrincipal') || 'R$ 0,00'}`);
+                if(getText('valorCorrecao')) textLines.push(`Correção:     ${getText('valorCorrecao')}`);
+                if(getText('valorJuros')) textLines.push(`Juros:        ${getText('valorJuros')}`);
+                if(getText('valorMulta')) textLines.push(`Multa:        ${getText('valorMulta')}`);
+                if(getText('valorHonorarios')) textLines.push(`Honorários:   ${getText('valorHonorarios')}`);
+                textLines.push(`-----------------`);
+                textLines.push(`Valor Total:  ${getText('valorTotal') || 'R$ 0,00'}`);
+                
+                fullTextToCopy += textLines.join('\n') + '\n\n';
+            });
+
+            copyToClipboard(fullTextToCopy.trim(), button, "Copiado!");
+        }
+
+       // --- Funções de Seleção e Cópia (BIC) ---
+        function updateBicCopyButtonState(container) {
+            const copyButton = container.querySelector('.bic-copy-button');
+            if (!copyButton) return;
+             // Verifica se QUALQUER checkbox dentro do container do BIC está marcado
+            const anyChecked = container.querySelector('.bic-checkbox:checked');
+            copyButton.disabled = !anyChecked;
+        }
+
+        function toggleSelectAllBic(selectAllCheckbox) {
+            const parentContainer = selectAllCheckbox.closest('.bic-container');
+            // Seleciona todos os checkboxes de seção/item dentro do container BIC
+            parentContainer.querySelectorAll('.bic-checkbox').forEach(checkbox => checkbox.checked = selectAllCheckbox.checked);
+            updateBicCopyButtonState(parentContainer);
+        }
+
+        function copySelectedBicData(button) {
+            const bicContainer = button.closest('.bic-container');
+            if (!bicContainer) return;
+            const fileName = bicContainer.querySelector('[data-field="fileName"]')?.textContent || 'BIC';
+            const exercicio = bicContainer.querySelector('[data-field="exercicio"]')?.textContent || 'N/A';
+            const checkedCheckboxes = bicContainer.querySelectorAll('.bic-checkbox:checked:not([id^="select-all"])'); // Ignora o "Selecionar Todos"
+
+            if (checkedCheckboxes.length === 0) return;
+
+            let textToCopy = `**Seleção do Boletim de Informação Cadastral (BIC)**\n`;
+            textToCopy += `Arquivo: ${fileName}\n`;
+            textToCopy += `Exercício: ${exercicio}\n`;
+            textToCopy += `=================================\n\n`;
+
+            // Mapeia títulos das seções para facilitar a formatação
+            const sectionTitles = {
+                'status': 'Status do Imóvel',
+                'inscricoes': 'Inscrição Cadastral',
+                'enderecos': 'Endereços',
+                'addr-principal': 'Endereço Principal',
+                'addr-correspondencia': 'Endereço de Correspondência',
+                'responsaveis': 'Responsáveis',
+                'terreno': 'Dados do Terreno',
+                'pgv-section': 'Planta Genérica de Valores (PGV)', // Usando o data-section do H5
+                'construcao': 'Construção do Imóvel',
+                'valores': `Valores (Exercício ${exercicio})`,
+                'valorVenal': 'Valor Venal',
+                'valorComercial': 'Valor Comercial',
+                'registro': 'Informações de Registro',
+                'historico': 'Histórico do Imóvel'
+                // IDs de itens específicos (responsavel-*, pgv-*, construcao-*, historico-*) serão tratados separadamente
+            };
+
+            let currentSectionTitle = "";
+
+            checkedCheckboxes.forEach(checkbox => {
+                 const sectionId = checkbox.value; // ex: 'status', 'responsavel-0', 'pgv-1'
+                 const sectionElement = bicContainer.querySelector(`[data-bic-section="${sectionId}"]`);
+                 
+                 if (sectionElement) {
+                     let sectionTitle = "";
+                     // Tenta obter título da seção principal
+                     if (sectionTitles[sectionId]) {
+                         sectionTitle = sectionTitles[sectionId];
+                     } else {
+                         // Trata itens individuais (responsáveis, construção, pgv, histórico)
+                         const sectionType = sectionId.split('-')[0]; // ex: 'responsavel', 'pgv'
+                         const parentSectionTitle = sectionTitles[sectionType + (sectionType === 'pgv' ? '-section' : 's')] || sectionTitles[sectionType]; // Tenta 'responsaveis', 'pgv-section'
+                         
+                         if(parentSectionTitle && parentSectionTitle !== currentSectionTitle) {
+                             textToCopy += `**${parentSectionTitle}**\n`;
+                             currentSectionTitle = parentSectionTitle;
+                         } else if (!parentSectionTitle) {
+                              textToCopy += `**Item Selecionado (${sectionId})**\n`; // Fallback
+                              currentSectionTitle = `Item Selecionado (${sectionId})`;
+                         }
+                         sectionTitle = null; // Indica que é um item, não precisa do título principal de novo
+                     }
+
+                     if (sectionTitle && sectionTitle !== currentSectionTitle) {
+                          textToCopy += `**${sectionTitle}**\n`;
+                          currentSectionTitle = sectionTitle;
+                     }
+                     
+                     // Extrai texto de forma inteligente
+                     let contentText = sectionElement.innerText.trim();
+                     // Remove texto de labels/cabeçalhos internos se for seção composta
+                     if (['responsaveis', 'pgv', 'construcao'].some(prefix => sectionId.startsWith(prefix))) {
+                         // Para tabelas, extrai linha por linha ou formato específico
+                         const tableRow = sectionElement.closest('tr');
+                         if (tableRow) {
+                             contentText = Array.from(tableRow.cells).map(cell => cell.innerText.trim()).join('\t| '); // Copia como linha de tabela simples
+                         } else if (sectionId.startsWith('historico')) {
+                             // Para histórico, pega o texto formatado
+                             contentText = sectionElement.querySelector('label')?.innerText.trim() || contentText;
+                         } else {
+                              // Remove títulos internos redundantes
+                             contentText = contentText.replace(/^(Status|Inscrição Cadastral|Inscrição Reduzida|Localização Principal|Correspondência \(Entrega\)|Valor Venal|Valor Comercial|Informações de Registro|Histórico do Imóvel)\s*\n/i, '');
+                         }
+                     } else if (sectionId.startsWith('addr-')) {
+                         contentText = sectionElement.querySelector('label')?.innerText.trim() || contentText; // Pega só o texto do label
+                     }
+                      else {
+                            // Remove títulos internos redundantes para seções simples
+                            contentText = contentText.replace(/^(Status|Inscrição Cadastral|Inscrição Reduzida|Localização Principal|Correspondência \(Entrega\)|Valor Venal|Valor Comercial|Informações de Registro|Histórico do Imóvel)\s*\n/i, '');
+                      }
+                      
+                     textToCopy += contentText + '\n\n';
+                 }
+            });
+
+            copyToClipboard(textToCopy.trim(), button, "Copiado!");
+        }
+
+
+        // Função auxiliar para copiar para clipboard e dar feedback
+        function copyToClipboard(text, button, feedbackText = "Copiado!") {
+             const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'absolute';
+            textarea.style.left = '-9999px';
+            document.body.appendChild(textarea);
+            textarea.select();
+            
+            try {
+                document.execCommand('copy');
+                const originalHTML = button.innerHTML;
+                 // Guarda o ícone original se precisar restaurar
+                 const originalIcon = button.querySelector('i')?.outerHTML || '<i class="fas fa-copy"></i>';
+                button.innerHTML = `<i class="fas fa-check"></i> <span>${feedbackText}</span>`;
+                button.disabled = true;
+                setTimeout(() => {
+                    button.innerHTML = originalHTML; // Restaura o HTML original
+                    button.disabled = false; 
+                }, 2000);
+            } catch (err) {
+                 showAlert('Erro', 'Não foi possível copiar os dados para la área de transferência.');
+            } finally {
+                document.body.removeChild(textarea);
+            }
+        }
+
+
+        // Lógica da Análise dos PDFs
+        analyzeButton.addEventListener('click', async () => {
+            if (uploadedFiles.length === 0) {
+                showAlert('Atenção', 'Você precisa anexar um ou mais documentos para iniciar a extração.');
+                return;
+            }
+
+            analysisResults.classList.remove('hidden');
+            resultsContent.innerHTML = '';
+            resultsContent.classList.add('hidden');
+            loader.classList.remove('hidden');
+
+            const analysisPromises = uploadedFiles.map(file => {
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = async (event) => {
+                        try {
+                            const typedarray = new Uint8Array(event.target.result);
+                            const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                            let fullText = '';
+                            for (let i = 1; i <= pdf.numPages; i++) {
+                                const page = await pdf.getPage(i);
+                                const textContent = await page.getTextContent();
+                                // Concatena o texto de forma mais inteligente para preservar algum espaçamento
+                                fullText += textContent.items.map(item => item.str).join(' ');
+                            }
+                            
+                            const analyzedData = await analyzeDocumentWithGemini(fullText);
+                            let resultHtml = '';
+
+                            switch(analyzedData.documentType) {
+                                case 'BIC':
+                                    resultHtml = renderBicResult(analyzedData.bicData, file.name); 
+                                    break;
+                                case 'EXTRATO_DEBITOS':
+                                    resultHtml = renderDebtResults(analyzedData.debtData, file.name);
+                                    break;
+                                default:
+                                    resultHtml = renderUnknownResult(file.name);
+                            }
+                            
+                            resolve(resultHtml);
+                        } catch (pdfError) {
+                            console.error("Error processing PDF " + file.name, pdfError);
+                            resolve(renderUnknownResult(file.name));
+                        }
+                    };
+                    reader.onerror = () => {
+                        console.error("Could not read file " + file.name);
+                        resolve(renderUnknownResult(file.name));
+                    };
+                    reader.readAsArrayBuffer(file);
+                });
+            });
+            
+            try {
+                const results = await Promise.all(analysisPromises);
+                resultsContent.innerHTML = results.join('<hr class="my-8 border-slate-200">');
+                
+                // Adiciona listeners para checkboxes de débitos e BIC APÓS renderizar
+                document.querySelectorAll('.debt-checkbox').forEach(checkbox => {
+                    checkbox.addEventListener('change', (e) => updateDebtCopyButtonState(e.target.closest('.debt-container')));
+                });
+                 document.querySelectorAll('.bic-checkbox').forEach(checkbox => {
+                    checkbox.addEventListener('change', (e) => {
+                         // Se for o 'select-all', chama a função específica
+                        if (e.target.id.startsWith('select-all-bic')) {
+                             // Não precisa chamar update state aqui, pois toggleSelectAllBic já faz isso
+                        } else {
+                            // Para checkboxes individuais, atualiza o estado do botão
+                            updateBicCopyButtonState(e.target.closest('.bic-container'));
+                        }
+                    });
+                });
+
+
+            } catch(e) {
+                showAlert('Erro Inesperado', 'Ocorreu um erro geral durante a análise. Verifique o console.');
+                console.error("General analysis error:", e);
+            } finally {
+                loader.classList.add('hidden');
+                resultsContent.classList.remove('hidden');
+            }
+        });
+
+        window.addEventListener('click', (event) => {
+            if (event.target == iaAssistantModal) closeIaModal();
+        });
+    </script>
+</body>
+</html>

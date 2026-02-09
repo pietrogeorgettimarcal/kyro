@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Kyro - Gestão Pessoal</title>
+    <link rel="shortcut icon" href="https://placehold.co/32x32/003366/FFFFFF?text=K" type="image/x-icon">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --cor-principal01: #1a237e;
+            --cor-destaque01: #ffca28;
+            --cor-fundo01: #f4f7fa;
+            --cor-texto01: #333333;
+        }
+
+        body { font-family: 'Inter', sans-serif; background-color: var(--cor-fundo01); color: var(--cor-texto01); }
+        
+        .tab-content { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Navegação */
+        .tab-nav {
+            display: flex;
+            justify-content: center;
+            background-color: var(--cor-principal01);
+            padding: 0;
+            flex-wrap: wrap;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .tab-link {
+            padding: 16px 24px;
+            cursor: pointer;
+            border: none;
+            background-color: transparent;
+            color: #b0bec5;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.3s;
+            border-bottom: 4px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab-link:hover { background-color: rgba(255, 255, 255, 0.05); color: #ffffff; }
+        .tab-link.active { background-color: rgba(0, 0, 0, 0.2); color: #ffffff; border-bottom: 4px solid var(--cor-destaque01); }
+        
+        /* Controles */
+        .input-padrao {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            transition: ring 0.2s, border 0.2s;
+            outline: none;
+        }
+        .input-padrao:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        .input-padrao:disabled {
+            background-color: #e2e8f0;
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
+        
+        /* Tabela */
+        .table-container {
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        th { background-color: #f8fafc; font-weight: 600; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; color: #64748b; }
+        
+        /* Badges */
+        .badge { padding: 4px 8px; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+        .badge-ponto { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .badge-escala { background-color: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- CABEÇALHO -->
+    <header class="bg-white shadow-sm w-full h-20 flex-shrink-0 z-40 relative">
+        <div class="container mx-auto px-4 md:px-6 h-full flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <a href="../kyro/kyro.html" class="flex items-center justify-center w-10 h-10 rounded-full text-gray-400 hover:text-blue-900 hover:bg-blue-50 transition-all duration-200" title="Voltar para Kyro">
+                    <i class="fas fa-arrow-left text-xl"></i>
+                </a>
+                <div class="bg-blue-900 text-white w-10 h-10 rounded-lg flex items-center justify-center font-bold text-xl shadow-lg">
+                    <i class="fas fa-landmark"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-gray-800 leading-tight">Prefeitura de Limeira</h1>
+                    <p class="text-xs text-gray-500 font-medium tracking-wide">CENTRO DE GESTÃO DE PESSOAL</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-6">
+                <div class="hidden md:flex items-center space-x-2 bg-green-50 px-3 py-1.5 rounded-full border border-green-200">
+                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span id="status-db" class="text-xs font-bold text-green-700">Sincronizado (v7)</span>
+                </div>
+            </div>
+        </div>
+    </header>
+        
+    <!-- NAVEGAÇÃO -->
+    <nav class="tab-nav">
+        <button onclick="switchTab('funcionarios-ponto')" class="tab-link active" id="tab-btn-funcionarios-ponto">
+            <i class="fas fa-clock"></i> <span>Equipe Ponto</span>
+        </button>
+        <button onclick="switchTab('funcionarios-escala')" class="tab-link" id="tab-btn-funcionarios-escala">
+            <i class="fas fa-calendar-alt"></i> <span>Equipe Escala</span>
+        </button>
+        <button onclick="switchTab('ferias')" class="tab-link" id="tab-btn-ferias">
+            <i class="fas fa-umbrella-beach"></i> <span>Férias</span>
+        </button>
+        <button onclick="switchTab('feriados')" class="tab-link" id="tab-btn-feriados">
+            <i class="fas fa-calendar-day"></i> <span>Feriados</span>
+        </button>
+        <button onclick="switchTab('integracao')" class="tab-link" id="tab-btn-integracao" style="color: #ffca28;">
+            <i class="fas fa-external-link-alt"></i> <span>Sistemas</span>
+        </button>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8 flex-grow max-w-6xl">
+
+        <!-- ABA FUNCIONÁRIOS PONTO -->
+        <div id="funcionarios-ponto" class="tab-content active">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-6">
+                <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2 mb-4">
+                    <span class="bg-green-100 p-2 rounded-lg text-green-700"><i class="fas fa-user-clock"></i></span>
+                    Funcionários do Ponto
+                </h2>
+                
+                <form id="form-funcionario-ponto" class="grid grid-cols-1 md:grid-cols-12 gap-4 mb-8 bg-gray-50 p-5 rounded-lg border border-gray-200 relative">
+                    <input type="hidden" id="ponto-id-hidden">
+                    <div class="md:col-span-5">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nome Completo</label>
+                        <input type="text" id="ponto-nome" class="input-padrao" required placeholder="Ex: João da Silva">
+                    </div>
+                    <div class="md:col-span-3">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Vínculo</label>
+                        <select id="ponto-vinculo" class="input-padrao bg-white">
+                            <option value="Funcionário">Funcionário</option>
+                            <option value="Estagiário">Estagiário</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Matrícula</label>
+                        <input type="text" id="ponto-matricula" class="input-padrao">
+                    </div>
+                    <div class="md:col-span-2 flex items-end">
+                        <button type="submit" id="btn-salvar-ponto" class="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-2.5 px-4 rounded shadow-sm transition"><i class="fas fa-save"></i> Salvar</button>
+                    </div>
+                    <button type="button" onclick="limparFormPonto()" class="absolute top-2 right-2 text-xs text-gray-400 hover:text-gray-600 underline">Limpar</button>
+                </form>
+
+                <div class="table-container">
+                    <table class="w-full text-left border-collapse">
+                        <thead><tr><th class="p-4 border-b">Nome</th><th class="p-4 border-b">Vínculo</th><th class="p-4 border-b">Matrícula</th><th class="p-4 border-b text-right">Ações</th></tr></thead>
+                        <tbody id="lista-funcionarios-ponto" class="bg-white"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABA FUNCIONÁRIOS ESCALA -->
+        <div id="funcionarios-escala" class="tab-content">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-6">
+                <div class="mb-6 pb-4 border-b border-gray-100">
+                    <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                        <span class="bg-blue-100 p-2 rounded-lg text-blue-700"><i class="fas fa-users-cog"></i></span>
+                        Funcionários da Escala
+                    </h2>
+                    <p class="text-sm text-gray-500 mt-1">Selecione um funcionário já cadastrado no Ponto para adicionar à Escala.</p>
+                </div>
+                
+                <form id="form-funcionario-escala" class="grid grid-cols-1 md:grid-cols-12 gap-4 mb-8 bg-gray-50 p-5 rounded-lg border border-gray-200 relative">
+                    <input type="hidden" id="escala-id-hidden">
+                    
+                    <div class="md:col-span-4">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Funcionário (do Ponto)</label>
+                        <select id="escala-funcionario-select" class="input-padrao bg-white" required>
+                            <option value="">Selecione...</option>
+                        </select>
+                    </div>
+
+                    <div class="md:col-span-3">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nome na Escala (Apelido)</label>
+                        <input type="text" id="escala-apelido" class="input-padrao" placeholder="Ex: Joãozinho">
+                        <p class="text-xs text-gray-400 mt-1">Este é o nome que aparecerá no gerador de escala.</p>
+                    </div>
+
+                    <div class="md:col-span-3">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Cargo</label>
+                        <select id="escala-cargo" class="input-padrao bg-white">
+                            <option value="">Selecione se aplicável...</option>
+                            <option value="Agente Fiscal">Agente Fiscal</option>
+                            <option value="Assistente Administrativo">Assistente Administrativo</option>
+                        </select>
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Categoria</label>
+                        <select id="escala-categoria" class="input-padrao bg-white" onchange="toggleCargo(this)">
+                            <option value="Funcionário">Geral</option>
+                            <option value="Funcionário da Senha">Senha</option>
+                        </select>
+                    </div>
+                    
+                    <!-- NOVOS CAMPOS DE HORÁRIO -->
+                    <div class="md:col-span-12 grid grid-cols-2 md:grid-cols-4 gap-4 border-t border-gray-200 pt-4 mt-2">
+                         <div>
+                            <label class="block text-xs font-bold text-blue-800 uppercase mb-1">Saída 1 (Almoço)</label>
+                            <input type="time" id="escala-saida1" class="input-padrao">
+                         </div>
+                         <div>
+                            <label class="block text-xs font-bold text-blue-800 uppercase mb-1">Entrada 2 (Retorno)</label>
+                            <input type="time" id="escala-entrada2" class="input-padrao">
+                         </div>
+                         <div class="col-span-2 flex items-end">
+                            <button type="submit" id="btn-salvar-escala" class="w-full bg-blue-800 hover:bg-blue-900 text-white font-bold py-2.5 px-4 rounded shadow-sm transition"><i class="fas fa-save"></i> Salvar na Escala</button>
+                         </div>
+                    </div>
+                    
+                    <button type="button" onclick="limparFormEscala()" class="absolute top-2 right-2 text-xs text-gray-400 hover:text-gray-600 underline">Limpar</button>
+                </form>
+
+                <div class="table-container">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr>
+                                <th class="p-4 border-b">Nome na Escala</th>
+                                <th class="p-4 border-b">Cargo / Categoria</th>
+                                <th class="p-4 border-b">Horários (Ref.)</th>
+                                <th class="p-4 border-b text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-funcionarios-escala" class="bg-white"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABA FÉRIAS -->
+        <div id="ferias" class="tab-content">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2 mb-4">
+                    <span class="bg-orange-100 p-2 rounded-lg text-orange-700"><i class="fas fa-plane-departure"></i></span>
+                    Agendamento de Férias
+                </h2>
+                
+                <form id="form-ferias" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 bg-gray-50 p-5 rounded-lg border border-gray-200">
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Funcionário</label>
+                        <select id="ferias-func-select" class="input-padrao bg-white" required></select>
+                        <p class="text-xs text-gray-400 mt-1">*Lista única de funcionários (Ponto + Escala)</p>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Início</label>
+                        <input type="date" id="ferias-inicio" class="input-padrao" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Duração (Dias)</label>
+                        <div class="flex gap-2">
+                            <input type="number" id="ferias-dias" min="1" value="30" class="input-padrao" required>
+                            <button type="submit" class="bg-orange-500 hover:bg-orange-600 text-white font-bold px-4 rounded shadow-sm transition"><i class="fas fa-plus"></i></button>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="table-container">
+                    <table class="w-full text-left border-collapse">
+                        <thead><tr><th class="p-4 border-b">Funcionário</th><th class="p-4 border-b">Início</th><th class="p-4 border-b">Fim</th><th class="p-4 border-b text-right">Ações</th></tr></thead>
+                        <tbody id="lista-ferias" class="bg-white"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABA FERIADOS -->
+        <div id="feriados" class="tab-content">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                    <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                        <span class="bg-red-100 p-2 rounded-lg text-red-700"><i class="fas fa-calendar-check"></i></span>
+                        Feriados (Banco de Dados Central)
+                    </h2>
+                    <div class="flex items-center gap-3">
+                         <div class="bg-yellow-50 text-yellow-800 text-xs px-3 py-1 rounded border border-yellow-200">
+                            <i class="fas fa-infinity mr-1"></i> Gerador Ilimitado (Basta alterar o ano)
+                         </div>
+                         <div class="flex items-center bg-gray-50 rounded p-1 border border-gray-200">
+                            <label class="text-xs font-bold text-gray-500 uppercase px-2">Ano:</label>
+                            <input type="number" id="filtro-ano-feriado" class="bg-transparent border-none w-20 text-center font-bold outline-none" onchange="renderFeriados()" placeholder="Ex: 2050">
+                         </div>
+                    </div>
+                </div>
+                
+                <form id="form-feriados" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 bg-gray-50 p-5 rounded-lg border border-gray-200">
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nome do Feriado</label>
+                        <input type="text" id="feriado-nome" class="input-padrao" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Data</label>
+                        <input type="date" id="feriado-data" class="input-padrao" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Tipo</label>
+                        <div class="flex gap-2">
+                            <select id="feriado-tipo" class="input-padrao bg-white w-full">
+                                <option value="Nacional">Nacional</option>
+                                <option value="Municipal">Municipal</option>
+                                <option value="Estadual">Estadual</option>
+                                <option value="Ponto Facultativo">Ponto Facultativo</option>
+                            </select>
+                            <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 rounded shadow-sm transition"><i class="fas fa-plus"></i></button>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="table-container">
+                    <table class="w-full text-left border-collapse">
+                        <thead><tr><th class="p-4 border-b">Data</th><th class="p-4 border-b">Nome</th><th class="p-4 border-b">Tipo</th><th class="p-4 border-b text-right">Ações</th></tr></thead>
+                        <tbody id="lista-feriados" class="bg-white"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABA INTEGRAÇÃO -->
+        <div id="integracao" class="tab-content">
+            <div class="bg-white p-10 rounded-xl shadow-sm border border-gray-200 text-center">
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">Sistemas Integrados</h2>
+                <p class="text-gray-600 mb-10">Este é o Painel Central. Dados inseridos aqui são refletidos nos sistemas abaixo.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                    
+                    <!-- LINK PARA ESCALA -->
+                    <a href="../escala/escala.html" target="_blank" class="group block bg-white border border-gray-200 p-8 rounded-2xl hover:shadow-xl hover:border-blue-300 transition duration-300 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-2 h-full bg-blue-500"></div>
+                        <div class="text-4xl mb-4 text-blue-600 group-hover:scale-110 transition-transform"><i class="fas fa-table"></i></div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Sistema de Escala</h3>
+                        <p class="text-gray-500 mb-4 text-sm">Gera escala automaticamente baseada nos dados deste painel.</p>
+                        <span class="text-blue-600 font-bold text-sm uppercase tracking-wider group-hover:underline">Acessar Sistema &rarr;</span>
+                    </a>
+
+                    <!-- LINK PARA PONTO (RESTAURADO) -->
+                    <a href="../ponto/ponto.html" target="_blank" class="group block bg-white border border-gray-200 p-8 rounded-2xl hover:shadow-xl hover:border-green-300 transition duration-300 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-2 h-full bg-green-500"></div>
+                        <div class="text-4xl mb-4 text-green-600 group-hover:scale-110 transition-transform"><i class="fas fa-clipboard-list"></i></div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Controle de Ponto</h3>
+                        <p class="text-gray-500 mb-4 text-sm">Folhas de frequência e relatórios mensais.</p>
+                        <span class="text-green-600 font-bold text-sm uppercase tracking-wider group-hover:underline">Acessar Sistema &rarr;</span>
+                    </a>
+
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // ATENÇÃO: BANCO V6 (Fonte da Verdade)
+        const DB_KEY = 'limeira_dados_integrados_v6';
+        
+        let data = {
+            funcionarios: [
+                // Equipe Ponto
+                { id: 'p1', nome: 'Alessandra Ogawa da Cruz', tipo: 'ponto', vinculo: 'Funcionário', matricula: '8311742' },
+                { id: 'p2', nome: 'Bruno Augusto Bonin', tipo: 'ponto', vinculo: 'Funcionário', matricula: '6892381' },
+                { id: 'p3', nome: 'Clayton Epifânio', tipo: 'ponto', vinculo: 'Funcionário', matricula: '8846801' },
+                { id: 'p4', nome: 'David Tank', tipo: 'ponto', vinculo: 'Funcionário', matricula: '6562321' },
+                { id: 'p5', nome: 'Flavia Marcia Schmidt', tipo: 'ponto', vinculo: 'Funcionário', matricula: '8531941' },
+                { id: 'p6', nome: 'Joanan de Oliveira Batista', tipo: 'ponto', vinculo: 'Funcionário', matricula: '8362651' },
+                { id: 'p7', nome: 'José Dimas Ayres', tipo: 'ponto', vinculo: 'Funcionário', matricula: '8843571' },
+                { id: 'p8', nome: 'Julio Antonio Borgo', tipo: 'ponto', vinculo: 'Funcionário', matricula: '6563561' },
+                { id: 'p9', nome: 'Kathleen Diana Torres', tipo: 'ponto', vinculo: 'Funcionário', matricula: '8851001' },
+                { id: 'p10', nome: 'Luis Henrique Bilatto', tipo: 'ponto', vinculo: 'Funcionário', matricula: '8015261' },
+                { id: 'p11', nome: 'Luzia Aparecida de Oliveira Martins', tipo: 'ponto', vinculo: 'Funcionário', matricula: '8065011' },
+                { id: 'p12', nome: 'Marcos Antonio Faria', tipo: 'ponto', vinculo: 'Funcionário', matricula: '8850221' },
+                { id: 'p13', nome: 'Matheus Fernando Riguetto Soares', tipo: 'ponto', vinculo: 'Funcionário', matricula: '8416172' },
+                { id: 'p14', nome: 'Monica Lourdes Silva Claudino', tipo: 'ponto', vinculo: 'Funcionário', matricula: '6884101' },
+                { id: 'p15', nome: 'Rafael Fabricio Menezes Salvador', tipo: 'ponto', vinculo: 'Funcionário', matricula: '#' },
+                { id: 'p16', nome: 'Rosangela Saccon Cardoso Franceschi', tipo: 'ponto', vinculo: 'Funcionário', matricula: '8392992' },
+                { id: 'p17', nome: 'Ruth Felicia Valles', tipo: 'ponto', vinculo: 'Funcionário', matricula: '7230451' },
+                { id: 'p18', nome: 'Pietro Georgetti Marçal', tipo: 'ponto', vinculo: 'Estagiário', matricula: '' },
+
+                // Equipe Escala
+                { id: 'e1', nome: 'Bruno Augusto Bonin', tipo: 'escala', apelido: 'BONIN', cargo: 'Assistente Administrativo', categoria: 'Funcionário', saida1: '12:00', entrada2: '13:00' },
+                { id: 'e2', nome: 'Clayton Epifânio', tipo: 'escala', apelido: 'CLAYTON', cargo: 'Assistente Administrativo', categoria: 'Funcionário', saida1: '11:00', entrada2: '12:00' },
+                { id: 'e3', nome: 'Flavia Marcia Schmidt', tipo: 'escala', apelido: 'FLAVIA', cargo: 'Agente Fiscal', categoria: 'Funcionário', saida1: '12:00', entrada2: '13:00' },
+                { id: 'e4', nome: 'Joanan de Oliveira Batista', tipo: 'escala', apelido: 'JOANAN', cargo: 'Assistente Administrativo', categoria: 'Funcionário', saida1: '13:00', entrada2: '14:00' },
+                { id: 'e5', nome: 'José Dimas Ayres', tipo: 'escala', apelido: 'DIMAS', cargo: 'Assistente Administrativo', categoria: 'Funcionário', saida1: '13:00', entrada2: '14:00' },
+                { id: 'e6', nome: 'Julio Antonio Borgo', tipo: 'escala', apelido: 'JULIO', cargo: 'Agente Fiscal', categoria: 'Funcionário', saida1: '12:00', entrada2: '14:00' },
+                { id: 'e7', nome: 'Kathleen Diana Torres', tipo: 'escala', apelido: 'KATTY', cargo: 'Assistente Administrativo', categoria: 'Funcionário', saida1: '13:00', entrada2: '14:00' },
+                { id: 'e8', nome: 'Luis Henrique Bilatto', tipo: 'escala', apelido: 'LUIS', cargo: 'Agente Fiscal', categoria: 'Funcionário', saida1: '12:00', entrada2: '13:30' },
+                { id: 'e9', nome: 'Monica Lourdes Silva Claudino', tipo: 'escala', apelido: 'MONICA', cargo: 'Assistente Administrativo', categoria: 'Funcionário', saida1: '11:30', entrada2: '13:30' },
+                { id: 'e10', nome: 'Pietro Georgetti Marçal', tipo: 'escala', apelido: 'PIETRO', cargo: '', categoria: 'Funcionário da Senha', saida1: '11:00', entrada2: '12:00' },
+                { id: 'e11', nome: 'Rafael Fabricio Menezes Salvador', tipo: 'escala', apelido: 'RAFAEL', cargo: 'Assistente Administrativo', categoria: 'Funcionário', saida1: '13:00', entrada2: '14:00' }
+            ],
+            ferias: [],
+            feriados: []
+        };
+
+        // --- SISTEMA DE GERAÇÃO AUTOMÁTICA DE FERIADOS (O CÉREBRO) ---
+        // Isso garante que todos os outros sites apenas "leiam" os dados, sem precisar calcular nada
+        
+        function getPascoa(ano) {
+            const f = Math.floor,
+                G = ano % 19,
+                C = f(ano / 100),
+                H = (C - f(C / 4) - f((8 * C + 13) / 25) + 19 * G + 15) % 30,
+                I = H - f(H / 28) * (1 - f(29 / (H + 1)) * f((21 - G) / 11)),
+                J = (ano + f(ano / 4) + I + 2 - C + f(C / 4)) % 7,
+                L = I - J,
+                mes = 3 + f((L + 40) / 44),
+                dia = L + 28 - 31 * f(mes / 4);
+            return new Date(ano, mes - 1, dia);
+        }
+
+        function addDays(date, days) {
+            const result = new Date(date);
+            result.setDate(result.getDate() + days);
+            return result;
+        }
+
+        function formatYMD(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        function gerarFeriadosPadrao(ano) {
+            const pascoa = getPascoa(ano);
+            const carnavalSeg = addDays(pascoa, -48);
+            const carnavalTer = addDays(pascoa, -47);
+            const cinzas = addDays(pascoa, -46);
+            const sextaSanta = addDays(pascoa, -2);
+            const corpusChristi = addDays(pascoa, 60);
+
+            return [
+                { data: `${ano}-01-01`, nome: 'Confraternização Universal', tipo: 'Nacional' },
+                { data: formatYMD(carnavalSeg), nome: 'Carnaval (Segunda-feira)', tipo: 'Ponto Facultativo' },
+                { data: formatYMD(carnavalTer), nome: 'Carnaval (Terça-feira)', tipo: 'Ponto Facultativo' },
+                { data: formatYMD(cinzas), nome: 'Quarta-feira de Cinzas (até 14h)', tipo: 'Ponto Facultativo' },
+                { data: formatYMD(sextaSanta), nome: 'Sexta-feira Santa (Paixão de Cristo)', tipo: 'Municipal' },
+                { data: `${ano}-04-21`, nome: 'Tiradentes', tipo: 'Nacional' },
+                { data: `${ano}-05-01`, nome: 'Dia do Trabalho', tipo: 'Nacional' },
+                { data: formatYMD(corpusChristi), nome: 'Corpus Christi', tipo: 'Municipal' },
+                { data: `${ano}-07-09`, nome: 'Revolução Constitucionalista', tipo: 'Estadual' },
+                { data: `${ano}-09-07`, nome: 'Independência do Brasil', tipo: 'Nacional' },
+                { data: `${ano}-09-15`, nome: 'N. Sra. das Dores (Aniversário de Limeira)', tipo: 'Municipal' },
+                { data: `${ano}-10-12`, nome: 'Nossa Senhora Aparecida', tipo: 'Nacional' },
+                { data: `${ano}-10-28`, nome: 'Dia do Servidor Público', tipo: 'Ponto Facultativo' },
+                { data: `${ano}-11-02`, nome: 'Finados', tipo: 'Nacional' },
+                { data: `${ano}-11-15`, nome: 'Proclamação da República', tipo: 'Nacional' },
+                { data: `${ano}-11-20`, nome: 'Dia da Consciência Negra', tipo: 'Nacional' },
+                { data: `${ano}-12-24`, nome: 'Véspera de Natal (pós 13h)', tipo: 'Ponto Facultativo' },
+                { data: `${ano}-12-25`, nome: 'Natal', tipo: 'Nacional' },
+                { data: `${ano}-12-26`, nome: 'Pós Natal', tipo: 'Ponto Facultativo' },
+                { data: `${ano}-12-31`, nome: 'Véspera de Ano Novo (pós 13h)', tipo: 'Ponto Facultativo' }
+            ];
+        }
+
+        function aplicarRegrasDeEmenda(feriados, ano) {
+            let novosFeriados = [...feriados];
+            let mudou = false;
+            
+            // --- REGRA 1: Terça (Emenda Seg) e Quinta (Emenda Sex) ---
+            // Apenas feriados reais (não facultativos) geram emenda
+            const feriadosReais = feriados.filter(f => f.data.startsWith(ano) && f.tipo !== 'Ponto Facultativo');
+            
+            feriadosReais.forEach(f => {
+                const dataFeriado = new Date(f.data + 'T00:00:00');
+                const diaSemana = dataFeriado.getDay();
+                
+                // Quinta (4) -> Emenda Sexta
+                if (diaSemana === 4) {
+                    const dataSexta = addDays(dataFeriado, 1);
+                    const strSexta = formatYMD(dataSexta);
+                    if (!novosFeriados.some(exist => exist.data === strSexta)) {
+                        novosFeriados.push({ data: strSexta, nome: `Emenda: ${f.nome}`, tipo: 'Ponto Facultativo' });
+                        mudou = true;
+                    }
+                }
+                // Terça (2) -> Emenda Segunda
+                if (diaSemana === 2) {
+                    const dataSegunda = addDays(dataFeriado, -1);
+                    const strSegunda = formatYMD(dataSegunda);
+                    if (!novosFeriados.some(exist => exist.data === strSegunda)) {
+                        novosFeriados.push({ data: strSegunda, nome: `Emenda: ${f.nome}`, tipo: 'Ponto Facultativo' });
+                        mudou = true;
+                    }
+                }
+            });
+
+            // --- REGRA 2: Sanduíche (Dia entre 2 feriados/pontos) ---
+            // Ordena para verificar adjacências temporais
+            let listaAnalise = novosFeriados
+                .filter(f => f.data.startsWith(ano))
+                .sort((a,b) => a.data.localeCompare(b.data));
+
+            for(let i=0; i < listaAnalise.length - 1; i++) {
+                const fAtual = listaAnalise[i];
+                const fProx = listaAnalise[i+1];
+                
+                const dAtual = new Date(fAtual.data + 'T00:00:00');
+                const dProx = new Date(fProx.data + 'T00:00:00');
+                
+                // Diferença em dias
+                const diffTime = Math.abs(dProx - dAtual);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                // Se a diferença for de 2 dias (ex: dia 10 e dia 12, intervalo é dia 11)
+                if (diffDays === 2) {
+                    const diaMeio = addDays(dAtual, 1);
+                    const strMeio = formatYMD(diaMeio);
+                    
+                    if (!novosFeriados.some(exist => exist.data === strMeio)) {
+                        novosFeriados.push({ 
+                            data: strMeio, 
+                            nome: `Ponte (Entre Feriados)`, 
+                            tipo: 'Ponto Facultativo' 
+                        });
+                        mudou = true;
+                    }
+                }
+            }
+
+            return { lista: novosFeriados, mudou };
+        }
+
+        // Função auxiliar para garantir que um ano específico tenha feriados
+        function garantirFeriadosParaAno(ano) {
+            const feriadosDoAno = data.feriados.filter(f => f.data.startsWith(ano));
+            let houveMudanca = false;
+
+            // Se tiver menos de 5 feriados, assume que o ano está vazio e gera tudo
+            if (feriadosDoAno.length < 5) {
+                console.log(`Gerando feriados para o ano ${ano}...`);
+                const padroes = gerarFeriadosPadrao(ano);
+                
+                padroes.forEach(padrao => {
+                    if (!data.feriados.some(f => f.data === padrao.data)) {
+                        data.feriados.push(padrao);
+                        houveMudanca = true;
+                    }
+                });
+            }
+
+            // Sempre reaplica regras de emenda para garantir a consistência
+            const res = aplicarRegrasDeEmenda(data.feriados, ano);
+            if (res.mudou) {
+                data.feriados = res.lista;
+                houveMudanca = true;
+            }
+
+            return houveMudanca;
+        }
+
+        function inicializarBancoDeFeriados() {
+            const anoAtual = new Date().getFullYear();
+            // Garante pelo menos o ano atual e o próximo para carregamento inicial rápido
+            let mudou = garantirFeriadosParaAno(anoAtual);
+            if (garantirFeriadosParaAno(anoAtual + 1)) mudou = true;
+
+            if (mudou) {
+                console.log("Banco de feriados inicializado.");
+                salvarDados(true);
+            }
+        }
+
+        function init() {
+            carregarDados();
+            document.getElementById('filtro-ano-feriado').value = new Date().getFullYear();
+            
+            inicializarBancoDeFeriados();
+
+            renderAll();
+            
+            const hash = window.location.hash.replace('#', '');
+            if(hash && document.getElementById(hash)) {
+                switchTab(hash);
+            }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-link').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            document.getElementById('tab-btn-' + tabId).classList.add('active');
+            if(tabId === 'funcionarios-escala') updateEscalaSelectOptions();
+        }
+
+        function carregarDados() {
+            const saved = localStorage.getItem(DB_KEY);
+            if (saved) {
+                try { 
+                    const parsed = JSON.parse(saved);
+                    const funcionariosSalvos = parsed.funcionarios || [];
+                    const idsSalvos = new Set(funcionariosSalvos.map(f => f.id));
+                    const novosDoCodigo = data.funcionarios.filter(f => !idsSalvos.has(f.id));
+                    
+                    data.funcionarios = [...funcionariosSalvos, ...novosDoCodigo];
+                    data.ferias = parsed.ferias || [];
+                    data.feriados = parsed.feriados || [];
+                    
+                } catch(e) { console.error("Erro ao carregar dados:", e); }
+            } else {
+                salvarDados();
+            }
+        }
+
+        function salvarDados(silencioso = false) {
+            localStorage.setItem(DB_KEY, JSON.stringify(data));
+            if(!silencioso) renderAll();
+            
+            const status = document.getElementById('status-db');
+            if (!silencioso) {
+                status.textContent = "Salvando...";
+                status.classList.remove('text-green-700');
+                status.classList.add('text-orange-600');
+                setTimeout(() => {
+                    status.textContent = "Sincronizado (v7)";
+                    status.classList.remove('text-orange-600');
+                    status.classList.add('text-green-700');
+                }, 600);
+            }
+        }
+
+        function renderAll() {
+            renderFuncs('ponto');
+            renderFuncs('escala');
+            renderFerias();
+            renderFeriados();
+            updateFeriasSelect();
+        }
+
+        function renderFuncs(tipo) {
+            const tbody = document.getElementById(`lista-funcionarios-${tipo}`);
+            tbody.innerHTML = '';
+            const lista = data.funcionarios.filter(f => f.tipo === tipo).sort((a,b) => a.nome.localeCompare(b.nome));
+            if (lista.length === 0) { tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center italic text-gray-400">Nenhum registro encontrado.</td></tr>`; return; }
+
+            lista.forEach(f => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b hover:bg-gray-50";
+                let nomeDisplay = '', extras = '';
+                
+                if(tipo === 'ponto') {
+                    nomeDisplay = `<div class="font-semibold text-gray-800">${f.nome}</div>`;
+                    extras = `<td class="p-4"><span class="badge badge-ponto">${f.vinculo}</span></td><td class="p-4 text-sm font-mono">${f.matricula||'-'}</td>`;
+                } else {
+                    const apelido = f.apelido ? `<span class="font-bold text-blue-900 text-base">${f.apelido}</span>` : `<span class="italic text-gray-400">Sem apelido</span>`;
+                    const nomeReal = `<div class="text-xs text-gray-500 mt-0.5">${f.nome}</div>`;
+                    nomeDisplay = `<div>${apelido}${nomeReal}</div>`;
+                    const catBadge = f.categoria === 'Funcionário da Senha' ? '<span class="badge bg-purple-100 text-purple-800">Senha</span>' : '<span class="badge badge-escala">Geral</span>';
+                    const horarios = (f.saida1 || f.entrada2) ? `<span class="text-xs text-gray-500"><i class="far fa-clock"></i> ${f.saida1 || '?'} - ${f.entrada2 || '?'}</span>` : '<span class="text-xs text-gray-300">-</span>';
+                    const cargoDisplay = f.cargo || '<span class="text-gray-300 text-xs italic">Sem cargo</span>';
+                    extras = `<td class="p-4"><div class="font-medium text-gray-700 text-sm">${cargoDisplay}</div><div class="mt-1">${catBadge}</div></td><td class="p-4">${horarios}</td>`;
+                }
+
+                tr.innerHTML = `<td class="p-4">${nomeDisplay}</td>${extras}<td class="p-4 text-right"><button onclick="editar('${f.id}', '${tipo}')" class="text-blue-600 hover:text-blue-800 p-2"><i class="fas fa-edit"></i></button><button onclick="excluir('${f.id}')" class="text-red-500 hover:text-red-700 p-2"><i class="fas fa-trash-alt"></i></button></td>`;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateEscalaSelectOptions() {
+            const select = document.getElementById('escala-funcionario-select');
+            const currentVal = select.value;
+            select.innerHTML = '<option value="">Selecione um funcionário do Ponto...</option>';
+            const funcionariosPonto = data.funcionarios.filter(f => f.tipo === 'ponto').sort((a,b) => a.nome.localeCompare(b.nome));
+            funcionariosPonto.forEach(func => {
+                const opt = document.createElement('option');
+                opt.value = func.nome; opt.dataset.id = func.id; opt.textContent = func.nome;
+                select.appendChild(opt);
+            });
+            if(currentVal) select.value = currentVal;
+        }
+
+        function handleFuncionario(e, tipo) {
+            e.preventDefault();
+            const id = document.getElementById(`${tipo}-id-hidden`).value;
+            let nome = '';
+            if(tipo === 'ponto') nome = document.getElementById('ponto-nome').value.trim();
+            else {
+                const select = document.getElementById('escala-funcionario-select');
+                nome = select.value;
+                if(!nome) return alert('Por favor, selecione um funcionário da lista.');
+            }
+            if(!nome) return;
+
+            let novo = { id: id || Date.now().toString(), nome, tipo };
+            if(tipo === 'ponto') {
+                novo.vinculo = document.getElementById('ponto-vinculo').value;
+                novo.matricula = document.getElementById('ponto-matricula').value;
+            } else {
+                novo.apelido = document.getElementById('escala-apelido').value.trim() || nome.split(' ')[0];
+                novo.categoria = document.getElementById('escala-categoria').value;
+                novo.cargo = (novo.categoria === 'Funcionário da Senha') ? '' : document.getElementById('escala-cargo').value;
+                novo.saida1 = document.getElementById('escala-saida1').value;
+                novo.entrada2 = document.getElementById('escala-entrada2').value;
+            }
+
+            if(id) {
+                const idx = data.funcionarios.findIndex(f => f.id == id);
+                if(idx > -1) {
+                    const nomeAntigo = data.funcionarios[idx].nome;
+                    data.funcionarios[idx] = { ...data.funcionarios[idx], ...novo };
+                    if(nomeAntigo !== nome) data.ferias.forEach(fer => { if(fer.funcionario === nomeAntigo) fer.funcionario = nome; });
+                }
+            } else {
+                if(data.funcionarios.some(f => f.tipo === tipo && f.nome.toLowerCase() === nome.toLowerCase())) {
+                    if(!confirm('Este funcionário já está cadastrado. Cadastrar novamente?')) return;
+                }
+                data.funcionarios.push(novo);
+            }
+            limparForm(tipo); salvarDados();
+        }
+
+        document.getElementById('form-funcionario-ponto').addEventListener('submit', (e) => handleFuncionario(e, 'ponto'));
+        document.getElementById('form-funcionario-escala').addEventListener('submit', (e) => handleFuncionario(e, 'escala'));
+
+        function limparForm(tipo) {
+            document.getElementById(`form-funcionario-${tipo}`).reset();
+            document.getElementById(`${tipo}-id-hidden`).value = '';
+            document.getElementById(`btn-salvar-${tipo}`).innerHTML = `<i class="fas fa-save"></i> Salvar${tipo === 'escala' ? ' na Escala' : ''}`;
+            if(tipo === 'escala') document.getElementById('escala-cargo').disabled = false;
+        }
+        window.limparFormPonto = () => limparForm('ponto');
+        window.limparFormEscala = () => limparForm('escala');
+
+        function editar(id, tipo) {
+            const f = data.funcionarios.find(f => f.id == id);
+            if(!f) return;
+            switchTab(`funcionarios-${tipo}`);
+            document.getElementById(`${tipo}-id-hidden`).value = f.id;
+            if(tipo === 'ponto') {
+                document.getElementById('ponto-nome').value = f.nome;
+                document.getElementById('ponto-vinculo').value = f.vinculo;
+                document.getElementById('ponto-matricula').value = f.matricula;
+            } else {
+                updateEscalaSelectOptions();
+                const select = document.getElementById('escala-funcionario-select');
+                if(![...select.options].some(o => o.value === f.nome)) {
+                    const opt = document.createElement('option'); opt.value = f.nome; opt.textContent = f.nome + ' (Não encontrado)'; select.appendChild(opt);
+                }
+                select.value = f.nome;
+                document.getElementById('escala-apelido').value = f.apelido || '';
+                document.getElementById('escala-cargo').value = f.cargo || '';
+                document.getElementById('escala-categoria').value = f.categoria;
+                toggleCargo(document.getElementById('escala-categoria'));
+                document.getElementById('escala-saida1').value = f.saida1 || '';
+                document.getElementById('escala-entrada2').value = f.entrada2 || '';
+            }
+            document.getElementById(`btn-salvar-${tipo}`).innerHTML = '<i class="fas fa-check-circle"></i> Atualizar';
+            document.getElementById(`form-funcionario-${tipo}`).scrollIntoView({behavior: 'smooth'});
+        }
+
+        function excluir(id) {
+            if(confirm('Excluir funcionário?')) {
+                data.funcionarios = data.funcionarios.filter(func => func.id != id);
+                salvarDados();
+            }
+        }
+        function toggleCargo(selectEl) {
+            const cargoSelect = document.getElementById('escala-cargo');
+            if (selectEl.value === 'Funcionário da Senha') { cargoSelect.value = ''; cargoSelect.disabled = true; } 
+            else { cargoSelect.disabled = false; }
+        }
+
+        function updateFeriasSelect() {
+            const sel = document.getElementById('ferias-func-select');
+            const val = sel.value;
+            sel.innerHTML = '<option value="">Selecione...</option>';
+            const nomesUnicos = new Set();
+            data.funcionarios.forEach(f => nomesUnicos.add(f.nome));
+            const listaNomes = Array.from(nomesUnicos).sort();
+            const group = document.createElement('optgroup'); group.label = "Funcionários Cadastrados";
+            listaNomes.forEach(nome => {
+                const opt = document.createElement('option'); opt.value = nome; opt.textContent = nome; group.appendChild(opt);
+            });
+            sel.appendChild(group);
+            if(val) sel.value = val;
+        }
+
+        document.getElementById('form-ferias').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const func = document.getElementById('ferias-func-select').value;
+            const inicio = document.getElementById('ferias-inicio').value;
+            const dias = parseInt(document.getElementById('ferias-dias').value);
+            if(data.ferias.some(f => f.funcionario === func)) return alert('Funcionário já tem férias agendadas.');
+            const fimDate = new Date(new Date(inicio + 'T00:00:00').setDate(new Date(inicio + 'T00:00:00').getDate() + dias - 1));
+            data.ferias.push({ funcionario: func, inicio, fim: fimDate.toISOString().split('T')[0], dias });
+            document.getElementById('form-ferias').reset(); document.getElementById('ferias-dias').value = 30;
+            salvarDados();
+        });
+
+        function renderFerias() {
+            const tbody = document.getElementById('lista-ferias'); tbody.innerHTML = '';
+            if(data.ferias.length === 0) { tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center italic text-gray-400">Nenhuma férias agendada.</td></tr>`; return; }
+            data.ferias.sort((a,b) => a.inicio.localeCompare(b.inicio)).forEach((f, i) => {
+                tbody.innerHTML += `<tr class="border-b"><td class="p-4 font-medium">${f.funcionario}</td><td class="p-4">${new Date(f.inicio+'T00:00:00').toLocaleDateString('pt-BR')}</td><td class="p-4">${new Date(f.fim+'T00:00:00').toLocaleDateString('pt-BR')} (${f.dias}d)</td><td class="p-4 text-right"><button onclick="excluirFerias(${i})" class="text-red-500 hover:text-red-700"><i class="fas fa-trash-alt"></i></button></td></tr>`;
+            });
+        }
+        function excluirFerias(i) { if(confirm('Excluir férias?')) { data.ferias.splice(i, 1); salvarDados(); } }
+
+        document.getElementById('form-feriados').addEventListener('submit', (e) => {
+            e.preventDefault();
+            data.feriados.push({
+                nome: document.getElementById('feriado-nome').value,
+                data: document.getElementById('feriado-data').value,
+                tipo: document.getElementById('feriado-tipo').value
+            });
+            document.getElementById('form-feriados').reset();
+            // Ao adicionar manual, reaplica regra de emenda naquele ano específico
+            const anoInserido = document.getElementById('feriado-data').value.split('-')[0];
+            const res = aplicarRegrasDeEmenda(data.feriados, anoInserido);
+            if(res.mudou) data.feriados = res.lista;
+            
+            salvarDados();
+        });
+
+        function renderFeriados() {
+            const anoInput = document.getElementById('filtro-ano-feriado').value;
+            
+            // GERAÇÃO SOB DEMANDA (Sem limites):
+            // 1. Verifica se temos o ano solicitado.
+            // 2. Se não tiver, chama a função de garantir/gerar para aquele ano específico.
+            if (anoInput) {
+                const anoNum = parseInt(anoInput);
+                const mudou = garantirFeriadosParaAno(anoNum);
+                if (mudou) {
+                    salvarDados(true); // Salva silenciosamente se gerou algo novo
+                }
+            }
+
+            const tbody = document.getElementById('lista-feriados'); tbody.innerHTML = '';
+            const lista = data.feriados.filter(f => f.data.startsWith(anoInput)).sort((a,b)=>a.data.localeCompare(b.data));
+            
+            if(lista.length === 0) { 
+                // Se ainda assim estiver vazio (ex: ano muito inválido ou erro de lógica), mostra msg
+                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center italic text-gray-400">Nenhum feriado encontrado para ${anoInput}.</td></tr>`; 
+                return; 
+            }
+            
+            lista.forEach(f => {
+                const idx = data.feriados.indexOf(f);
+                let badgeClass = 'bg-gray-100 text-gray-800';
+                if(f.tipo === 'Nacional') badgeClass = 'bg-green-100 text-green-800 border-green-200';
+                else if(f.tipo === 'Municipal') badgeClass = 'bg-blue-100 text-blue-800 border-blue-200';
+                else if(f.tipo === 'Ponto Facultativo') badgeClass = 'bg-yellow-100 text-yellow-800 border-yellow-200';
+                else if(f.tipo === 'Estadual') badgeClass = 'bg-gray-200 text-gray-800 border-gray-300';
+                tbody.innerHTML += `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-4 font-mono text-sm">${new Date(f.data+'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                        <td class="p-4 font-medium text-gray-700">${f.nome}</td>
+                        <td class="p-4"><span class="badge ${badgeClass} border">${f.tipo}</span></td>
+                        <td class="p-4 text-right"><button onclick="excluirFeriado(${idx})" class="text-red-500 hover:text-red-700 transition"><i class="fas fa-trash-alt"></i></button></td>
+                    </tr>`;
+            });
+        }
+        function excluirFeriado(i) { if(confirm('Excluir feriado?')) { data.feriados.splice(i, 1); salvarDados(); } }
+
+        init();
+    </script>
+</body>
+</html>

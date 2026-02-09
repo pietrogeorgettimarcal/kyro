@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Kyro - Gestão de Escala Pro (Auto-Fit)</title>
+    <link rel="shortcut icon" href="https://placehold.co/32x32/003366/FFFFFF?text=K" type="image/x-icon">
+    
+    <!-- Bibliotecas Externas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: { 50: '#eef2ff', 100: '#e0e7ff', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 900: '#312e81' },
+                        slate: { 850: '#1e293b' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Estilos Globais */
+        :root {
+            /* Cálculo Inteligente de Fonte:
+               Usa 'vh' (altura da tela) como fator principal. 
+               1.5vh significa que cada linha tentará ocupar 1.5% da altura total da tela.
+               Isso garante que ~35 linhas (dias + cabeçalho) caibam em 60-70% da tela.
+            */
+            --table-font-size: min(1.6vh, 0.75vw); 
+            --table-line-height: 1.1;
+            --table-cell-padding: 0.2vh;
+        }
+
+        body { background-color: #f1f5f9; color: #1e293b; font-size: 0.9rem; overflow: hidden; } 
+        
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Tabela Moderno (Absolute Fit - Sem Scroll) */
+        .modern-table { 
+            width: 100%; 
+            height: 100%; 
+            border-collapse: separate; 
+            border-spacing: 0; 
+            font-size: var(--table-font-size);
+            line-height: var(--table-line-height);
+            table-layout: fixed; 
+        }
+        .modern-table th { 
+            background: #f8fafc; color: #64748b; font-weight: 600; text-transform: uppercase; 
+            letter-spacing: 0.05em; padding: 2px; border-bottom: 2px solid #e2e8f0; 
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            height: 3vh; /* Altura fixa proporcional para cabeçalhos */
+            user-select: none;
+        }
+        .modern-table td { 
+            border-bottom: 1px solid #e2e8f0; 
+            padding: 0 2px; /* Padding lateral mínimo */
+            text-align: center; white-space: nowrap;
+            transition: all 0.1s; position: relative;
+            overflow: hidden; text-overflow: ellipsis;
+            height: 1px; /* Força distribuição uniforme vertical */
+            cursor: pointer;
+        }
+        .modern-table tr:hover td { background-color: #f1f5f9; }
+
+        /* Estados de Célula */
+        .editable:hover { background-color: #e0e7ff !important; color: #4338ca; font-weight: 600; }
+        .cursor-troca .editable { cursor: alias !important; }
+        .celula-troca-origem { background-color: #bbf7d0 !important; border: 2px dashed #166534 !important; animation: pulse 1s infinite; }
+        .celula-travada { background-color: #f0fdf4 !important; color: #15803d; font-weight: 600; border: 1px dashed #86efac; }
+        .dia-hoje { background-color: #eff6ff !important; border-left: 3px solid #3b82f6; }
+        
+        .bg-custom-gray { background-color: #e2e8f0 !important; } 
+        .bg-custom-gray-header { background-color: #cbd5e1 !important; color: #1e293b !important; }
+        .bg-custom-gray-group { background-color: #e2e8f0 !important; color: #475569 !important; }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        @keyframes syncPulse { 0% { background-color: #dcfce7; } 100% { background-color: transparent; } }
+
+        .sync-active { animation: syncPulse 1.5s ease-out; }
+
+        /* Layout Dinâmico */
+        .dashboard-container {
+            display: flex;
+            height: calc(100vh - 50px); /* Header super compacto (50px) */
+            overflow: hidden;
+            gap: 10px;
+            padding: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-left, .sidebar-right {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            opacity: 1;
+            flex-shrink: 0;
+        }
+        
+        .sidebar-left { width: 220px; }
+        .sidebar-right { width: 280px; }
+        
+        /* Estados Colapsados */
+        .sidebar-left.collapsed { width: 0; padding: 0; margin: 0; opacity: 0; pointer-events: none; }
+        .sidebar-right.collapsed { width: 0; padding: 0; margin: 0; opacity: 0; pointer-events: none; }
+
+        .main-panel {
+            flex: 1;
+            min-width: 0; 
+            display: flex;
+            flex-direction: column;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+            height: 100%; 
+        }
+
+        .panel { background: white; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; overflow: hidden; height: 100%; }
+        .panel-header { padding: 4px 8px; border-bottom: 1px solid #e2e8f0; background: #fff; display: flex; justify-content: space-between; align-items: center; min-height: 36px; }
+        .panel-content { padding: 0; overflow-y: auto; flex: 1; }
+        
+        /* Botões Compactos */
+        .btn { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 4px; font-weight: 500; transition: all 0.2s; font-size: 0.75rem; cursor: pointer; border: 1px solid transparent; }
+        .btn-sm { padding: 2px 6px; font-size: 0.7rem; }
+        .btn-primary { background: #4f46e5; color: white; border-color: #4338ca; }
+        .btn-primary:hover { background: #4338ca; }
+        .btn-secondary { background: white; color: #475569; border-color: #cbd5e1; }
+        .btn-secondary:hover { background: #f8fafc; border-color: #94a3b8; }
+        .btn-ghost { background: transparent; color: #64748b; }
+        .btn-ghost:hover { background: #f1f5f9; color: #334155; }
+        .btn-danger { background: #fee2e2; color: #ef4444; border-color: #fca5a5; }
+        .btn-active { background: #e0e7ff; color: #4338ca; border-color: #6366f1; }
+        
+        .editor-btn { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 4px; color: #475569; cursor: pointer; transition: bg 0.2s; }
+        .editor-btn:hover { background-color: #f1f5f9; color: #1e293b; }
+        
+        .valign-top { justify-content: flex-start; }
+        .valign-middle { justify-content: center; }
+        .valign-bottom { justify-content: flex-end; }
+        
+        .modal-backdrop { background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(2px); }
+        .input-std { width: 100%; padding: 4px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.75rem; }
+        
+        /* Toggle Buttons for Sidebars */
+        .toggle-sidebar-btn {
+            width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+            border-radius: 4px; color: #64748b; cursor: pointer; transition: all 0.2s;
+        }
+        .toggle-sidebar-btn:hover { background: #e2e8f0; color: #1e293b; }
+        
+        @media (max-width: 900px) {
+            #mes-select, #ano-input { font-size: 0.7rem; }
+            .btn { padding: 4px 8px; }
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden bg-slate-100">
+
+    <!-- Header Compacto -->
+    <header class="bg-white border-b border-slate-200 h-[50px] flex-shrink-0 z-30 px-3 flex items-center justify-between shadow-sm">
+        <div class="flex items-center gap-3">
+            <div class="bg-blue-800 text-white w-7 h-7 rounded flex items-center justify-center font-bold text-sm shadow-sm">P</div>
+            <div class="leading-tight">
+                <div class="flex items-center gap-2">
+                    <h1 class="text-sm font-bold text-slate-800">Prefeitura de Limeira</h1>
+                    <div id="sync-indicator" class="hidden items-center gap-1 bg-green-50 text-green-700 px-1.5 py-0.5 rounded border border-green-200">
+                        <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                        <span class="text-[9px] font-bold">Sincronizado</span>
+                    </div>
+                </div>
+                <p class="text-[9px] text-slate-500">Dívida Ativa</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-1 bg-slate-50 p-0.5 rounded border border-slate-200">
+            <button onclick="toggleSidebar('left')" class="toggle-sidebar-btn" title="Alternar Painel Esquerdo" id="btn-toggle-left">
+                <i class="fas fa-columns"></i>
+            </button>
+            <div class="h-3 w-px bg-slate-300"></div>
+            <span class="text-[9px] font-semibold text-slate-400 px-1 hidden sm:inline">VISUAL</span>
+            <div class="h-3 w-px bg-slate-300 hidden sm:block"></div>
+            <button onclick="toggleSidebar('right')" class="toggle-sidebar-btn" title="Alternar Painel Direito" id="btn-toggle-right">
+                <i class="fas fa-cog"></i>
+            </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <button onclick="abrirModalMestre()" class="btn btn-secondary btn-sm text-[10px]">
+                <i class="fas fa-database text-slate-400"></i> <span class="hidden md:inline">Mestre</span>
+            </button>
+            <label class="btn btn-secondary btn-sm cursor-pointer text-[10px]">
+                <i class="fas fa-file-import text-blue-500"></i> <span class="hidden md:inline">Importar</span>
+                <input type="file" id="input-importar" class="hidden" accept=".json">
+            </label>
+        </div>
+    </header>
+
+    <!-- Layout Flexível -->
+    <div class="dashboard-container" id="dashboard-container">
+        
+        <!-- Esquerda: Resumo -->
+        <aside class="sidebar-left panel" id="sidebar-left">
+            <div class="panel-header bg-slate-50">
+                <span class="font-semibold text-slate-600 text-xs"><i class="fas fa-chart-pie text-brand-500 mr-2"></i>Resumo</span>
+                <span class="text-[9px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full font-mono" id="total-dias-badge">0d</span>
+            </div>
+            <div class="panel-content custom-scrollbar">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-50 text-[9px] text-slate-500 sticky top-0 z-10 border-b border-slate-200 uppercase tracking-wider">
+                        <tr><th class="p-1.5 font-semibold">Nome</th><th class="p-1.5 text-center font-semibold">F</th><th class="p-1.5 text-center font-semibold">S</th><th class="p-1.5 text-center font-semibold">T</th></tr>
+                    </thead>
+                    <tbody id="lista-resumo" class="text-[10px] divide-y divide-slate-100"></tbody>
+                </table>
+            </div>
+        </aside>
+
+        <!-- Centro: Tabela -->
+        <main class="main-panel relative flex flex-col" id="painel-central">
+            <!-- Toolbar Principal -->
+            <div class="panel-header flex-wrap gap-2 py-1 flex-shrink-0 border-b border-slate-200" style="min-height: 36px;">
+                <!-- Navegação Meses -->
+                <div class="flex items-center bg-slate-100 rounded p-0.5">
+                    <button id="prev-month" class="w-5 h-5 flex items-center justify-center rounded hover:bg-white hover:shadow-sm text-slate-500"><i class="fas fa-chevron-left text-[9px]"></i></button>
+                    <div class="flex flex-col items-center px-1">
+                        <select id="mes-select" class="text-[10px] font-bold bg-transparent border-none cursor-pointer text-center p-0 outline-none text-slate-700">
+                            <option value="0">JAN</option><option value="1">FEV</option><option value="2">MAR</option>
+                            <option value="3">ABR</option><option value="4">MAI</option><option value="5">JUN</option>
+                            <option value="6">JUL</option><option value="7">AGO</option><option value="8">SET</option>
+                            <option value="9">OUT</option><option value="10">NOV</option><option value="11">DEZ</option>
+                        </select>
+                        <input type="number" id="ano-input" class="text-[9px] text-slate-400 bg-transparent border-none w-10 text-center p-0 leading-none outline-none" value="2024">
+                    </div>
+                    <button id="next-month" class="w-5 h-5 flex items-center justify-center rounded hover:bg-white hover:shadow-sm text-slate-500"><i class="fas fa-chevron-right text-[9px]"></i></button>
+                </div>
+
+                <div class="h-4 w-px bg-slate-200 mx-1 hidden sm:block"></div>
+
+                <!-- Ações -->
+                <button id="gerar-escala-btn" class="btn btn-primary btn-sm shadow-sm"><i class="fas fa-magic"></i> <span class="hidden lg:inline">Gerar</span></button>
+                <button id="embaralhar-btn" class="btn btn-secondary btn-sm" title="Gerar Aleatório"><i class="fas fa-random text-amber-500"></i></button>
+                <button id="btn-troca-rapida" class="btn btn-secondary btn-sm" title="Modo Troca Rápida"><i class="fas fa-exchange-alt text-blue-500"></i></button>
+
+                <div class="flex-1"></div>
+
+                <!-- Export -->
+                <div class="relative">
+                    <button id="btn-export-toggle" class="btn btn-secondary btn-sm"><i class="fas fa-download text-slate-500"></i></button>
+                    <div id="export-menu" class="absolute right-0 mt-1 w-32 bg-white border border-slate-200 rounded-lg shadow-xl hidden z-50 py-1">
+                        <button onclick="exportarExcelOriginal()" class="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 text-slate-700 flex items-center gap-2"><i class="fas fa-file-excel text-green-600"></i> Excel</button>
+                        <button onclick="exportarPDFOriginal()" class="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 text-slate-700 flex items-center gap-2"><i class="fas fa-file-pdf text-red-600"></i> PDF</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabela Container -->
+            <div class="flex-1 overflow-hidden relative bg-white flex flex-col">
+                <table class="modern-table" id="tabela-principal">
+                    <thead id="tabela-head"></thead>
+                    <tbody id="tabela-escala"></tbody>
+                </table>
+            </div>
+
+            <!-- Editor de Observações (Altura Proporcional Reduzida) -->
+            <div class="bg-slate-50 border-t border-slate-200 flex-shrink-0 flex flex-col" style="height: 12vh; min-height: 60px; max-height: 120px;">
+                <div class="px-2 py-0.5 flex items-center justify-between border-b border-slate-200 bg-white" style="min-height: 28px;">
+                    <div class="flex items-center gap-0.5">
+                        <button onclick="execCmd('bold')" class="editor-btn" title="Negrito"><i class="fas fa-bold text-[9px]"></i></button>
+                        <button onclick="execCmd('italic')" class="editor-btn" title="Itálico"><i class="fas fa-italic text-[9px]"></i></button>
+                        <button onclick="execCmd('underline')" class="editor-btn" title="Sublinhado"><i class="fas fa-underline text-[9px]"></i></button>
+                        <div class="h-3 w-px bg-slate-200 mx-1 hidden sm:block"></div>
+                        <button onclick="execCmd('justifyLeft')" class="editor-btn hidden sm:flex" title="Esquerda"><i class="fas fa-align-left text-[9px]"></i></button>
+                        <button onclick="execCmd('justifyCenter')" class="editor-btn hidden sm:flex" title="Centro"><i class="fas fa-align-center text-[9px]"></i></button>
+                        <button onclick="execCmd('justifyRight')" class="editor-btn hidden sm:flex" title="Direita"><i class="fas fa-align-right text-[9px]"></i></button>
+                        <div class="h-3 w-px bg-slate-200 mx-1 hidden sm:block"></div>
+                        <button onclick="setVerticalAlign('top')" class="editor-btn" title="Topo"><i class="fas fa-arrow-up text-[9px]"></i></button>
+                        <button onclick="setVerticalAlign('middle')" class="editor-btn" title="Meio"><i class="fas fa-arrows-alt-v text-[9px]"></i></button>
+                        <button onclick="setVerticalAlign('bottom')" class="editor-btn" title="Base"><i class="fas fa-arrow-down text-[9px]"></i></button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="color" onchange="execCmd('foreColor', this.value)" class="w-3.5 h-3.5 p-0 border-0 bg-transparent cursor-pointer" title="Cor Texto">
+                        <input type="color" onchange="execCmd('hiliteColor', this.value)" value="#ffffff" class="w-3.5 h-3.5 p-0 border-0 bg-transparent cursor-pointer" title="Cor Fundo">
+                    </div>
+                </div>
+                <div id="editor-obs" 
+                     class="flex-1 p-1.5 text-[10px] text-slate-700 focus:outline-none overflow-y-auto bg-white flex flex-col" 
+                     contenteditable="true" 
+                     style="font-family: 'Inter', sans-serif;">
+                </div>
+            </div>
+        </main>
+
+        <!-- Direita: Configurações -->
+        <aside class="sidebar-right panel" id="sidebar-right">
+            <!-- Ferramentas Busca -->
+            <div class="p-2 border-b border-slate-100 bg-slate-50">
+                <div class="text-[9px] font-bold text-slate-400 uppercase mb-1">Ferramentas Rápidas</div>
+                <div class="flex items-center gap-2 mb-1">
+                    <select id="busca-func" class="input-std bg-white text-[10px] h-6"></select>
+                    <button onclick="limparDestaques()" class="btn btn-secondary btn-sm h-6 w-6 justify-center" title="Limpar"><i class="fas fa-eraser text-[10px]"></i></button>
+                </div>
+                <div class="flex gap-2 justify-center">
+                    <button onclick="destacarCor('#fef9c3')" class="w-4 h-4 rounded bg-yellow-200 border border-yellow-300 hover:scale-110 transition-transform"></button>
+                    <button onclick="destacarCor('#dcfce7')" class="w-4 h-4 rounded bg-green-200 border border-green-300 hover:scale-110 transition-transform"></button>
+                    <button onclick="destacarCor('#fee2e2')" class="w-4 h-4 rounded bg-red-200 border border-red-300 hover:scale-110 transition-transform"></button>
+                </div>
+            </div>
+
+            <!-- Travar -->
+            <div class="flex-shrink-0 border-b border-slate-200">
+                <div class="panel-header bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors" onclick="toggleSection('sec-travas')">
+                    <span class="font-semibold text-slate-600 text-[10px] uppercase"><i class="fas fa-lock text-slate-400 mr-1"></i>Travas</span>
+                    <i class="fas fa-chevron-down text-slate-400 text-[10px]"></i>
+                </div>
+                <div id="sec-travas" class="p-2 bg-slate-50 space-y-2">
+                    <div class="space-y-1">
+                        <select id="config-func" class="input-std bg-white text-[10px] py-1"></select>
+                        <select id="config-slot" class="input-std bg-white text-[10px] py-1"></select>
+                        <button onclick="adicionarRegraFixa()" class="w-full btn btn-secondary btn-sm justify-center text-[10px]">
+                            <i class="fas fa-plus text-slate-400 mr-1"></i> Travar
+                        </button>
+                    </div>
+                    <div class="pt-1 border-t border-slate-200">
+                        <div class="flex justify-between items-center mb-1">
+                             <span class="text-[9px] font-bold text-slate-400 uppercase">Ativas</span>
+                             <button onclick="limparTodasRegras()" class="text-[9px] text-red-500 hover:text-red-700 font-bold hover:underline">Limpar</button>
+                        </div>
+                        <div id="lista-regras" class="space-y-1 max-h-20 overflow-y-auto pr-1 custom-scrollbar"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estrutura -->
+            <div class="flex-1 overflow-hidden flex flex-col">
+                <div class="panel-header bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors" onclick="toggleSection('sec-estrutura')">
+                    <span class="font-semibold text-slate-600 text-[10px] uppercase"><i class="fas fa-columns text-slate-400 mr-1"></i>Estrutura</span>
+                    <i class="fas fa-chevron-down text-slate-400 text-[10px]"></i>
+                </div>
+                <div id="sec-estrutura" class="flex-1 overflow-y-auto p-2 bg-slate-50 space-y-2 custom-scrollbar">
+                    <div id="editor-estrutura-lista" class="space-y-2"></div>
+                    <button onclick="adicionarGrupo()" class="w-full btn btn-secondary border-dashed border-slate-300 text-slate-500 text-[10px] justify-center hover:bg-white hover:border-slate-400 hover:text-slate-600">
+                        <i class="fas fa-folder-plus mr-1"></i> Grupo
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+    </div>
+
+    <!-- Modais (Mantidos igual) -->
+    <div id="modal-edicao" class="fixed inset-0 modal-backdrop hidden flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-xl shadow-2xl w-80 animate-in fade-in zoom-in duration-200">
+            <h4 class="font-bold text-slate-800 mb-2">Editar Célula</h4>
+            <select id="modal-select" class="input-std mb-4 hidden"></select>
+            <input type="text" id="modal-input" class="input-std mb-4 hidden" placeholder="Digite o novo valor...">
+            <div class="flex justify-end gap-2">
+                <button onclick="fecharModal()" class="btn btn-secondary">Cancelar</button>
+                <button onclick="salvarEdicaoManual()" class="btn btn-primary">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-mestre" class="fixed inset-0 modal-backdrop hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl w-[900px] h-[70vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div class="p-4 border-b flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-slate-700 flex items-center gap-2"><i class="fas fa-database text-blue-500"></i> Dados Mestre</h3>
+                <button onclick="document.getElementById('modal-mestre').classList.add('hidden')" class="text-slate-400 hover:text-red-500 w-8 h-8 rounded-full hover:bg-red-50 flex items-center justify-center transition-colors"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1 space-y-6 custom-scrollbar">
+                <div>
+                    <h4 class="font-bold text-slate-700 text-sm uppercase tracking-wide mb-3 border-b pb-1">Funcionários</h4>
+                    <table class="w-full text-xs text-left border-collapse border border-slate-200">
+                        <thead class="bg-slate-100 text-slate-600"><tr><th class="p-2 border font-semibold">Nome</th><th class="p-2 border font-semibold">Cargo</th><th class="p-2 border font-semibold">Almoço</th></tr></thead>
+                        <tbody id="mestre-funcs" class="text-slate-600"></tbody>
+                    </table>
+                </div>
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-bold text-slate-700 text-sm uppercase tracking-wide mb-3 border-b pb-1">Férias</h4>
+                        <table class="w-full text-xs text-left border-collapse border border-slate-200">
+                            <thead class="bg-slate-100 text-slate-600"><tr><th class="p-2 border font-semibold">Func</th><th class="p-2 border font-semibold">Início</th><th class="p-2 border font-semibold">Fim</th></tr></thead>
+                            <tbody id="mestre-ferias" class="text-slate-600"></tbody>
+                        </table>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-slate-700 text-sm uppercase tracking-wide mb-3 border-b pb-1">Feriados</h4>
+                        <table class="w-full text-xs text-left border-collapse border border-slate-200">
+                            <thead class="bg-slate-100 text-slate-600"><tr><th class="p-2 border font-semibold">Data</th><th class="p-2 border font-semibold">Nome</th></tr></thead>
+                            <tbody id="mestre-feriados" class="text-slate-600"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- ESTADO ---
+        const MASTER_DB_KEY = 'limeira_dados_integrados_v6';
+        const CONFIG_DB_KEY = 'escala_config_v23'; // Versão 23 - Auto-Fit Absolute
+        const DEFAULT_MOCK = { funcionarios: [], ferias: [], feriados: [] };
+        const DEFAULT_OBS_TEXT = '<div style="text-align: center;"><b>Obs.: A escala poderá sofrer alterações.</b></div><div style="text-align: center;"><b>Na abertura dos guichês, 1° e 2° suplentes, permanecerão atendendo até às 09:30 ou a fila zerar.</b></div>';
+
+        const DEFAULT_STRUCTURE = [
+            {
+                title: "",
+                grayTitle: false,
+                cols: [
+                    { key: 'dataLabel', label: 'DIAS', type: 'system', grayHeader: false, grayBody: false },
+                    { key: 'semLabel', label: 'DIAS SEM.', type: 'system', grayHeader: false, grayBody: false },
+                    { key: 'senha', label: 'SENHA', type: 'system', grayHeader: false, grayBody: false }
+                ]
+            },
+            {
+                title: "",
+                grayTitle: false,
+                cols: [
+                    { key: 'fixo1', label: 'FIXO 1', type: 'fixo', grayHeader: true, grayBody: false },
+                    { key: 'fixo2', label: 'FIXO 2', type: 'fixo', grayHeader: true, grayBody: false },
+                    { key: 'fixo3', label: 'FIXO 3', type: 'fixo', grayHeader: true, grayBody: false }
+                ]
+            },
+            {
+                title: "10 SENHAS OU 15 MIN / ALMOÇO",
+                grayTitle: false,
+                cols: [
+                    { key: 'sup1', label: '1° SUPLENTE', type: 'suplente', grayHeader: true, grayBody: false },
+                    { key: 'sup2', label: '2° SUPLENTE', type: 'suplente', grayHeader: true, grayBody: false }
+                ]
+            },
+            {
+                title: "15 SENHAS OU 20 MIN E ALMOÇO",
+                grayTitle: false,
+                cols: [
+                    { key: 'sup3', label: '3° SUPLENTE', type: 'suplente', grayHeader: false, grayBody: false },
+                    { key: 'sup4', label: '4° SUPLENTE', type: 'suplente', grayHeader: false, grayBody: false }
+                ]
+            },
+            {
+                title: "ACIMA 20 MINUTOS, ALMOÇO, QUANDO NECESSÁRIO",
+                grayTitle: false,
+                cols: [
+                    { key: 'sup5', label: '5° SUPLENTE', type: 'suplente', grayHeader: false, grayBody: true },
+                    { key: 'sup6', label: '6° SUPLENTE', type: 'suplente', grayHeader: false, grayBody: true }
+                ]
+            }
+        ];
+
+        let masterData = { funcionarios: [], ferias: [], feriados: [] };
+        let appState = {
+            escala: [],
+            regrasFixas: [],
+            destaques: {}, 
+            structure: JSON.parse(JSON.stringify(DEFAULT_STRUCTURE)), 
+            mes: new Date().getMonth(),
+            ano: new Date().getFullYear(),
+            observacoes: {},
+            observacoesConfig: {},
+            ui: { leftPanel: true, rightPanel: true } 
+        };
+        
+        let editando = null;
+        let modoTrocaRapida = false;
+        let trocaOrigem = null;
+
+        // --- INIT ---
+        document.addEventListener('DOMContentLoaded', () => {
+            carregarDados();
+            setupEvents();
+            atualizarUI();
+            carregarObservacaoAtual();
+            aplicarEstadoUI();
+            
+            // Detecta zoom/resize inicial e ajusta layout
+            checkResponsive();
+            window.addEventListener('resize', checkResponsive);
+            
+            // Mostra status se tiver dados
+            if(masterData.funcionarios.length > 0) {
+                 const el = document.getElementById('sync-indicator');
+                 el.classList.remove('hidden'); el.classList.add('flex');
+            }
+        });
+
+        // --- LISTENER DE SINCRONIZAÇÃO EM TEMPO REAL ---
+        // Isso garante que mudanças na aba 'funcionarios.html' reflitam aqui instantaneamente
+        window.addEventListener('storage', function(e) {
+            if (e.key === MASTER_DB_KEY) {
+                console.log("Detectada alteração nos dados mestre via outra aba.");
+                
+                // Pisca a tela ou mostra indicador
+                const el = document.getElementById('sync-indicator');
+                el.classList.remove('hidden'); el.classList.add('flex', 'sync-active');
+                setTimeout(() => el.classList.remove('sync-active'), 1500);
+
+                // Recarrega APENAS os dados mestre (funcionários/férias)
+                // Não recarrega 'escala_config' para não perder estado da tela atual
+                carregarDadosMestre();
+                
+                // Atualiza selects e tabelas
+                atualizarUI();
+            }
+        });
+
+        // --- FUNÇÕES DE UI ---
+        function checkResponsive() {
+            // Verifica a largura do PAINEL CENTRAL, não só da janela
+            const container = document.getElementById('dashboard-container');
+            const leftEl = document.getElementById('sidebar-left');
+            const rightEl = document.getElementById('sidebar-right');
+            const width = window.innerWidth;
+
+            // Se a tela estiver muito apertada (zoom alto), esconde sidebars
+            if (width < 1100) {
+                if (!leftEl.classList.contains('collapsed')) toggleSidebar('left', true);
+                if (!rightEl.classList.contains('collapsed')) toggleSidebar('right', true);
+            }
+        }
+
+        function toggleSidebar(side, forceClose = false) {
+            const el = document.getElementById(`sidebar-${side}`);
+            const btn = document.getElementById(`btn-toggle-${side}`);
+            
+            if (forceClose) {
+                el.classList.add('collapsed');
+                btn.classList.add('bg-blue-100', 'text-blue-600');
+                if (side === 'left') appState.ui.leftPanel = false;
+                if (side === 'right') appState.ui.rightPanel = false;
+                return;
+            }
+
+            const isCollapsed = el.classList.contains('collapsed');
+            if (isCollapsed) {
+                el.classList.remove('collapsed');
+                btn.classList.remove('bg-blue-100', 'text-blue-600');
+                if (side === 'left') appState.ui.leftPanel = true;
+                if (side === 'right') appState.ui.rightPanel = true;
+            } else {
+                el.classList.add('collapsed');
+                btn.classList.add('bg-blue-100', 'text-blue-600');
+                if (side === 'left') appState.ui.leftPanel = false;
+                if (side === 'right') appState.ui.rightPanel = false;
+            }
+            salvarEstado();
+        }
+
+        function aplicarEstadoUI() {
+            if (window.innerWidth >= 1100) {
+                if (!appState.ui.leftPanel) toggleSidebar('left', true);
+                if (!appState.ui.rightPanel) toggleSidebar('right', true);
+            } else {
+                toggleSidebar('left', true);
+                toggleSidebar('right', true);
+            }
+        }
+
+        // --- LÓGICA CORE (MANTIDA/OTIMIZADA) ---
+        
+        // Separei esta função para poder chamá-la sozinha na sincronização
+        function carregarDadosMestre() {
+            const rawMaster = localStorage.getItem(MASTER_DB_KEY);
+            masterData = rawMaster ? JSON.parse(rawMaster) : DEFAULT_MOCK;
+            
+            // Repopula selects que dependem do mestre
+            const selectFunc = document.getElementById('config-func');
+            const selectBusca = document.getElementById('busca-func');
+            
+            // Guarda seleção atual para tentar manter
+            const selFunc = selectFunc.value;
+            const selBusca = selectBusca.value;
+
+            selectFunc.innerHTML = '<option value="">Funcinário...</option>';
+            selectBusca.innerHTML = '<option value="">Selecionar...</option>';
+
+            getFuncionariosEscala().forEach(f => {
+                const n = f.apelido || f.nome;
+                selectFunc.add(new Option(n, n));
+                selectBusca.add(new Option(n, n));
+            });
+            
+            // Restaura seleção se possível
+            if(selFunc) selectFunc.value = selFunc;
+            if(selBusca) selectBusca.value = selBusca;
+        }
+
+        function carregarDados() {
+            carregarDadosMestre(); // Chama a parte do mestre
+
+            const rawConfig = localStorage.getItem(CONFIG_DB_KEY);
+            if(rawConfig) {
+                const s = JSON.parse(rawConfig);
+                appState.regrasFixas = s.regrasFixas || [];
+                appState.escala = s.escala || [];
+                appState.destaques = s.destaques || {};
+                appState.observacoes = s.observacoes || {};
+                appState.observacoesConfig = s.observacoesConfig || {};
+                appState.ui = { ...appState.ui, ...(s.ui || {}) }; 
+                
+                if(s.structure && s.structure.length > 0) {
+                    appState.structure = s.structure.map(g => ({
+                        ...g,
+                        grayTitle: g.grayTitle !== undefined ? g.grayTitle : false, 
+                        cols: g.cols.map(c => ({
+                            ...c,
+                            grayHeader: c.grayHeader !== undefined ? c.grayHeader : (c.gray || false), 
+                            grayBody: c.grayBody !== undefined ? c.grayBody : (c.gray || false)
+                        }))
+                    }));
+                }
+                
+                if(appState.escala.length) {
+                    appState.escala.forEach(l => {
+                        l.data = new Date(l.data);
+                        l.diaSemana = new Date(l.diaSemana);
+                    });
+                }
+            }
+            
+            document.getElementById('mes-select').value = appState.mes;
+            document.getElementById('ano-input').value = appState.ano;
+        }
+
+        function salvarEstado() {
+            localStorage.setItem(CONFIG_DB_KEY, JSON.stringify(appState));
+        }
+
+        function setupEvents() {
+            document.getElementById('gerar-escala-btn').addEventListener('click', () => gerarEscala(false));
+            document.getElementById('embaralhar-btn').addEventListener('click', () => gerarEscala(true));
+            document.getElementById('prev-month').addEventListener('click', () => mudarMes(-1));
+            document.getElementById('next-month').addEventListener('click', () => mudarMes(1));
+            document.getElementById('mes-select').addEventListener('change', (e) => { appState.mes = parseInt(e.target.value); atualizarUI(); });
+            document.getElementById('ano-input').addEventListener('change', (e) => { appState.ano = parseInt(e.target.value); atualizarUI(); });
+            document.getElementById('input-importar').addEventListener('change', importarDados);
+            document.getElementById('btn-troca-rapida').addEventListener('click', toggleTrocaRapida);
+            
+            document.getElementById('btn-export-toggle').addEventListener('click', (e) => {
+                e.stopPropagation(); 
+                document.getElementById('export-menu').classList.toggle('hidden');
+            });
+            
+            document.addEventListener('click', (e) => {
+                const menu = document.getElementById('export-menu');
+                const btn = document.getElementById('btn-export-toggle');
+                if(menu && !menu.classList.contains('hidden') && !menu.contains(e.target) && e.target !== btn) {
+                    menu.classList.add('hidden');
+                }
+            });
+            
+            document.getElementById('tabela-escala').addEventListener('click', (e) => {
+                const cell = e.target.closest('.editable');
+                if(!cell) return;
+                if(modoTrocaRapida) handleTroca(cell);
+                else {
+                    const nome = cell.innerText.trim();
+                    if(nome && nome !== '-') document.getElementById('busca-func').value = nome;
+                }
+            });
+
+            document.getElementById('tabela-escala').addEventListener('dblclick', (e) => {
+                if(modoTrocaRapida) return;
+                const cell = e.target.closest('.editable');
+                if(cell) abrirModal(cell.dataset.idx, cell.dataset.key);
+            });
+
+            document.getElementById('editor-obs').addEventListener('input', salvarObservacaoAtual);
+        }
+
+        // --- MANIPULAÇÃO OBSERVAÇÕES ---
+        function execCmd(command, value = null) {
+            document.execCommand(command, false, value);
+            document.getElementById('editor-obs').focus();
+            salvarObservacaoAtual();
+        }
+        
+        function setVerticalAlign(align) {
+            const editor = document.getElementById('editor-obs');
+            editor.classList.remove('valign-top', 'valign-middle', 'valign-bottom');
+            if(align === 'top') editor.classList.add('valign-top');
+            if(align === 'middle') editor.classList.add('valign-middle');
+            if(align === 'bottom') editor.classList.add('valign-bottom');
+            
+            const key = getObsKey();
+            if(!appState.observacoesConfig[key]) appState.observacoesConfig[key] = {};
+            appState.observacoesConfig[key].vAlign = align;
+            salvarEstado();
+            editor.focus();
+        }
+
+        function getObsKey() { return `${appState.ano}-${appState.mes}`; }
+
+        function carregarObservacaoAtual() {
+            const key = getObsKey();
+            let content = appState.observacoes[key];
+            if (content === undefined) { content = DEFAULT_OBS_TEXT; appState.observacoes[key] = content; }
+            const config = appState.observacoesConfig[key] || { vAlign: 'middle' };
+            const editor = document.getElementById('editor-obs');
+            editor.innerHTML = content;
+            editor.classList.remove('valign-top', 'valign-middle', 'valign-bottom');
+            if(config.vAlign === 'top') editor.classList.add('valign-top');
+            if(config.vAlign === 'middle') editor.classList.add('valign-middle');
+            if(config.vAlign === 'bottom') editor.classList.add('valign-bottom');
+        }
+
+        function salvarObservacaoAtual() {
+            const key = getObsKey();
+            appState.observacoes[key] = document.getElementById('editor-obs').innerHTML;
+            salvarEstado();
+        }
+
+        function toggleSection(id) {
+            const el = document.getElementById(id);
+            el.classList.toggle('hidden');
+        }
+
+        // --- EDITOR ESTRUTURA ---
+        function getFlatColumns() {
+            const cols = [];
+            appState.structure.forEach(g => { g.cols.forEach(c => cols.push(c)); });
+            return cols;
+        }
+
+        function renderEditorEstrutura() {
+            const container = document.getElementById('editor-estrutura-lista');
+            container.innerHTML = '';
+
+            appState.structure.forEach((group, gIdx) => {
+                const groupEl = document.createElement('div');
+                groupEl.className = "bg-white border border-slate-200 rounded shadow-sm overflow-hidden";
+                
+                let groupHtml = `
+                    <div class="bg-slate-100 p-2 flex gap-2 items-center border-b border-slate-200">
+                        <div class="flex flex-col gap-0.5">
+                            <button onclick="moverGrupo(${gIdx}, -1)" class="text-[8px] text-slate-400 hover:text-blue-500 h-3 flex items-center" ${gIdx===0?'disabled style="opacity:0.3"':''}><i class="fas fa-chevron-up"></i></button>
+                            <button onclick="moverGrupo(${gIdx}, 1)" class="text-[8px] text-slate-400 hover:text-blue-500 h-3 flex items-center" ${gIdx===appState.structure.length-1?'disabled style="opacity:0.3"':''}><i class="fas fa-chevron-down"></i></button>
+                        </div>
+                        <i class="fas fa-folder text-slate-400 text-xs"></i>
+                        <input type="text" value="${group.title}" 
+                            onchange="updateGroupTitle(${gIdx}, this.value)"
+                            class="bg-transparent text-xs font-bold text-slate-700 w-full focus:outline-none focus:bg-white focus:ring-1 focus:ring-blue-200 rounded px-1" placeholder="Título do Grupo">
+                        
+                        <button onclick="toggleGroupGray(${gIdx})" 
+                            class="text-[10px] px-1.5 py-0.5 rounded border ${group.grayTitle ? 'bg-slate-500 text-white border-slate-600' : 'bg-white text-slate-300 border-slate-200 hover:border-slate-300'}"
+                            title="Pintar Título do Grupo">
+                            <i class="fas fa-fill-drip"></i>
+                        </button>
+
+                        <button onclick="removerGrupo(${gIdx})" class="text-slate-400 hover:text-red-500"><i class="fas fa-trash-alt text-[10px]"></i></button>
+                    </div>
+                    <div class="p-2 space-y-2">
+                `;
+
+                group.cols.forEach((col, cIdx) => {
+                    const isFixo = col.type === 'fixo';
+                    const isSystem = col.type === 'system';
+                    
+                    let btnClass = 'bg-purple-50 text-purple-600 border-purple-200';
+                    let btnText = 'SUP';
+                    if(isFixo) { btnClass = 'bg-blue-50 text-blue-600 border-blue-200'; btnText = 'FIXO'; }
+                    if(isSystem) { btnClass = 'bg-slate-200 text-slate-600 border-slate-300 cursor-not-allowed'; btnText = 'SIS'; }
+
+                    groupHtml += `
+                        <div class="flex gap-1 items-center">
+                            <div class="flex flex-col gap-0.5 mr-1">
+                                <button onclick="moverColuna(${gIdx}, ${cIdx}, -1)" class="text-[8px] text-slate-300 hover:text-blue-500 h-2.5 flex items-center" ${cIdx===0?'disabled style="opacity:0.2"':''}><i class="fas fa-chevron-up"></i></button>
+                                <button onclick="moverColuna(${gIdx}, ${cIdx}, 1)" class="text-[8px] text-slate-300 hover:text-blue-500 h-2.5 flex items-center" ${cIdx===group.cols.length-1?'disabled style="opacity:0.2"':''}><i class="fas fa-chevron-down"></i></button>
+                            </div>
+                            
+                            <input type="text" value="${col.label}" 
+                                onchange="updateColLabel(${gIdx}, ${cIdx}, this.value)"
+                                class="input-sm flex-1 w-16 bg-slate-50 border border-slate-200 rounded text-slate-600 focus:bg-white">
+                            
+                            <button onclick="toggleColHeaderGray(${gIdx}, ${cIdx})" 
+                                class="text-[10px] px-1.5 py-0.5 rounded border ${col.grayHeader ? 'bg-slate-600 text-white border-slate-700' : 'bg-white text-slate-300 border-slate-200 hover:border-slate-300'}"
+                                title="Pintar Título">
+                                <i class="fas fa-heading"></i>
+                            </button>
+
+                            <button onclick="toggleColBodyGray(${gIdx}, ${cIdx})" 
+                                class="text-[10px] px-1.5 py-0.5 rounded border ${col.grayBody ? 'bg-slate-400 text-white border-slate-500' : 'bg-white text-slate-300 border-slate-200 hover:border-slate-300'}"
+                                title="Pintar Coluna">
+                                <i class="fas fa-fill-drip"></i>
+                            </button>
+
+                            <button onclick="${isSystem ? '' : `toggleColType(${gIdx}, ${cIdx})`}" 
+                                class="text-[8px] px-1 py-0.5 rounded border min-w-[28px] ${btnClass}"
+                                title="Alternar Tipo">
+                                ${btnText}
+                            </button>
+                            
+                            <button onclick="removerColuna(${gIdx}, ${cIdx})" class="text-slate-300 hover:text-red-500 px-1"><i class="fas fa-times"></i></button>
+                        </div>
+                    `;
+                });
+
+                groupHtml += `
+                        <button onclick="adicionarColuna(${gIdx})" class="w-full mt-1 text-[10px] text-slate-400 hover:text-brand-600 hover:bg-slate-50 py-1 rounded border border-transparent hover:border-slate-200 border-dashed transition-all">
+                            <i class="fas fa-plus mr-1"></i> Adicionar Coluna
+                        </button>
+                    </div>
+                `;
+
+                groupEl.innerHTML = groupHtml;
+                container.appendChild(groupEl);
+            });
+
+            const slotSelect = document.getElementById('config-slot');
+            slotSelect.innerHTML = '';
+            getFlatColumns().forEach(c => {
+                if(c.type !== 'system') slotSelect.add(new Option(c.label, c.key));
+            });
+        }
+
+        // Funções de Edição Estrutura
+        function updateGroupTitle(gIdx, val) { appState.structure[gIdx].title = val; salvarEstado(); atualizarUI(); }
+        function toggleGroupGray(gIdx) { appState.structure[gIdx].grayTitle = !appState.structure[gIdx].grayTitle; salvarEstado(); atualizarUI(); }
+        function updateColLabel(gIdx, cIdx, val) { appState.structure[gIdx].cols[cIdx].label = val; salvarEstado(); atualizarUI(); }
+        function toggleColType(gIdx, cIdx) { 
+            const t = appState.structure[gIdx].cols[cIdx].type;
+            if(t === 'system') return;
+            appState.structure[gIdx].cols[cIdx].type = (t === 'fixo' ? 'suplente' : 'fixo');
+            salvarEstado(); atualizarUI();
+        }
+        function toggleColHeaderGray(gIdx, cIdx) { appState.structure[gIdx].cols[cIdx].grayHeader = !appState.structure[gIdx].cols[cIdx].grayHeader; salvarEstado(); atualizarUI(); }
+        function toggleColBodyGray(gIdx, cIdx) { appState.structure[gIdx].cols[cIdx].grayBody = !appState.structure[gIdx].cols[cIdx].grayBody; salvarEstado(); atualizarUI(); }
+        function removerGrupo(gIdx) { if(!confirm('Remover grupo?')) return; appState.structure.splice(gIdx, 1); salvarEstado(); atualizarUI(); }
+        function removerColuna(gIdx, cIdx) { appState.structure[gIdx].cols.splice(cIdx, 1); salvarEstado(); atualizarUI(); }
+        function adicionarGrupo() { appState.structure.push({ title: "NOVO GRUPO", grayTitle: false, cols: [] }); salvarEstado(); atualizarUI(); }
+        function adicionarColuna(gIdx) {
+            const key = 'col_' + Date.now() + Math.floor(Math.random()*1000);
+            appState.structure[gIdx].cols.push({ key: key, label: "Nova", type: 'suplente', grayHeader: false, grayBody: false });
+            salvarEstado(); atualizarUI();
+        }
+        function moverGrupo(idx, dir) {
+            const temp = appState.structure[idx]; appState.structure[idx] = appState.structure[idx + dir]; appState.structure[idx + dir] = temp; salvarEstado(); atualizarUI();
+        }
+        function moverColuna(gIdx, cIdx, dir) {
+            const temp = appState.structure[gIdx].cols[cIdx]; appState.structure[gIdx].cols[cIdx] = appState.structure[gIdx].cols[cIdx + dir]; appState.structure[gIdx].cols[cIdx + dir] = temp; salvarEstado(); atualizarUI();
+        }
+
+        // --- ALGORITMO GERAÇÃO ---
+        function gerarEscala(embaralhar) {
+            const mes = appState.mes;
+            const ano = appState.ano;
+            const diasNoMes = new Date(ano, mes + 1, 0).getDate();
+            const feriadosStr = masterData.feriados.map(f => f.data);
+            const pool = getFuncionariosEscala();
+            if(pool.length === 0) return alert("Sem funcionários!");
+
+            const flatCols = getFlatColumns();
+            const slotsKeys = flatCols.filter(c => c.type !== 'system').map(c => c.key); 
+
+            const stats = {};
+            const colStats = {};
+            pool.forEach(f => {
+                const n = f.apelido || f.nome;
+                stats[n] = { fixo: 0, suplente: 0, total: 0 };
+                colStats[n] = {};
+                slotsKeys.forEach(k => colStats[n][k] = 0);
+            });
+
+            const novaEscala = [];
+            let senhaIdx = 0;
+            const poolSenha = masterData.funcionarios.filter(f => f.tipo === 'escala' && f.categoria === 'Funcionário da Senha');
+            let fatorCaos = 0;
+
+            for(let d=1; d<=diasNoMes; d++) {
+                const dataObj = new Date(ano, mes, d);
+                const diaSemana = dataObj.getDay();
+                const dataISO = dataObj.toISOString().split('T')[0];
+                if(diaSemana === 0 || diaSemana === 6 || feriadosStr.includes(dataISO)) continue;
+
+                fatorCaos++;
+                const linha = { data: dataObj, diaSemana: dataObj, senha: '' };
+                slotsKeys.forEach(k => linha[k] = ''); 
+
+                if(poolSenha.length > 0) {
+                    linha.senha = (poolSenha[senhaIdx].apelido || poolSenha[senhaIdx].nome);
+                    senhaIdx = (senhaIdx + 1) % poolSenha.length;
+                }
+
+                const escaladosNoDia = new Set();
+
+                // 1. Aplica Travas
+                appState.regrasFixas.forEach(r => {
+                    if(slotsKeys.includes(r.slot)) {
+                        linha[r.slot] = r.func;
+                        escaladosNoDia.add(r.func);
+                        const colDef = flatCols.find(c => c.key === r.slot);
+                        if(colDef) atualizarStats(r.func, r.slot, colDef.type, stats, colStats);
+                    }
+                });
+
+                // 2. Preenche Vazios
+                const slotsParaPreencher = slotsKeys.filter(s => !linha[s]);
+                const diaAnterior = novaEscala.length > 0 ? novaEscala[novaEscala.length - 1] : null;
+
+                const candidatosBase = pool.filter(f => {
+                    const n = f.apelido || f.nome;
+                    if(escaladosNoDia.has(n)) return false;
+                    const emFerias = masterData.ferias.some(fer => {
+                         if(fer.funcionario !== f.nome) return false;
+                         const ini = new Date(fer.inicio+'T00:00:00');
+                         const fim = new Date(fer.fim+'T00:00:00');
+                         return dataObj >= ini && dataObj <= fim;
+                    });
+                    return !emFerias;
+                });
+
+                let melhorTentativa = null;
+                let menorRepeticao = Infinity;
+                const maxTentativas = 25; // Aumentado para melhor distribuição
+
+                for(let t=0; t<maxTentativas; t++) {
+                    const slotsOrdem = [...slotsParaPreencher].sort(() => Math.random() - 0.5);
+                    const poolTentativa = [...candidatosBase];
+                    const preenchimento = {};
+                    let repeticoes = 0;
+
+                    for(const slot of slotsOrdem) {
+                        if(poolTentativa.length === 0) break;
+                        const colDef = flatCols.find(c => c.key === slot);
+
+                        poolTentativa.sort((a, b) => {
+                            const nA = a.apelido || a.nome;
+                            const nB = b.apelido || b.nome;
+                            const sA = stats[nA];
+                            const sB = stats[nB];
+
+                            // Regra 1: Evitar repetição dia anterior (Peso Absoluto)
+                            let pA = 0, pB = 0;
+                            if(diaAnterior) {
+                                if(diaAnterior[slot] === nA) pA = 1e7;
+                                if(diaAnterior[slot] === nB) pB = 1e7;
+                            }
+                            if(pA !== pB) return pA - pB;
+
+                            // Regra 2: Equilíbrio Total (Quem trabalhou menos tem prioridade)
+                            if(sA.total !== sB.total) return sA.total - sB.total;
+
+                            // Regra 3: Equilíbrio por Tipo (Fixo vs Suplente)
+                            const valA = colDef.type === 'fixo' ? sA.fixo : sA.suplente;
+                            const valB = colDef.type === 'fixo' ? sB.fixo : sB.suplente;
+                            if(valA !== valB) return valA - valB;
+
+                            // Regra 4: Rotação de Posição Específica (Evitar cair sempre no Sup1)
+                            const colA = colStats[nA][slot] || 0;
+                            const colB = colStats[nB][slot] || 0;
+                            if(colA !== colB) return colA - colB;
+
+                            // Fator Aleatório Controlado
+                            if(embaralhar) return Math.random() - 0.5;
+                            const cA = nA.charCodeAt(0); const cB = nB.charCodeAt(0);
+                            return ((cA + fatorCaos + t) % 100) - ((cB + fatorCaos + t) % 100);
+                        });
+
+                        const eleito = poolTentativa[0];
+                        const nome = eleito.apelido || eleito.nome;
+                        preenchimento[slot] = nome;
+                        poolTentativa.shift();
+
+                        if(diaAnterior && diaAnterior[slot] === nome) repeticoes++;
+                    }
+
+                    if(repeticoes === 0) { melhorTentativa = preenchimento; break; }
+                    if(repeticoes < menorRepeticao) { menorRepeticao = repeticoes; melhorTentativa = preenchimento; }
+                }
+
+                if(melhorTentativa) {
+                    Object.keys(melhorTentativa).forEach(k => {
+                        const nome = melhorTentativa[k];
+                        linha[k] = nome;
+                        const colDef = flatCols.find(c => c.key === k);
+                        if(colDef) atualizarStats(nome, k, colDef.type, stats, colStats);
+                    });
+                }
+                novaEscala.push(linha);
+            }
+
+            appState.escala = novaEscala;
+            salvarEstado();
+            atualizarUI();
+        }
+
+        function atualizarStats(nome, slot, type, stats, colStats) {
+            if(!stats[nome]) return;
+            if(type === 'system') return; 
+            stats[nome].total++;
+            if(type === 'fixo') stats[nome].fixo++; else stats[nome].suplente++;
+            if(colStats[nome]) colStats[nome][slot]++;
+        }
+
+        function getPosicaoIdx(linha, nome, keys) {
+            for(let i=0; i<keys.length; i++) {
+                if(linha[keys[i]] === nome) return i;
+            }
+            return -1;
+        }
+
+        // --- RENDER ---
+        function atualizarUI() {
+            renderEditorEstrutura();
+            renderTabela();
+            renderResumo();
+            renderRegras();
+            carregarObservacaoAtual();
+            aplicarEstadoUI();
+        }
+
+        function renderTabela() {
+            const thead = document.getElementById('tabela-head');
+            let h1 = `<tr>`;
+            appState.structure.forEach(g => {
+                if(g.cols.length > 0) {
+                    let bgClass = "bg-slate-200 text-slate-600";
+                    if (g.title === "DADOS") bgClass = "bg-slate-100 text-slate-600";
+                    if (g.grayTitle) bgClass = "bg-custom-gray-group"; 
+                    h1 += `<th class="${bgClass} border-l border-slate-300 text-center text-xs font-bold" colspan="${g.cols.length}">${g.title}</th>`;
+                }
+            });
+            h1 += `</tr>`;
+
+            let h2 = `<tr class="text-xs">`;
+            appState.structure.forEach(g => {
+                g.cols.forEach((c, idx) => {
+                    const border = idx === 0 ? 'border-l border-slate-300' : '';
+                    let color = 'text-slate-600';
+                    if(c.type === 'fixo') color = 'text-blue-600';
+                    if(c.type === 'suplente') color = 'text-purple-600';
+                    const headerClass = c.grayHeader ? 'bg-custom-gray-header' : '';
+                    h2 += `<th class="top-[38px] z-[9] ${border} ${color} ${headerClass}">${c.label}</th>`;
+                });
+            });
+            h2 += `</tr>`;
+            thead.innerHTML = h1 + h2;
+
+            const tbody = document.getElementById('tabela-escala');
+            tbody.innerHTML = '';
+            
+            const dias = appState.escala.filter(l => l.data.getMonth() === appState.mes && l.data.getFullYear() === appState.ano);
+            const hoje = new Date();
+            document.getElementById('total-dias-badge').innerText = `${dias.length} dias letivos`;
+
+            dias.forEach((linha, idx) => {
+                const tr = document.createElement('tr');
+                if(linha.data.getDate() === hoje.getDate() && linha.data.getMonth() === hoje.getMonth()) tr.classList.add('dia-hoje');
+
+                let html = ``;
+                appState.structure.forEach(g => {
+                    g.cols.forEach((c, cIdx) => {
+                        let val = linha[c.key] || '';
+                        
+                        if(c.key === 'dataLabel' && !val) val = linha.data.toLocaleDateString('pt-BR');
+                        if(c.key === 'semLabel' && !val) val = linha.diaSemana.toLocaleDateString('pt-BR', {weekday: 'short'}).toUpperCase();
+                        if(c.key === 'senha' && !val) val = linha.senha || '-';
+
+                        const isLocked = appState.regrasFixas.some(r => r.func === val && r.slot === c.key);
+                        const bgDest = appState.destaques[val] ? `style="background-color: ${appState.destaques[val]} !important"` : '';
+                        const lockedClass = isLocked ? 'celula-travada' : '';
+                        const borderL = cIdx === 0 ? 'border-l border-slate-300' : '';
+                        
+                        let extraClass = '';
+                        if(c.type === 'system') extraClass += ' font-medium bg-slate-50 text-slate-600';
+                        if(c.grayBody) extraClass += ' coluna-cinza';
+
+                        html += `<td class="editable ${lockedClass} ${borderL} ${extraClass}" ${bgDest} data-idx="${idx}" data-key="${c.key}">
+                                    ${val || '<span class="text-slate-200">-</span>'}
+                                 </td>`;
+                    });
+                });
+                tr.innerHTML = html;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderResumo() {
+            const tbody = document.getElementById('lista-resumo');
+            tbody.innerHTML = '';
+            const stats = {};
+            const flatCols = getFlatColumns();
+            getFuncionariosEscala().forEach(f => stats[f.apelido || f.nome] = {f:0, s:0});
+
+            appState.escala.forEach(l => {
+                if(l.data.getMonth() !== appState.mes) return;
+                flatCols.forEach(c => {
+                    if(c.type === 'system') return;
+                    const nome = l[c.key];
+                    if(nome && stats[nome]) {
+                        if(c.type === 'fixo') stats[nome].f++; else stats[nome].s++;
+                    }
+                });
+            });
+
+            let max = 0;
+            Object.values(stats).forEach(v => max = Math.max(max, v.f+v.s));
+            if(max === 0) max = 1;
+
+            Object.keys(stats).sort().forEach(n => {
+                const s = stats[n];
+                const tot = s.f + s.s;
+                const pct = (tot/max)*100;
+                let color = 'bg-emerald-500';
+                if(pct < 70) color = 'bg-amber-400';
+                if(pct < 40) color = 'bg-red-400';
+
+                tbody.innerHTML += `<tr>
+                    <td class="p-2 border-r border-slate-100 font-medium text-slate-700 w-24 truncate" title="${n}">
+                        ${n}
+                        <div class="w-full bg-slate-100 h-1 mt-1 rounded-full"><div class="${color} h-full rounded-full" style="width:${pct}%"></div></div>
+                    </td>
+                    <td class="p-2 text-center text-blue-600 bg-blue-50/30">${s.f}</td>
+                    <td class="p-2 text-center text-purple-600 bg-purple-50/30">${s.s}</td>
+                    <td class="p-2 text-center font-bold">${tot}</td>
+                </tr>`;
+            });
+        }
+
+        // --- UTILS & MODAIS ---
+        function getFuncionariosEscala() { return masterData.funcionarios.filter(f => f.tipo === 'escala' && f.categoria !== 'Funcionário da Senha').sort((a,b) => (a.apelido||a.nome).localeCompare(b.apelido||b.nome)); }
+        function mudarMes(d) {
+            let n = appState.mes + d;
+            if(n > 11) { appState.mes = 0; appState.ano++; } else if(n < 0) { appState.mes = 11; appState.ano--; } else { appState.mes = n; }
+            document.getElementById('mes-select').value = appState.mes; document.getElementById('ano-input').value = appState.ano;
+            atualizarUI();
+        }
+        function importarDados(e) {
+            const f = e.target.files[0]; if(!f) return;
+            const r = new FileReader(); r.onload = (ev) => { try {
+                const j = JSON.parse(ev.target.result); if(j.funcionarios) { localStorage.setItem(MASTER_DB_KEY, JSON.stringify(j)); masterData = j; atualizarUI(); alert("Importado!"); }
+            } catch(e) { alert("Erro JSON"); }}; r.readAsText(f);
+        }
+        function renderRegras() {
+            const div = document.getElementById('lista-regras'); div.innerHTML = '';
+            appState.regrasFixas.forEach((r, idx) => {
+                const col = getFlatColumns().find(c => c.key === r.slot);
+                const colLabel = col ? col.label : r.slot;
+                div.innerHTML += `<div class="flex justify-between items-center bg-white p-1.5 border rounded text-[10px]">
+                    <span class="truncate max-w-[140px]"><b>${r.func}</b> <i class="fas fa-arrow-right mx-1 text-slate-300"></i> ${colLabel}</span>
+                    <button onclick="removerRegra(${idx})" class="text-red-400 hover:text-red-600 px-1"><i class="fas fa-times"></i></button>
+                </div>`;
+            });
+        }
+        function removerRegra(idx) { appState.regrasFixas.splice(idx, 1); salvarEstado(); atualizarUI(); }
+        function adicionarRegraFixa() {
+            const func = document.getElementById('config-func').value; const slot = document.getElementById('config-slot').value;
+            if(!func || !slot) return;
+            appState.regrasFixas = appState.regrasFixas.filter(r => !(r.func === func || r.slot === slot));
+            appState.regrasFixas.push({ func, slot }); salvarEstado(); atualizarUI();
+        }
+        function limparTodasRegras() { if(confirm('Limpar todas as regras?')) { appState.regrasFixas = []; salvarEstado(); atualizarUI(); } }
+        function destacarCor(cor) { const n = document.getElementById('busca-func').value; if(n) { appState.destaques[n] = cor; salvarEstado(); atualizarUI(); } }
+        function limparDestaques() { appState.destaques = {}; salvarEstado(); atualizarUI(); }
+        function toggleTrocaRapida() {
+            modoTrocaRapida = !modoTrocaRapida;
+            const btn = document.getElementById('btn-troca-rapida'); const p = document.getElementById('painel-central');
+            trocaOrigem = null; document.querySelectorAll('.celula-troca-origem').forEach(el => el.classList.remove('celula-troca-origem'));
+            if(modoTrocaRapida) { btn.classList.add('btn-active'); p.classList.add('cursor-troca'); } else { btn.classList.remove('btn-active'); p.classList.remove('cursor-troca'); }
+        }
+        function handleTroca(cell) {
+            if(!trocaOrigem) { trocaOrigem = { idx: cell.dataset.idx, key: cell.dataset.key, el: cell }; cell.classList.add('celula-troca-origem'); }
+            else {
+                const dest = { idx: cell.dataset.idx, key: cell.dataset.key };
+                const v1 = appState.escala[trocaOrigem.idx][trocaOrigem.key]; const v2 = appState.escala[dest.idx][dest.key];
+                appState.escala[trocaOrigem.idx][trocaOrigem.key] = v2; appState.escala[dest.idx][dest.key] = v1;
+                trocaOrigem.el.classList.remove('celula-troca-origem'); trocaOrigem = null; toggleTrocaRapida(); salvarEstado(); atualizarUI();
+            }
+        }
+        function abrirModalMestre() {
+            const funcBody = document.getElementById('mestre-funcs');
+            funcBody.innerHTML = '';
+            masterData.funcionarios.forEach(f => {
+                const almoco = (f.saida1 && f.entrada2) ? `${f.saida1} - ${f.entrada2}` : '-';
+                funcBody.innerHTML += `<tr><td class="p-1 border">${f.apelido||f.nome}</td><td class="p-1 border">${f.cargo}</td><td class="p-1 border">${almoco}</td></tr>`;
+            });
+            const feriasBody = document.getElementById('mestre-ferias');
+            feriasBody.innerHTML = '';
+            masterData.ferias.forEach(f => {
+                feriasBody.innerHTML += `<tr><td class="p-1 border">${f.funcionario}</td><td class="p-1 border">${f.inicio}</td><td class="p-1 border">${f.fim}</td></tr>`;
+            });
+            const feriadosBody = document.getElementById('mestre-feriados');
+            feriadosBody.innerHTML = '';
+            masterData.feriados.forEach(f => {
+                feriadosBody.innerHTML += `<tr><td class="p-1 border">${f.data}</td><td class="p-1 border">${f.nome}</td></tr>`;
+            });
+            document.getElementById('modal-mestre').classList.remove('hidden');
+        }
+        function abrirModal(idx, key) {
+            editando = { idx, key };
+            const linha = appState.escala[idx];
+            const modalSelect = document.getElementById('modal-select');
+            const modalInput = document.getElementById('modal-input');
+            modalSelect.classList.add('hidden'); modalInput.classList.add('hidden');
+            let valorAtual = linha[key];
+            if(key === 'dataLabel' && !valorAtual) valorAtual = linha.data.toLocaleDateString('pt-BR');
+            if(key === 'semLabel' && !valorAtual) valorAtual = linha.diaSemana.toLocaleDateString('pt-BR', {weekday: 'short'}).toUpperCase();
+            if(key === 'senha' && !valorAtual) valorAtual = linha.senha;
+            const isSystemCol = key === 'dataLabel' || key === 'semLabel';
+            if (isSystemCol) { modalInput.value = valorAtual || ''; modalInput.classList.remove('hidden'); } else {
+                modalSelect.innerHTML = '<option value="">(Vazio)</option>';
+                let list = [];
+                if(key === 'senha') { list = masterData.funcionarios.map(f => (f.apelido || f.nome)); } else { list = getFuncionariosEscala().map(f => (f.apelido || f.nome)); }
+                list.sort();
+                list.forEach(nome => { const opt = new Option(nome, nome); if(nome === valorAtual) opt.selected = true; modalSelect.add(opt); });
+                modalSelect.classList.remove('hidden');
+            }
+            document.getElementById('modal-edicao').classList.remove('hidden');
+        }
+        function salvarEdicaoManual() {
+            if(!editando) return;
+            const modalSelect = document.getElementById('modal-select');
+            const modalInput = document.getElementById('modal-input');
+            let novoValor = !modalSelect.classList.contains('hidden') ? modalSelect.value : modalInput.value;
+            appState.escala[editando.idx][editando.key] = novoValor;
+            salvarEstado(); atualizarUI(); fecharModal();
+        }
+        function fecharModal() { document.getElementById('modal-edicao').classList.add('hidden'); editando = null; }
+
+        // --- EXPORTAR ---
+        function parseHtmlToExcelRichText(rootNode) {
+            const results = [];
+            function traverse(node, style) {
+                if (node.nodeType === Node.TEXT_NODE) {
+                    const text = node.textContent;
+                    if (text) {
+                        const fontStyle = { ...style, size: 10, name: 'Calibri' };
+                        if (!fontStyle.color) delete fontStyle.color; 
+                        results.push({ text: text, font: fontStyle });
+                    }
+                } else if (node.nodeType === Node.ELEMENT_NODE) {
+                    const newStyle = { ...style };
+                    const computed = window.getComputedStyle(node);
+                    const tagName = node.tagName.toUpperCase();
+                    if (tagName === 'B' || tagName === 'STRONG' || parseInt(computed.fontWeight) >= 700) newStyle.bold = true;
+                    if (tagName === 'I' || tagName === 'EM' || computed.fontStyle === 'italic') newStyle.italic = true;
+                    if (tagName === 'U' || computed.textDecorationLine.includes('underline')) newStyle.underline = true;
+                    let color = node.style.color || computed.color;
+                    if (color && color !== 'rgb(0, 0, 0)' && color !== 'rgba(0, 0, 0, 0)') {
+                         const hex = rgbToHex(color);
+                         if (hex) newStyle.color = { argb: 'FF' + hex.replace('#', '') };
+                    }
+                    const isBlock = ['DIV', 'P', 'LI', 'BR'].includes(tagName);
+                    if (tagName === 'BR') { results.push({ text: '\n', font: { size: 10, name: 'Calibri' } }); }
+                    if (isBlock && results.length > 0 && !results[results.length-1].text.endsWith('\n') && tagName !== 'BR') { results.push({ text: '\n', font: { size: 10, name: 'Calibri' } }); }
+                    node.childNodes.forEach(child => traverse(child, newStyle));
+                }
+            }
+            traverse(rootNode, {});
+            return results;
+        }
+        function rgbToHex(rgb) {
+            if (!rgb) return null; if (rgb.startsWith('#')) return rgb;
+            const sep = rgb.indexOf(",") > -1 ? "," : " ";
+            const parts = rgb.substr(4).split(")")[0].split(sep);
+            if(parts.length < 3) return null;
+            let r = (+parts[0]).toString(16), g = (+parts[1]).toString(16), b = (+parts[2]).toString(16);
+            if (r.length == 1) r = "0" + r; if (g.length == 1) g = "0" + g; if (b.length == 1) b = "0" + b;
+            return "#" + r + g + b;
+        }
+        async function exportarExcelOriginal() {
+            if (appState.escala.length === 0) return alert("Gere a escala primeiro.");
+            const mesNome = document.getElementById('mes-select').options[appState.mes].text.toUpperCase();
+            const ano = appState.ano;
+            const wb = new ExcelJS.Workbook();
+            const ws = wb.addWorksheet('Escala');
+            ws.pageSetup = { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 1 };
+            const center = { alignment: { horizontal: 'center', vertical: 'middle', wrapText: true }, border: { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} } };
+            const gray = { ...center, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } } };
+            const bold = { ...center, font: { bold: true } };
+            const flatCols = getFlatColumns();
+            const totalCols = flatCols.length;
+            const processText = (text) => text ? text.toString().replace(/\|/g, '\n') : '';
+            ws.getRow(1).height = 36;
+            ws.mergeCells(1, 1, 1, totalCols);
+            const title = ws.getCell(1, 1);
+            title.value = `ESCALA DO GUICHÊ PARA ${mesNome}/${ano}`;
+            title.style = { ...bold, font: { bold: true, size: 16 } };
+            let colIdx = 1;
+            appState.structure.forEach(g => {
+                if(g.cols.length > 0) {
+                    ws.mergeCells(2, colIdx, 4, colIdx + g.cols.length - 1);
+                    const cell = ws.getCell(2, colIdx);
+                    cell.value = processText(g.title);
+                    const groupStyle = g.grayTitle ? gray : center;
+                    cell.style = { ...groupStyle, font: { ...groupStyle.font, size: 7, bold: true } };
+                    for(let r=2; r<=4; r++) for(let c=colIdx; c<colIdx+g.cols.length; c++) ws.getCell(r,c).style = cell.style;
+                    colIdx += g.cols.length;
+                }
+            });
+            const headers = [];
+            const colWidths = [];
+            flatCols.forEach(c => {
+                const labelRaw = c.label.toUpperCase();
+                const labelProcessed = processText(labelRaw);
+                headers.push(labelProcessed);
+                const lines = labelProcessed.split('\n');
+                let maxLength = 0;
+                lines.forEach(line => { if(line.length > maxLength) maxLength = line.length; });
+                let width = Math.max(11, maxLength + 3); 
+                if(c.key === 'dataLabel') width = 12;
+                if(c.key === 'semLabel') width = 9;
+                colWidths.push({ width: width });
+            });
+            ws.columns = colWidths;
+            const r5 = ws.getRow(5);
+            r5.values = headers;
+            r5.eachCell((c, colNumber) => {
+                const col = flatCols[colNumber-1];
+                const isGray = col.grayHeader; 
+                c.style = isGray ? { ...bold, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } } } : bold;
+            });
+            let rowIdx = 6;
+            appState.escala.filter(l => l.data.getMonth() === appState.mes).forEach(l => {
+                const rowVals = [];
+                flatCols.forEach(c => {
+                    let val = l[c.key] || '';
+                    if(c.key === 'dataLabel' && !val) val = l.data.toLocaleDateString('pt-BR');
+                    if(c.key === 'semLabel' && !val) val = l.diaSemana.toLocaleDateString('pt-BR', {weekday: 'short'}).replace('.', '');
+                    if(c.key === 'senha' && !val) val = l.senha || '';
+                    rowVals.push(val);
+                });
+                const r = ws.getRow(rowIdx);
+                r.values = rowVals;
+                r.eachCell((cell, colNum) => {
+                    const col = flatCols[colNum-1];
+                    const isGray = col.grayBody;
+                    cell.style = isGray ? gray : center;
+                });
+                rowIdx++;
+            });
+            const editorEl = document.getElementById('editor-obs');
+            const config = appState.observacoesConfig[getObsKey()] || { vAlign: 'middle' };
+            let hAlign = 'left';
+            if(editorEl.childNodes.length > 0) {
+                 const firstNode = editorEl.childNodes[0];
+                 if(firstNode.style && firstNode.style.textAlign) hAlign = firstNode.style.textAlign;
+            }
+            if(hAlign === 'justify' || hAlign === 'justifyFull') hAlign = 'justify';
+            const richTextValue = parseHtmlToExcelRichText(editorEl);
+            if (richTextValue.length > 0) {
+                rowIdx += 1; 
+                ws.mergeCells(rowIdx, 1, rowIdx + 4, totalCols);
+                const obsCell = ws.getCell(rowIdx, 1);
+                const isPlain = richTextValue.length === 1 && !richTextValue[0].font;
+                if (isPlain) { obsCell.value = richTextValue[0].text; } else { obsCell.value = { richText: richTextValue }; }
+                obsCell.style = {
+                    alignment: { horizontal: hAlign, vertical: config.vAlign, wrapText: true },
+                    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
+                };
+            }
+            const buffer = await wb.xlsx.writeBuffer();
+            saveAs(new Blob([buffer]), `Escala_${mesNome}_${ano}.xlsx`);
+        }
+        async function exportarPDFOriginal() {
+            if (appState.escala.length === 0) return alert("Gere a escala primeiro.");
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'mm', 'a4');
+            const mesNome = document.getElementById('mes-select').options[appState.mes].text.toUpperCase();
+            const ano = appState.ano;
+            doc.setFontSize(14); doc.setFont("helvetica", "bold");
+            doc.text(`ESCALA DO GUICHÊ PARA ${mesNome}/${ano}`, 14, 15);
+            const head1 = [];
+            appState.structure.forEach(g => {
+                if(g.cols.length > 0) {
+                    let groupStyle = { halign: 'center', valign: 'middle', fontSize: 6 };
+                    if (g.grayTitle) groupStyle.fillColor = [220, 220, 220]; 
+                    const title = g.title.replace(/\|/g, '\n');
+                    head1.push({ content: title, colSpan: g.cols.length, styles: groupStyle });
+                }
+            });
+            const head2 = [];
+            const flatCols = getFlatColumns();
+            flatCols.forEach(c => {
+                let cellStyle = {};
+                if (c.grayHeader) { cellStyle = { fillColor: [230, 230, 230] }; }
+                const label = c.label.replace(/\|/g, '\n');
+                head2.push({ content: label, styles: cellStyle });
+            });
+            const body = appState.escala.filter(l => l.data.getMonth() === appState.mes).map(l => {
+                const row = [];
+                flatCols.forEach(c => {
+                    let val = l[c.key] || '';
+                    if(c.key === 'dataLabel' && !val) val = l.data.toLocaleDateString('pt-BR');
+                    if(c.key === 'semLabel' && !val) val = l.diaSemana.toLocaleDateString('pt-BR', {weekday: 'short'}).replace('.', '');
+                    if(c.key === 'senha' && !val) val = l.senha || '';
+                    row.push(val);
+                });
+                return row;
+            });
+            const colStyles = {};
+            flatCols.forEach((c, idx) => {
+                if(c.key === 'dataLabel') colStyles[idx] = { cellWidth: 15 };
+                if(c.key === 'semLabel') colStyles[idx] = { cellWidth: 10 };
+                if(c.grayBody) { colStyles[idx] = { ...colStyles[idx], fillColor: [230, 230, 230] }; }
+            });
+            doc.autoTable({
+                startY: 20, head: [head1, head2], body: body, theme: 'grid',
+                styles: { fontSize: 7, cellPadding: 1, lineColor: [44, 62, 80], lineWidth: 0.1, halign: 'center' },
+                headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold', lineWidth: 0.1, lineColor: [44, 62, 80] },
+                columnStyles: colStyles
+            });
+            const editorEl = document.getElementById('editor-obs');
+            const obsText = editorEl.innerText.trim();
+            const config = appState.observacoesConfig[getObsKey()] || { vAlign: 'middle' };
+            let hAlign = 'left';
+            if(editorEl.childNodes.length > 0) {
+                 const firstNode = editorEl.childNodes[0];
+                 if(firstNode.style && firstNode.style.textAlign) hAlign = firstNode.style.textAlign;
+            }
+            if(hAlign === 'justifyFull') hAlign = 'justify';
+            if (obsText) {
+                const finalY = doc.lastAutoTable.finalY + 10;
+                doc.setFontSize(10);
+                doc.setFont("helvetica", "normal"); 
+                const maxWidth = 270;
+                const splitText = doc.splitTextToSize(obsText, maxWidth); 
+                let x = 14;
+                if (hAlign === 'center') x = 14 + (maxWidth / 2);
+                else if (hAlign === 'right') x = 14 + maxWidth;
+                doc.text(splitText, x, finalY + 5, { align: hAlign === 'justify' ? 'left' : hAlign, maxWidth: maxWidth });
+            }
+            doc.save(`Escala_${mesNome}_${ano}.pdf`);
+        }
+    </script>
+</body>
+</html>

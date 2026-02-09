@@ -1,0 +1,3582 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estúdio de BI Avançado</title>
+    <link rel="shortcut icon" href="https://placehold.co/32x32/003366/FFFFFF?text=K" type="image/x-icon">
+    <!-- Tailwind CSS para um design moderno e responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fonte Inter do Google Fonts para uma melhor legibilidade -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Ícones para botões e alertas -->
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+    
+    <!-- === BIBLIOTECAS DE GRÁFICOS E DADOS === -->
+    <!-- Biblioteca para ler Excel (SheetJS) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    
+    <!-- Chart.js (Core) e Adaptador de Data -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    
+    <!-- Plugins para Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix@^2/dist/chartjs-chart-matrix.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-treemap@^2/dist/chartjs-chart-treemap.min.js"></script>
+
+    <!-- Bibliotecas para Gráficos 3D -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/objects/Reflector.js"></script>
+     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+
+
+    <!-- Outras Bibliotecas Utilitárias -->
+    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .hidden { display: none; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .spinner { animation: spin 1s linear infinite; }
+        .card-glow { box-shadow: 0 0 20px rgba(0, 0, 0, 0.3); }
+        
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .dark .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
+        
+        /* Dashboard Item Styling */
+        .dashboard-item {
+            touch-action: none;
+            user-select: none;
+            position: absolute;
+            transition: box-shadow 0.2s, outline 0.2s, background-color 0.3s, color 0.3s;
+        }
+        .dashboard-item.active {
+            outline: 2px solid #06b6d4;
+            z-index: 100;
+        }
+        .dashboard-item [contenteditable="true"] { overflow-y: auto; }
+        .dashboard-item canvas { cursor: crosshair; } /* Cursor para gráficos */
+
+        .style-preview {
+            transition: transform 0.2s;
+        }
+        .style-preview:hover {
+            transform: scale(1.05);
+        }
+
+        /* Estilos para legendas e labels 3D */
+        .chart-legend-3d {
+            padding: 8px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+            list-style: none;
+            font-size: 12px;
+            max-height: 100%;
+            overflow-y: auto;
+        }
+        .dark .chart-legend-3d {
+             background-color: rgba(30, 41, 59, 0.8);
+        }
+        .chart-legend-3d li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        .chart-legend-3d span {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            margin-right: 8px;
+            border-radius: 2px;
+        }
+        .label3d {
+            color: #fff;
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 12px;
+            pointer-events: none; /* Ignora eventos do mouse */
+        }
+        .three-d-container {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px;
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 transition-colors duration-300">
+
+    <!-- Tela de Criação/Seleção de Projeto -->
+    <div id="project-selection-section" class="flex flex-col items-center justify-center h-screen bg-slate-100 dark:bg-slate-900 p-4">
+        <div class="bg-white dark:bg-slate-800 p-8 rounded-xl shadow-md card-glow max-w-2xl w-full">
+            <div class="text-center mb-6">
+                <ion-icon name="analytics-outline" class="text-6xl text-cyan-500 dark:text-cyan-400 mx-auto"></ion-icon>
+                <h1 class="text-3xl font-bold text-slate-900 dark:text-white mt-4">Estúdio BI</h1>
+                <p class="text-slate-500 dark:text-slate-400 mt-2">Selecione um projeto existente ou crie um novo.</p>
+            </div>
+            <div id="project-list" class="max-h-64 overflow-y-auto custom-scrollbar space-y-3 mb-4 pr-2">
+                <!-- Projetos salvos serão inseridos aqui -->
+            </div>
+            <button id="create-project-button" class="w-full bg-cyan-500 text-white font-semibold py-3 px-6 rounded-lg hover:bg-cyan-600 transition-colors shadow-lg flex items-center justify-center gap-2">
+                <ion-icon name="add-circle-outline" class="text-2xl"></ion-icon>
+                <span>Criar Novo Projeto</span>
+            </button>
+        </div>
+    </div>
+    
+    <!-- App Principal (Inicialmente Oculto) -->
+    <div id="main-app" class="hidden h-screen overflow-hidden flex relative">
+        <!-- Barra de Navegação Lateral -->
+        <aside class="w-20 lg:w-64 bg-white dark:bg-slate-800 p-4 flex flex-col items-center lg:items-start shadow-2xl z-30 flex-shrink-0">
+            <div class="flex items-center gap-2 mb-10 w-full">
+                <ion-icon name="analytics-outline" class="text-3xl text-cyan-500 dark:text-cyan-400"></ion-icon>
+                <h1 class="text-xl font-bold text-slate-800 dark:text-white hidden lg:block">Estúdio BI</h1>
+            </div>
+            <nav class="flex flex-col gap-4 w-full flex-grow">
+                <a href="#" id="dashboard-link" class="flex items-center gap-4 p-3 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white font-semibold">
+                    <ion-icon name="grid-outline" class="text-2xl"></ion-icon>
+                    <span class="hidden lg:block">Dashboard</span>
+                </a>
+                <a href="#" id="report-link" class="flex items-center gap-4 p-3 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-slate-500 dark:text-slate-400">
+                    <ion-icon name="document-text-outline" class="text-2xl"></ion-icon>
+                    <span class="hidden lg:block">Relatório</span>
+                </a>
+                <a href="#" id="settings-link" class="flex items-center gap-4 p-3 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-slate-500 dark:text-slate-400">
+                    <ion-icon name="settings-outline" class="text-2xl"></ion-icon>
+                    <span class="hidden lg:block">Configurações</span>
+                </a>
+            </nav>
+            <div class="mt-auto w-full">
+                 <a href="#" id="back-to-projects-link" class="flex items-center gap-4 p-3 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-slate-500 dark:text-slate-400">
+                    <ion-icon name="arrow-back-outline" class="text-2xl"></ion-icon>
+                    <span class="hidden lg:block">Voltar aos Projetos</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Conteúdo Principal -->
+        <div class="flex-1 flex flex-row overflow-hidden">
+            <main class="flex-1 flex flex-col overflow-auto custom-scrollbar">
+                <header class="bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm sticky top-0 z-20">
+                    <div class="w-full mx-auto py-3 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <h1 class="text-2xl font-bold leading-tight text-slate-900 dark:text-white" id="dashboard-title-header">Relatório de Performance</h1>
+                            <span id="save-status" class="text-sm font-semibold text-slate-500 dark:text-slate-400 transition-all duration-500 opacity-0"></span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                             <button id="undo-button" title="Desfazer" class="hidden flex items-center gap-2 bg-slate-500/10 text-slate-500 font-semibold p-2 rounded-lg hover:bg-slate-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                <ion-icon name="arrow-undo-outline" class="text-xl"></ion-icon>
+                            </button>
+                             <button id="redo-button" title="Refazer" class="hidden flex items-center gap-2 bg-slate-500/10 text-slate-500 font-semibold p-2 rounded-lg hover:bg-slate-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                <ion-icon name="arrow-redo-outline" class="text-xl"></ion-icon>
+                            </button>
+                             <button id="add-text-button" title="Adicionar Caixa de Texto" class="hidden flex items-center gap-2 bg-blue-500/10 text-blue-500 font-semibold p-2 rounded-lg hover:bg-blue-500/20 transition-colors">
+                                <ion-icon name="text-outline" class="text-xl"></ion-icon>
+                            </button>
+                             <button id="clear-filters-button" title="Limpar Filtros" class="hidden flex items-center gap-2 bg-red-500/10 text-red-500 font-semibold p-2 rounded-lg hover:bg-red-500/20 transition-colors">
+                                <ion-icon name="refresh-outline" class="text-xl"></ion-icon>
+                            </button>
+                            <button id="download-button" title="Baixar PDF" class="hidden flex items-center gap-2 bg-cyan-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-cyan-600 transition-colors shadow-sm">
+                                <ion-icon name="download-outline" class="text-xl"></ion-icon>
+                                <span class="hidden md:inline">Baixar PDF</span>
+                            </button>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="flex-grow p-4 sm:p-6 lg:p-8">
+                    <div id="filters-container" class="mb-6 flex gap-4"></div>
+                     <div id="upload-section" class="hidden">
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-md card-glow text-center">
+                            <h2 class="text-xl font-semibold mb-4 text-slate-900 dark:text-white">Anexe sua Planilha</h2>
+                            <p class="text-slate-500 dark:text-slate-400 mb-6 max-w-2xl mx-auto">Arraste e solte um arquivo .xlsx ou clique para selecionar.</p>
+                            <label for="file-upload" class="relative cursor-pointer bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl font-medium text-cyan-600 dark:text-cyan-400 focus-within:outline-none focus-within:ring-2 focus-within:ring-cyan-500 border-2 border-dashed border-slate-300 dark:border-slate-600 flex flex-col items-center justify-center p-8 text-center transition-colors">
+                                <ion-icon name="cloud-upload-outline" class="text-5xl text-slate-400 dark:text-slate-500"></ion-icon>
+                                <span class="mt-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">Selecionar arquivo .xlsx</span>
+                                <input id="file-upload" name="file-upload" type="file" class="sr-only" accept=".xlsx, .xls">
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="dashboard-section" class="hidden">
+                        <div id="dashboard-layout" class="relative w-full min-h-screen rounded-lg"></div>
+                        <div id="loading-state" class="absolute inset-0 flex flex-col items-center justify-center gap-4 text-slate-500 dark:text-slate-400">
+                            <div class="spinner w-10 h-10 border-4 border-slate-300 dark:border-slate-700 border-t-cyan-500 rounded-full"></div>
+                            <p>Analisando dados...</p>
+                        </div>
+                        <div id="error-message" class="hidden absolute inset-0 flex flex-col items-center justify-center gap-4 text-red-500 p-8">
+                            <ion-icon name="alert-circle-outline" class="text-5xl"></ion-icon>
+                            <p class="font-semibold" id="error-details"></p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+            
+            <!-- Painel Lateral Direito -->
+            <aside id="right-panel" class="w-64 md:w-72 lg:w-80 bg-white dark:bg-slate-800 p-4 flex-col shadow-2xl z-30 overflow-y-auto custom-scrollbar hidden flex-shrink-0">
+                <div class="border-b border-slate-200 dark:border-slate-700 mb-4">
+                    <nav class="flex -mb-px" id="right-panel-tabs">
+                        <button data-panel="add-items-panel" class="right-panel-tab whitespace-nowrap py-2 px-3 border-b-2 font-medium text-sm border-cyan-500 text-cyan-600 dark:text-cyan-400">Adicionar</button>
+                        <button data-panel="fields-panel" class="right-panel-tab whitespace-nowrap py-2 px-3 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 dark:text-slate-400 dark:hover:text-slate-300">Campos</button>
+                        <button data-panel="customize-panel" class="right-panel-tab whitespace-nowrap py-2 px-3 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 dark:text-slate-400 dark:hover:text-slate-300">Personalizar</button>
+                    </nav>
+                </div>
+                
+                <div id="add-items-panel" class="panel-content space-y-4"></div>
+                <div id="fields-panel" class="panel-content space-y-2 hidden"></div>
+                <div id="customize-panel" class="panel-content space-y-4 hidden"></div>
+            </aside>
+        </div>
+
+        <!-- Botão Flutuante da IA -->
+         <button id="ai-assistant-button" onclick="openAiAssistant()" title="Ajuda IA" class="fixed bottom-6 right-6 z-40 bg-gradient-to-br from-cyan-500 to-blue-600 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center transform hover:scale-110 transition-transform">
+            <ion-icon name="sparkles-outline" class="text-3xl"></ion-icon>
+        </button>
+    </div>
+    
+    <!-- Modals -->
+    <div id="project-name-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden" style="z-index: 150;"></div>
+    <div id="sheet-selector-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden" style="z-index: 150;"></div>
+    <div id="visual-config-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden" style="z-index: 150;"></div>
+    <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden" style="z-index: 150;"></div>
+    <div id="report-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden" style="z-index: 150;"></div>
+    <div id="delete-confirm-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden" style="z-index: 150;"></div>
+    <div id="ai-assistant-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden" style="z-index: 150;"></div>
+
+
+    <script>
+        // --- DOM Elements ---
+        const getEl = (id) => document.getElementById(id);
+        const fileUpload = getEl('file-upload');
+        const projectSelectionSection = getEl('project-selection-section');
+        const mainApp = getEl('main-app');
+        const uploadSection = getEl('upload-section');
+        const dashboardSection = getEl('dashboard-section');
+        const dashboardLayout = getEl('dashboard-layout');
+        const loadingState = getEl('loading-state');
+        const errorMessage = getEl('error-message');
+        const errorDetails = getEl('error-details');
+        const downloadButton = getEl('download-button');
+        const rightPanel = getEl('right-panel');
+        const rightPanelTabs = getEl('right-panel-tabs');
+        const clearFiltersButton = getEl('clear-filters-button');
+        const filtersContainer = getEl('filters-container');
+        const addTextButton = getEl('add-text-button');
+
+        // --- App State ---
+        let currentProjectId = null;
+        let projectName = null;
+        let activeCharts = new Map();
+        let active3DScenes = new Map();
+        let originalData = [];
+        let filteredData = [];
+        let fields = []; 
+        let dashboardConfig = [];
+        let activeFilters = {};
+        let selectedVisualId = null;
+        let currentWorkbook = null;
+        let selectedSheetName = null;
+        let mainCategoryColumn = null;
+        let employeeColumn = null;
+        let activeRightPanel = 'add-items-panel';
+        let chartToStyleId = null;
+        let saveTimeout = null;
+        let history = [];
+        let historyIndex = -1;
+        
+        // --- App Settings ---
+        let appSettings = {
+            theme: 'light',
+            defaultPalette: 'cyan',
+            dashboardBackground: ''
+        };
+        
+        const chartTypeOptions = [
+            { value: 'bar', label: 'Barras' },
+            { value: 'line', label: 'Linha' },
+            { value: 'pie', label: 'Pizza' },
+            { value: 'doughnut', label: 'Rosca' },
+            { value: 'radar', label: 'Radar' },
+            { value: 'polarArea', label: 'Área Polar' },
+            { value: 'bubble', label: 'Bolhas' },
+            { value: 'scatter', label: 'Dispersão' },
+        ];
+
+        // --- Event Listeners Setup ---
+        function setupEventListeners() {
+            loadSettings();
+            getEl('create-project-button').addEventListener('click', showProjectNameModal);
+            getEl('back-to-projects-link').addEventListener('click', goBackToProjects);
+            fileUpload.addEventListener('change', handleFile);
+            downloadButton.addEventListener('click', downloadDashboard);
+            addTextButton.addEventListener('click', addTextBox);
+            rightPanelTabs.addEventListener('click', switchRightPanel);
+            clearFiltersButton.addEventListener('click', () => {
+                activeFilters = {};
+                getEl('dashboard-title-header').textContent = `${projectName} | Análise de ${selectedSheetName}`;
+                renderDashboard();
+            });
+            getEl('settings-link').addEventListener('click', (e) => { e.preventDefault(); openSettingsModal(); });
+            getEl('report-link').addEventListener('click', (e) => { e.preventDefault(); openReportModal(); });
+            getEl('undo-button').addEventListener('click', undo);
+            getEl('redo-button').addEventListener('click', redo);
+            
+            showProjectListScreen();
+        }
+
+        // --- Project Management ---
+        function showProjectListScreen() {
+            mainApp.classList.add('hidden');
+            projectSelectionSection.classList.remove('hidden');
+            
+            const projects = JSON.parse(localStorage.getItem('bi-studio-projects') || '[]');
+            const projectList = getEl('project-list');
+            
+            if (projects.length === 0) {
+                projectList.innerHTML = `<p class="text-center text-slate-500 dark:text-slate-400">Nenhum projeto salvo ainda.</p>`;
+                return;
+            }
+
+            projectList.innerHTML = projects.map(p => `
+                <div class="flex items-center justify-between p-3 bg-slate-100 dark:bg-slate-700 rounded-lg">
+                    <div>
+                        <button class="font-semibold text-cyan-600 dark:text-cyan-400 hover:underline" onclick="loadProject('${p.id}')">${p.name}</button>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">ID: ${p.id}</p>
+                    </div>
+                    <button onclick="deleteProject('${p.id}')" title="Excluir Projeto" class="p-2 rounded-full hover:bg-red-500/10 text-slate-500 hover:text-red-500">
+                        <ion-icon name="trash-outline" class="text-xl"></ion-icon>
+                    </button>
+                </div>
+            `).join('');
+        }
+        
+        function goBackToProjects() {
+            saveProject();
+            currentProjectId = null;
+            showProjectListScreen();
+        }
+
+        function showProjectNameModal() {
+            const modal = getEl('project-name-modal');
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 max-w-sm w-full card-glow">
+                    <h3 class="text-lg font-semibold mb-4">Nome do Projeto</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Dê um nome ao seu novo relatório para começar.</p>
+                    <div>
+                        <label for="project-name-input" class="sr-only">Nome do Projeto</label>
+                        <input type="text" id="project-name-input" placeholder="Ex: Relatório de Vendas Trimestral" class="w-full p-2 bg-slate-100 dark:bg-slate-700 rounded-md focus:ring-2 focus:ring-cyan-500 focus:outline-none">
+                    </div>
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button onclick="closeModal('project-name-modal')" class="bg-slate-200 dark:bg-slate-700 font-semibold py-2 px-4 rounded-lg">Cancelar</button>
+                        <button id="confirm-project-creation-button" class="bg-cyan-500 text-white font-semibold py-2 px-4 rounded-lg">Criar</button>
+                    </div>
+                </div>`;
+            modal.classList.remove('hidden');
+            const confirmButton = getEl('confirm-project-creation-button');
+            const nameInput = getEl('project-name-input');
+            
+            confirmButton.addEventListener('click', createProject);
+            nameInput.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') createProject();
+            });
+            nameInput.focus();
+        }
+        
+        function createProject() {
+            const input = getEl('project-name-input');
+            const name = input.value.trim();
+            if (name) {
+                projectName = name;
+                currentProjectId = `proj-${Date.now()}`;
+
+                let projects = JSON.parse(localStorage.getItem('bi-studio-projects') || '[]');
+                projects.push({ id: currentProjectId, name: projectName });
+                localStorage.setItem('bi-studio-projects', JSON.stringify(projects));
+                
+                // Reset state for new project
+                activeCharts = new Map();
+                originalData = [];
+                filteredData = [];
+                fields = [];
+                dashboardConfig = [];
+                activeFilters = {};
+                selectedVisualId = null;
+                currentWorkbook = null;
+                selectedSheetName = null;
+                mainCategoryColumn = null;
+                employeeColumn = null;
+                history = [];
+                historyIndex = -1;
+                
+                saveProject();
+
+                closeModal('project-name-modal');
+                getEl('dashboard-title-header').textContent = projectName;
+                projectSelectionSection.classList.add('hidden');
+                mainApp.classList.remove('hidden');
+                uploadSection.classList.remove('hidden');
+                dashboardSection.classList.add('hidden');
+            } else {
+                input.classList.add('ring-2', 'ring-red-500');
+            }
+        }
+
+        function loadProject(projectId) {
+            try {
+                const projectData = JSON.parse(localStorage.getItem(`bi-studio-${projectId}`));
+                if (projectData) {
+                    currentProjectId = projectId;
+                    projectName = projectData.projectName;
+                    dashboardConfig = projectData.dashboardConfig || [];
+                    originalData = projectData.originalData || [];
+                    fields = projectData.fields || [];
+                    selectedSheetName = projectData.selectedSheetName;
+                    
+                    initializeDataState();
+                    activeFilters = {};
+                    selectedVisualId = null;
+
+                    mainApp.classList.remove('hidden');
+                    projectSelectionSection.classList.add('hidden');
+
+                    if (originalData.length > 0) {
+                        uploadSection.classList.add('hidden');
+                        dashboardSection.classList.remove('hidden');
+                        const titleEl = document.querySelector('#dashboard-title-header');
+                        if(titleEl) titleEl.textContent = `${projectName} | Análise de ${selectedSheetName}`;
+                        renderDashboard({ isLoad: true });
+                        // Initialize history for the loaded project
+                        history = [JSON.parse(JSON.stringify(dashboardConfig))];
+                        historyIndex = 0;
+                        updateHistoryButtons();
+                    } else {
+                        const titleEl = document.querySelector('#dashboard-title-header');
+                        if(titleEl) titleEl.textContent = projectName;
+                        uploadSection.classList.remove('hidden');
+                        dashboardSection.classList.add('hidden');
+                    }
+                }
+            } catch (e) {
+                alert("Erro ao carregar o projeto. Os dados podem estar corrompidos.");
+                console.error(e);
+            }
+        }
+
+        function saveProject() {
+            if (!currentProjectId) return;
+
+            const projectState = {
+                projectName,
+                dashboardConfig,
+                originalData,
+                fields,
+                selectedSheetName
+            };
+
+            try {
+                localStorage.setItem(`bi-studio-${currentProjectId}`, JSON.stringify(projectState));
+                showSaveStatus('saved');
+            } catch(e) {
+                console.error("Não foi possível salvar o projeto. O armazenamento pode estar cheio.", e);
+            }
+        }
+        
+        function debouncedSave() {
+            clearTimeout(saveTimeout);
+            showSaveStatus('saving');
+            saveTimeout = setTimeout(saveProject, 1000);
+        }
+
+        function deleteProject(projectId) {
+            const modal = getEl('delete-confirm-modal');
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 max-w-sm w-full card-glow">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/30 sm:mx-0 sm:h-10 sm:w-10">
+                            <ion-icon name="warning-outline" class="h-6 w-6 text-red-600 dark:text-red-400" aria-hidden="true"></ion-icon>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                            <h3 class="text-lg leading-6 font-medium text-slate-900 dark:text-white" id="modal-title">
+                                Excluir Projeto
+                            </h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-slate-500 dark:text-slate-400">
+                                    Tem certeza que deseja excluir este projeto? Todos os dados serão removidos permanentemente. Esta ação não pode ser desfeita.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                        <button id="confirm-delete-button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+                            Excluir
+                        </button>
+                        <button onclick="closeModal('delete-confirm-modal')" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-slate-300 dark:border-slate-600 shadow-sm px-4 py-2 bg-white dark:bg-slate-700 text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 sm:mt-0 sm:w-auto sm:text-sm">
+                            Cancelar
+                        </button>
+                    </div>
+                </div>`;
+            modal.classList.remove('hidden');
+            
+            getEl('confirm-delete-button').onclick = () => confirmDeleteProject(projectId);
+        }
+        
+        function confirmDeleteProject(projectId) {
+            let projects = JSON.parse(localStorage.getItem('bi-studio-projects') || '[]');
+            projects = projects.filter(p => p.id !== projectId);
+            localStorage.setItem('bi-studio-projects', JSON.stringify(projects));
+            localStorage.removeItem(`bi-studio-${projectId}`);
+            closeModal('delete-confirm-modal');
+            showProjectListScreen();
+        }
+
+        // --- Main App Functions ---
+        function handleFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            uploadSection.classList.add('hidden');
+            dashboardSection.classList.remove('hidden');
+            loadingState.classList.remove('hidden');
+            [dashboardLayout, errorMessage, rightPanel, filtersContainer, getEl('undo-button'), getEl('redo-button')].forEach(el => el.classList.add('hidden'));
+            
+            cleanupDashboard();
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    currentWorkbook = XLSX.read(data, { type: 'array' });
+                    openSheetSelectorModal();
+                } catch (err) { console.error("Error reading file:", err); }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function loadSelectedSheet() {
+            if (!selectedSheetName || !currentWorkbook) return;
+            closeModal('sheet-selector-modal');
+            const worksheet = currentWorkbook.Sheets[selectedSheetName];
+            originalData = XLSX.utils.sheet_to_json(worksheet, { defval: null });
+            
+            getEl('dashboard-title-header').textContent = `${projectName} | Análise de ${selectedSheetName}`;
+            uploadSection.classList.add('hidden');
+            dashboardSection.classList.remove('hidden');
+
+            initializeState();
+            renderDashboard(); 
+            saveProject();
+        }
+        
+        function initializeDataState() {
+             if (originalData.length === 0) return;
+             const headers = Object.keys(originalData[0] || {});
+             fields = headers.map(h => {
+                const firstValue = originalData.find(row => row[h] !== null)?.[h];
+                const type = typeof firstValue === 'number' ? 'number' : 'text';
+                return { name: h, type };
+             });
+             
+             const categoryKeywords = ['serviço', 'produto', 'categoria', 'tipo'];
+             mainCategoryColumn = fields.find(f => f.type === 'text' && categoryKeywords.some(kw => f.name.toLowerCase().includes(kw)))?.name;
+             
+             const employeeKeywords = ['funcionário', 'vendedor', 'colaborador', 'nome', 'consultor'];
+             employeeColumn = fields.find(f => f.type === 'text' && employeeKeywords.some(kw => f.name.toLowerCase().includes(kw)))?.name;
+        }
+        
+        function initializeState() {
+             initializeDataState();
+             dashboardConfig = [];
+             activeFilters = {};
+             selectedVisualId = null;
+             history = [[]];
+             historyIndex = 0;
+        }
+        
+        function cleanupDashboard() {
+            dashboardLayout.innerHTML = '';
+            activeCharts.forEach(chart => chart.destroy());
+            activeCharts.clear();
+            active3DScenes.forEach(scene => {
+                cancelAnimationFrame(scene.animationId);
+                if (scene.renderer) scene.renderer.dispose();
+                if (scene.labelRenderer) {
+                    // Clear labels manually
+                     while (scene.labelRenderer.domElement.firstChild) {
+                        scene.labelRenderer.domElement.removeChild(scene.labelRenderer.domElement.firstChild);
+                    }
+                }
+            });
+            active3DScenes.clear();
+        }
+
+        function renderDashboard({ isLoad = false, isHistoryChange = false } = {}) {
+            if (originalData.length === 0) return;
+            
+            cleanupDashboard();
+
+            renderGlobalFilters();
+
+            clearFiltersButton.classList.toggle('hidden', Object.keys(activeFilters).length === 0);
+            filteredData = Object.keys(activeFilters).length > 0
+                ? originalData.filter(row => Object.entries(activeFilters).every(([key, value]) => value === 'all' || row[key] === value))
+                : [...originalData];
+            
+            loadingState.classList.add('hidden');
+            [dashboardLayout, rightPanel, downloadButton, filtersContainer, addTextButton, getEl('undo-button'), getEl('redo-button')].forEach(el => el.classList.remove('hidden'));
+            
+            renderRightPanel();
+            
+            dashboardConfig.forEach(visual => {
+                const element = createVisualContainer(visual);
+                if (element) {
+                     dashboardLayout.appendChild(element);
+                     renderVisualContent(visual, element);
+                }
+            });
+
+            setupInteract();
+            
+            if (!isLoad && !isHistoryChange) {
+                // This is now handled by individual actions to avoid saving intermediate states
+            }
+
+            if (!isLoad) {
+                debouncedSave();
+            }
+            updateHistoryButtons();
+        }
+        
+        // --- UI Rendering ---
+        function createVisualContainer(visual) {
+            const container = document.createElement('div');
+            container.id = visual.id;
+            container.className = 'dashboard-item p-4 rounded-xl shadow-lg card-glow flex flex-col bg-white dark:bg-slate-800 overflow-hidden'; // Added overflow-hidden for 3D
+            Object.assign(container.style, {
+                backgroundColor: visual.style?.backgroundColor,
+                width: `${visual.layout.w}px`,
+                height: `${visual.layout.h}px`,
+                transform: `translate(${visual.layout.x}px, ${visual.layout.y}px)`
+            });
+            container.dataset.x = visual.layout.x;
+            container.dataset.y = visual.layout.y;
+            if (visual.id === selectedVisualId) container.classList.add('active');
+
+            container.addEventListener('mousedown', () => {
+                selectedVisualId = visual.id;
+                document.querySelectorAll('.dashboard-item').forEach(c => c.classList.remove('active'));
+                container.classList.add('active');
+                renderRightPanel();
+            });
+            return container;
+        }
+
+        function renderVisualContent(visual, container) {
+            container.innerHTML = '';
+            switch (visual.type) {
+                case 'kpi':
+                    container.innerHTML = renderKpiContent(visual);
+                    break;
+                case 'kpiGrid':
+                    renderKpiGridContent(visual, container);
+                    break;
+                case 'textBox':
+                    container.innerHTML = renderTextBoxContent(visual);
+                    container.querySelector('[contenteditable]').addEventListener('blur', (e) => {
+                        visual.config.text = e.target.innerHTML;
+                        saveStateToHistory();
+                        debouncedSave();
+                    });
+                    break;
+                case 'table':
+                    renderTableContent(visual, container);
+                    break;
+                case 'bar3d':
+                case 'scatter3d':
+                case 'pie3d':
+                case 'doughnut3d':
+                     render3DChart(visual, container);
+                     break;
+                default: // Chart.js visuals
+                    container.innerHTML = renderChartContent(visual);
+                    setTimeout(() => {
+                        const canvas = getEl(`canvas-${visual.id}`);
+                        if (!canvas) return;
+                        
+                        const chartData = prepareChartData(visual, filteredData);
+                        
+                        const chart = createChart(canvas, visual, chartData);
+                        if (chart) activeCharts.set(visual.id, chart);
+                    }, 50);
+                    break;
+            }
+        }
+        
+        function renderKpiContent(visual) {
+            const { aggregation, column, prefix = '', suffix = '' } = visual.config.measure;
+            const value = calculateMeasure(filteredData, aggregation, column);
+            
+            const style = suffix === '%' ? 'percent' : getFormatType(column);
+            const formattedValue = formatValue(value, style);
+            
+            const finalPrefix = style === 'BRL' ? '' : prefix;
+            const finalSuffix = style === 'percent' ? '' : suffix;
+            const fullText = `${finalPrefix}${formattedValue}${finalSuffix}`;
+
+            const titleFontSize = visual.style?.fontSize || '14px';
+            let valueFontSize = visual.style?.valueFontSize || '30px';
+            
+            if (!visual.style?.valueFontSize) {
+                if (fullText.length > 12) { valueFontSize = '1.5rem'; }
+                if (fullText.length > 18) { valueFontSize = '1.25rem'; }
+            }
+
+            return `
+                <div class="flex flex-col justify-center h-full w-full text-center">
+                    <p class="text-sm text-slate-500 dark:text-slate-400" style="color:${visual.style?.textColor || ''}; font-size:${titleFontSize};">${visual.config.title}</p>
+                    <p class="font-extrabold text-cyan-500 dark:text-cyan-400 mt-1" style="overflow-wrap: break-word; word-break: break-all; color:${visual.style?.valueColor || ''}; font-size:${valueFontSize}; line-height: 1.2;">${fullText}</p>
+                </div>
+             `;
+        }
+
+        function renderKpiGridContent(visual, container) {
+            const { title, measures } = visual.config;
+             if (!measures || measures.length === 0) {
+                container.innerHTML = '<p class="text-sm text-slate-500 dark:text-slate-400 p-4">Selecione as métricas para o card no painel de campos.</p>';
+                return;
+            }
+
+            const header = document.createElement('h3');
+            header.className = 'text-base font-semibold text-slate-900 dark:text-white mb-2';
+            header.style.color = visual.style?.textColor || '';
+            header.style.fontSize = visual.style?.fontSize || '16px';
+            header.textContent = title;
+            container.appendChild(header);
+
+            const grid = document.createElement('div');
+            grid.className = 'grid grid-cols-2 gap-2 flex-grow';
+            container.appendChild(grid);
+
+            measures.forEach(measure => {
+                const kpiItem = document.createElement('div');
+                kpiItem.className = 'p-2 rounded-lg flex flex-col justify-center text-center';
+                
+                const value = calculateMeasure(filteredData, measure.aggregation, measure.column);
+                const formattedValue = formatValue(value, getFormatType(measure.column));
+                
+                kpiItem.innerHTML = `
+                    <p class="text-xs text-slate-500 dark:text-slate-400" style="color:${visual.style?.textColor || ''};">${measure.title}</p>
+                    <p class="font-bold text-lg text-cyan-500 dark:text-cyan-400" style="color:${visual.style?.valueColor || ''};">${formattedValue}</p>
+                `;
+                grid.appendChild(kpiItem);
+            });
+        }
+
+        function renderTextBoxContent(visual) {
+            return `<div contenteditable="true" class="w-full h-full focus:outline-none custom-scrollbar" style="color:${visual.style?.textColor || ''}; font-size:${visual.style?.fontSize || '16px'}">${visual.config.text}</div>`;
+        }
+        
+        function renderTableContent(visual, container) {
+            const { columns } = visual.config;
+            if (!columns || columns.length === 0) {
+                container.innerHTML = '<p class="text-sm text-slate-500 dark:text-slate-400 p-4">Selecione colunas no painel de campos para exibir dados.</p>';
+                return;
+            }
+
+            const tableHTML = `
+                <h3 class="text-base font-semibold text-slate-900 dark:text-white mb-2" style="color:${visual.style?.textColor || ''}; font-size:${visual.style?.fontSize || '16px'}">${visual.config.title}</h3>
+                <div class="h-full w-full overflow-auto custom-scrollbar">
+                    <table class="w-full text-left text-sm">
+                        <thead class="sticky top-0 bg-white/80 dark:bg-slate-700/80 backdrop-blur-sm">
+                            <tr>
+                                ${columns.map(col => `<th class="p-2 border-b-2 border-slate-200 dark:border-slate-600 font-semibold">${col}</th>`).join('')}
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+                            ${filteredData.map(row => `
+                                <tr>
+                                    ${columns.map(col => `<td class="p-2 whitespace-nowrap">${row[col] ?? ''}</td>`).join('')}
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            container.innerHTML = tableHTML;
+        }
+
+
+        function renderChartContent(visual) {
+            return `<h3 class="text-base font-semibold text-slate-900 dark:text-white mb-2" style="color:${visual.style?.textColor || ''}; font-size:${visual.style?.fontSize || '16px'}">${visual.config.title}</h3><div class="flex-grow min-h-0 relative"><canvas id="canvas-${visual.id}"></canvas></div>`;
+        }
+        
+        function rerenderVisual(visualId) {
+            const visual = dashboardConfig.find(v => v.id === visualId);
+            const container = getEl(visualId);
+            if (visual && container) {
+                renderVisualContent(visual, container);
+            }
+        }
+        
+        // --- Right Panel Logic ---
+        function switchRightPanel(e) {
+            const button = e.target.closest('button');
+            if (!button) return;
+            activeRightPanel = button.dataset.panel;
+            
+            document.querySelectorAll('.panel-content').forEach(p => p.classList.add('hidden'));
+            getEl(activeRightPanel).classList.remove('hidden');
+
+            document.querySelectorAll('.right-panel-tab').forEach(t => t.className = t.className.replace('border-cyan-500 text-cyan-600 dark:text-cyan-400', 'border-transparent text-slate-500'));
+            button.className = button.className.replace('border-transparent text-slate-500', 'border-cyan-500 text-cyan-600 dark:text-cyan-400');
+            
+            renderRightPanel();
+        }
+        
+        function renderRightPanel() {
+            const panelRenderers = {
+                'add-items-panel': renderAddItemsPanel,
+                'fields-panel': renderFieldsPanel,
+                'customize-panel': renderCustomizePanel
+            };
+            panelRenderers[activeRightPanel]();
+        }
+
+        function renderAddItemsPanel() {
+            const panel = getEl('add-items-panel');
+            const visualGroups = [
+                {
+                    title: 'Cards e KPIs',
+                    items: [
+                        { title: 'KPI Único', icon: 'cash-outline', type: 'kpi' },
+                        { title: 'Medidor', icon: 'speedometer-outline', type: 'gauge' },
+                        { title: 'Card de Métricas', icon: 'apps-outline', type: 'kpiGrid' },
+                    ]
+                },
+                {
+                    title: 'Gráficos 2D',
+                    items: [
+                        { title: 'Barras Verticais', icon: 'bar-chart-outline', type: 'bar' },
+                        { title: 'Barras Horizontais', icon: 'bar-chart-outline', transform: 'rotate-90', type: 'bar', subType: 'horizontal' },
+                        { title: 'Linha', icon: 'analytics-outline', type: 'line' },
+                        { title: 'Área', icon: 'podium-outline', type: 'line', subType: 'area' },
+                        { title: 'Pizza', icon: 'pie-chart-outline', type: 'pie' },
+                        { title: 'Rosca', icon: 'ellipse-outline', type: 'doughnut' },
+                        { title: 'Dispersão (XY)', icon: 'shapes-outline', type: 'scatter' },
+                        { title: 'Bolhas', icon: 'water-outline', type: 'bubble' },
+                        { title: 'Funil', icon: 'funnel-outline', type: 'bar', subType: 'funnel' },
+                        { title: 'Gráfico Composto', icon: 'cellular-outline', type: 'composite' },
+                    ]
+                },
+                 {
+                    title: 'Hierarquia e Matriz',
+                    items: [
+                         { title: 'Treemap', icon: 'map-outline', type: 'treemap' },
+                         { title: 'Matriz de Calor', icon: 'grid-outline', type: 'matrix' },
+                    ]
+                },
+                {
+                    title: 'Gráficos 3D',
+                    items: [
+                        { title: 'Barras 3D', icon: 'cube-outline', type: 'bar3d' },
+                        { title: 'Dispersão 3D', icon: 'planet-outline', type: 'scatter3d' },
+                        { title: 'Pizza 3D', icon: 'pie-chart-outline', type: 'pie3d' },
+                        { title: 'Rosca 3D', icon: 'ellipse-outline', type: 'doughnut3d' },
+                    ]
+                },
+                {
+                    title: 'Outros',
+                    items: [
+                        { title: 'Caixa de Texto', icon: 'text-outline', type: 'textBox' },
+                        { title: 'Tabela', icon: 'list-outline', type: 'table' }
+                    ]
+                }
+            ];
+
+            panel.innerHTML = visualGroups.map(group => `
+                <div>
+                    <h3 class="font-semibold text-slate-900 dark:text-white mb-2">${group.title}</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        ${group.items.map(item => `
+                            <button class="flex flex-col items-center justify-center text-center p-2 rounded-md bg-slate-100 dark:bg-slate-700 hover:bg-cyan-100 dark:hover:bg-cyan-900 transition-colors"
+                                onclick='addVisual(${JSON.stringify(item)})'>
+                                <ion-icon name="${item.icon}" class="text-2xl mb-1" style="${item.transform ? `transform:${item.transform}`: ''}"></ion-icon>
+                                <span class="text-xs">${item.title}</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function renderFieldsPanel() {
+            const panel = getEl('fields-panel');
+            const visual = dashboardConfig.find(v => v.id === selectedVisualId);
+            if (!visual || visual.type === 'textBox' || visual.type === 'kpi' ) {
+                panel.innerHTML = '<p class="text-sm text-slate-500 dark:text-slate-400">Selecione um visual para configurar seus campos.</p>';
+                return;
+            }
+
+            let fieldsHtml = '';
+            
+            if (visual.type === 'table') {
+                 fieldsHtml = `
+                    <div>
+                        <label class="text-sm font-semibold">Título da Tabela</label>
+                        <input type="text" value="${visual.config.title || ''}" oninput="updateVisualConfig('${visual.id}', 'title', this.value)" class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md">
+                    </div>
+                    <div class="mt-2">
+                        <label class="text-sm font-semibold">Colunas da Tabela</label>
+                        <div class="max-h-60 mt-1 overflow-y-auto custom-scrollbar border rounded-md p-2 dark:border-slate-600">
+                        ${fields.map(field => `
+                            <label class="flex items-center gap-2 p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700">
+                                <input type="checkbox" onchange="updateTableColumns('${visual.id}', '${field.name}', this.checked)" ${(visual.config.columns || []).includes(field.name) ? 'checked' : ''}>
+                                <span class="text-sm">${field.name}</span>
+                            </label>
+                        `).join('')}
+                        </div>
+                    </div>
+                `;
+            } else if (visual.type === 'kpiGrid') {
+                fieldsHtml = `
+                     <div>
+                        <label class="text-sm font-semibold">Título do Card</label>
+                        <input type="text" value="${visual.config.title || ''}" oninput="updateVisualConfig('${visual.id}', 'title', this.value)" class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md">
+                    </div>
+                     <div id="kpi-grid-measures-panel" class="space-y-3 mt-3">
+                        ${(visual.config.measures || []).map((measure, index) => renderKpiGridMeasurePanel(visual, measure, index)).join('')}
+                    </div>
+                    <button class="w-full mt-2 text-sm bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 p-2 rounded-md" onclick="addKpiGridMeasure('${visual.id}')">Adicionar Métrica</button>
+                `;
+            } else if (['scatter3d', 'bar3d'].includes(visual.type)) {
+                 fieldsHtml = `
+                    <div>
+                        <label class="text-sm font-semibold">Título</label>
+                        <input type="text" value="${visual.config.title || ''}" oninput="updateVisualConfig('${visual.id}', 'title', this.value)" class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md">
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold">Eixo X ${visual.type === 'bar3d' ? '(Categoria)' : ''}</label>
+                        <select class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md" onchange="updateVisualConfig('${visual.id}', 'xAxis', this.value)">
+                            ${fields.map(f => `<option value="${f.name}" ${visual.config.xAxis === f.name ? 'selected' : ''}>${f.name}</option>`).join('')}
+                        </select>
+                    </div>
+                     <div>
+                        <label class="text-sm font-semibold">Eixo Y ${visual.type === 'bar3d' ? '(Valor/Altura)' : ''}</label>
+                        <select class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md" onchange="updateVisualConfig('${visual.id}', 'yAxis', this.value)">
+                            ${fields.filter(f => f.type === 'number').map(f => `<option value="${f.name}" ${visual.config.yAxis === f.name ? 'selected' : ''}>${f.name}</option>`).join('')}
+                        </select>
+                    </div>
+                     <div>
+                        <label class="text-sm font-semibold">Eixo Z ${visual.type === 'bar3d' ? '(Série)' : ''}</label>
+                        <select class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md" onchange="updateVisualConfig('${visual.id}', 'zAxis', this.value)">
+                             ${fields.map(f => `<option value="${f.name}" ${visual.config.zAxis === f.name ? 'selected' : ''}>${f.name}</option>`).join('')}
+                        </select>
+                    </div>
+                `;
+            } else if (['pie3d', 'doughnut3d'].includes(visual.type)) {
+                fieldsHtml = `
+                     <div>
+                        <label class="text-sm font-semibold">Título</label>
+                        <input type="text" value="${visual.config.title || ''}" oninput="updateVisualConfig('${visual.id}', 'title', this.value)" class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md">
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold">Categoria (Fatias)</label>
+                        <select class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md" onchange="updateVisualConfig('${visual.id}', 'axis', this.value)">
+                            ${fields.filter(f => f.type === 'text').map(f => `<option value="${f.name}" ${visual.config.axis === f.name ? 'selected' : ''}>${f.name}</option>`).join('')}
+                        </select>
+                    </div>
+                     <div>
+                        <label class="text-sm font-semibold">Valor (Tamanho da Fatia)</label>
+                        <select class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md" onchange="updateVisualConfig('${visual.id}', 'values', [this.value])">
+                            ${fields.filter(f => f.type === 'number').map(f => `<option value="${f.name}" ${visual.config.values && visual.config.values[0] === f.name ? 'selected' : ''}>${f.name}</option>`).join('')}
+                        </select>
+                    </div>
+                `;
+            } else if (visual.type === 'bubble') {
+                 fieldsHtml = `
+                    <div>
+                        <label class="text-sm font-semibold">Título</label>
+                        <input type="text" value="${visual.config.title || ''}" oninput="updateVisualConfig('${visual.id}', 'title', this.value)" class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md">
+                    </div>
+                     <div>
+                        <label class="text-sm font-semibold">Eixo X</label>
+                         <select class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md" onchange="updateVisualConfig('${visual.id}', 'xAxis', this.value)">
+                            <option value="">Selecione...</option>
+                           ${fields.filter(f => f.type === 'number').map(f => `<option value="${f.name}" ${visual.config.xAxis === f.name ? 'selected' : ''}>${f.name}</option>`).join('')}
+                        </select>
+                    </div>
+                     <div>
+                        <label class="text-sm font-semibold">Eixo Y</label>
+                         <select class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md" onchange="updateVisualConfig('${visual.id}', 'yAxis', this.value)">
+                            <option value="">Selecione...</option>
+                           ${fields.filter(f => f.type === 'number').map(f => `<option value="${f.name}" ${visual.config.yAxis === f.name ? 'selected' : ''}>${f.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold">Tamanho da Bolha</label>
+                         <select class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md" onchange="updateVisualConfig('${visual.id}', 'bubbleSize', this.value)">
+                            <option value="">Selecione...</option>
+                           ${fields.filter(f => f.type === 'number').map(f => `<option value="${f.name}" ${visual.config.bubbleSize === f.name ? 'selected' : ''}>${f.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold">Cor da Bolha (Categoria)</label>
+                        <select class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md" onchange="updateVisualConfig('${visual.id}', 'category', this.value)">
+                            <option value="">Nenhuma</option>
+                            ${fields.filter(f => f.type === 'text').map(f => `<option value="${f.name}" ${visual.config.category === f.name ? 'selected' : ''}>${f.name}</option>`).join('')}
+                        </select>
+                    </div>
+                 `;
+            } else if (['treemap', 'matrix'].includes(visual.type)) {
+                fieldsHtml = `
+                     <div>
+                        <label class="text-sm font-semibold">Título</label>
+                        <input type="text" value="${visual.config.title || ''}" oninput="updateVisualConfig('${visual.id}', 'title', this.value)" class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md">
+                    </div>
+                     <div>
+                        <label class="text-sm font-semibold">${visual.type === 'treemap' ? 'Rótulos (Categorias)' : 'Eixo X'}</label>
+                        <div class="max-h-28 overflow-y-auto custom-scrollbar border rounded-md p-2 dark:border-slate-600 text-sm mt-1">
+                            ${fields.filter(f => f.type === 'text').map(field => `
+                                <label class="flex items-center gap-2 p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700">
+                                    <input type="checkbox" onchange="updateTreemapColumns('${visual.id}', 'labels', '${field.name}', this.checked)" ${(visual.config.labels || []).includes(field.name) ? 'checked' : ''}>
+                                    <span>${field.name}</span>
+                                </label>
+                            `).join('')}
+                        </div>
+                    </div>
+                     ${visual.type === 'matrix' ? `
+                     <div>
+                        <label class="text-sm font-semibold">Eixo Y</label>
+                        <select class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md" onchange="updateVisualConfig('${visual.id}', 'yAxis', this.value)">
+                             ${fields.filter(f => f.type === 'text').map(f => `<option value="${f.name}" ${visual.config.yAxis === f.name ? 'selected' : ''}>${f.name}</option>`).join('')}
+                        </select>
+                    </div>
+                     ` : ''}
+                     <div>
+                        <label class="text-sm font-semibold">${visual.type === 'treemap' ? 'Valores (Tamanho)' : 'Valores (Cor)'}</label>
+                        <select class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md" onchange="updateVisualConfig('${visual.id}', 'value', this.value)">
+                            ${fields.filter(f => f.type === 'number').map(f => `<option value="${f.name}" ${visual.config.value === f.name ? 'selected' : ''}>${f.name}</option>`).join('')}
+                        </select>
+                    </div>
+                `;
+            }
+            else if (visual.type === 'composite') {
+                 fieldsHtml = `
+                    <div>
+                        <label class="text-sm font-semibold">Eixo X (Categoria)</label>
+                        <select class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md" onchange="updateVisualConfig('${visual.id}', 'axis', this.value)">
+                            ${fields.map(f => `<option value="${f.name}" ${visual.config.axis === f.name ? 'selected' : ''}>${f.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div id="composite-series-panel" class="space-y-3 mt-3">
+                        ${(visual.config.series || []).map((serie, index) => renderCompositeSeriesPanel(visual, serie, index)).join('')}
+                    </div>
+                    <button class="w-full mt-2 text-sm bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 p-2 rounded-md" onclick="addCompositeSeries('${visual.id}')">Adicionar Série</button>
+                `;
+            } else { // Other charts
+                let axisOptions = `
+                    <option value="valores" ${visual.config.axisType === 'valores' ? 'selected' : ''}>Valores por Categoria</option>
+                    <option value="funcionarios" ${visual.config.axisType === 'funcionarios' ? 'selected' : ''}>Comparar Funcionários</option>
+                `;
+
+                fieldsHtml = `
+                    <div>
+                        <label class="text-sm font-semibold">Tipo de Análise</label>
+                        <select class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md" onchange="updateVisualAxisType('${visual.id}', this.value)">
+                            ${axisOptions}
+                        </select>
+                    </div>
+                    <div id="axis-fields-container" class="mt-4 space-y-2"></div>
+                `;
+            }
+            
+            panel.innerHTML = `
+                <div class="flex justify-between items-center">
+                    <h3 class="font-semibold text-slate-900 dark:text-white">Campos</h3>
+                </div>
+                <div id="fields-list" class="space-y-2 mt-2">${fieldsHtml}</div>
+            `;
+
+            if (!['composite', 'table', 'bubble', 'kpiGrid', 'treemap', 'matrix'].includes(visual.type) && !visual.type.includes('3d')) {
+                renderAxisFields(visual);
+            }
+        }
+        
+        function renderKpiGridMeasurePanel(visual, measure, index) {
+            return `
+                <div class="p-2 border rounded-md dark:border-slate-600 bg-slate-50 dark:bg-slate-800/50">
+                     <div class="flex justify-between items-center mb-2">
+                        <label class="text-sm font-semibold">Métrica ${index + 1}</label>
+                        <button class="p-1 rounded-full hover:bg-red-500/10 text-slate-500 hover:text-red-500" onclick="removeKpiGridMeasure('${visual.id}', ${index})">
+                            <ion-icon name="trash-outline"></ion-icon>
+                        </button>
+                     </div>
+                     <label class="text-xs">Título</label>
+                     <input type="text" value="${measure.title}" oninput="updateKpiGridMeasure('${visual.id}', ${index}, 'title', this.value)" class="w-full text-sm mb-1 p-1 bg-slate-100 dark:bg-slate-700 rounded-md">
+                     <label class="text-xs">Coluna</label>
+                     <select class="w-full text-sm mb-1 p-1 bg-slate-100 dark:bg-slate-700 rounded-md" onchange="updateKpiGridMeasure('${visual.id}', ${index}, 'column', this.value)">
+                        ${fields.filter(f => f.type === 'number').map(f => `<option value="${f.name}" ${measure.column === f.name ? 'selected' : ''}>${f.name}</option>`).join('')}
+                     </select>
+                     <label class="text-xs">Cálculo</label>
+                     <select class="w-full text-sm p-1 bg-slate-100 dark:bg-slate-700 rounded-md" onchange="updateKpiGridMeasure('${visual.id}', ${index}, 'aggregation', this.value)">
+                        <option value="SUM" ${measure.aggregation === 'SUM' ? 'selected': ''}>Soma</option>
+                        <option value="AVERAGE" ${measure.aggregation === 'AVERAGE' ? 'selected': ''}>Média</option>
+                        <option value="MAX" ${measure.aggregation === 'MAX' ? 'selected': ''}>Máximo</option>
+                        <option value="MIN" ${measure.aggregation === 'MIN' ? 'selected': ''}>Mínimo</option>
+                     </select>
+                </div>
+            `;
+        }
+
+        
+        function updateTreemapColumns(id, key, value, isChecked) {
+             const visual = dashboardConfig.find(v => v.id === id);
+             if (visual) {
+                if (!visual.config[key]) visual.config[key] = [];
+                if (isChecked) {
+                    if (!visual.config[key].includes(value)) visual.config[key].push(value);
+                } else {
+                    visual.config[key] = visual.config[key].filter(v => v !== value);
+                }
+                saveStateToHistory();
+                rerenderVisual(id);
+            }
+        }
+        
+        function updateTableColumns(id, columnName, isChecked) {
+            const visual = dashboardConfig.find(v => v.id === id);
+            if (visual) {
+                if (!visual.config.columns) {
+                    visual.config.columns = [];
+                }
+                if (isChecked) {
+                    if (!visual.config.columns.includes(columnName)) {
+                        visual.config.columns.push(columnName);
+                    }
+                } else {
+                    visual.config.columns = visual.config.columns.filter(c => c !== columnName);
+                }
+                saveStateToHistory();
+                rerenderVisual(id);
+            }
+        }
+        
+        function renderCompositeSeriesPanel(visual, serie, index) {
+            const compatibleTypes = [ { value: 'bar', label: 'Barras' }, { value: 'line', label: 'Linha' }];
+            return `
+                <div class="p-2 border rounded-md dark:border-slate-600 bg-slate-50 dark:bg-slate-800/50">
+                     <div class="flex justify-between items-center mb-2">
+                        <label class="text-sm font-semibold">Série ${index + 1}</label>
+                        <button class="p-1 rounded-full hover:bg-red-500/10 text-slate-500 hover:text-red-500" onclick="removeCompositeSeries('${visual.id}', ${index})">
+                            <ion-icon name="trash-outline"></ion-icon>
+                        </button>
+                     </div>
+                     <select class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md text-sm" onchange="updateCompositeSeries('${visual.id}', ${index}, 'type', this.value)">
+                        ${compatibleTypes.map(t => `<option value="${t.value}" ${serie.type === t.value ? 'selected' : ''}>${t.label}</option>`).join('')}
+                     </select>
+                      ${serie.type === 'line' ? `
+                        <label class="flex items-center gap-2 mt-2 text-sm">
+                           <input type="checkbox" onchange="updateCompositeSeries('${visual.id}', ${index}, 'fill', this.checked)" ${serie.fill ? 'checked' : ''}>
+                           Preencher como área
+                        </label>
+                     ` : ''}
+                     <div class="text-sm mt-2">Valores:</div>
+                     <div class="max-h-28 overflow-y-auto custom-scrollbar border rounded-md p-2 dark:border-slate-600 text-sm mt-1">
+                        ${fields.filter(f => f.type === 'number').map(metric => `
+                            <label class="flex items-center gap-2 p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700">
+                                <input type="checkbox" onchange="updateCompositeSeriesValue('${visual.id}', ${index}, '${metric.name}', this.checked)" ${(serie.values || []).includes(metric.name) ? 'checked' : ''}>
+                                <span>${metric.name}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+
+        function renderAxisFields(visual) {
+            const container = getEl('axis-fields-container');
+            if (!container) return;
+
+            if (visual.config.axisType === 'funcionarios') {
+                 if (!employeeColumn) {
+                    container.innerHTML = `<p class="text-xs text-amber-500">Nenhuma coluna de funcionário detectada na planilha.</p>`;
+                    return;
+                }
+                const employees = [...new Set(originalData.map(row => row[employeeColumn]))].sort();
+                
+                container.innerHTML = `
+                    <label class="text-sm font-semibold">Selecione os Funcionários</label>
+                    <div class="max-h-40 overflow-y-auto custom-scrollbar border rounded-md p-2 dark:border-slate-600">
+                    ${employees.map(emp => `
+                        <label class="flex items-center gap-2 p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700">
+                            <input type="checkbox" onchange="updateEmployeeSelection('${visual.id}', this.value, this.checked)" value="${emp}" ${(visual.config.selectedEmployees || []).includes(emp) ? 'checked' : ''}>
+                            <span class="text-sm">${emp}</span>
+                        </label>
+                    `).join('')}
+                    </div>
+                    <label class="text-sm font-semibold mt-2 block">Métricas</label>
+                    <div class="max-h-40 overflow-y-auto custom-scrollbar border rounded-md p-2 dark:border-slate-600">
+                        ${fields.filter(f => f.type === 'number').map(metric => `
+                             <label class="flex items-center gap-2 p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700">
+                                <input type="checkbox" onchange="updateValueSelection('${visual.id}', '${metric.name}', this.checked)" ${(visual.config.values || []).includes(metric.name) ? 'checked' : ''}>
+                                <span class="text-sm">${metric.name}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                `;
+
+            } else { // 'valores'
+                container.innerHTML = `
+                    <label class="text-sm font-semibold">Eixo X (Categoria)</label>
+                    <select class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md" onchange="updateVisualConfig('${visual.id}', 'axis', this.value)">
+                         ${fields.map(f => `<option value="${f.name}" ${visual.config.axis === f.name ? 'selected' : ''}>${f.name}</option>`).join('')}
+                    </select>
+                    <label class="text-sm font-semibold mt-2 block">Valores a Comparar (Eixo Y)</label>
+                     <div class="max-h-40 overflow-y-auto custom-scrollbar border rounded-md p-2 dark:border-slate-600">
+                        ${fields.filter(f => f.type === 'number').map(metric => `
+                            <label class="flex items-center gap-2 p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700">
+                                <input type="checkbox" onchange="updateValueSelection('${visual.id}', '${metric.name}', this.checked)" ${(visual.config.values || []).includes(metric.name) ? 'checked' : ''}>
+                                <span class="text-sm">${metric.name}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                `;
+            }
+        }
+        
+        function renderCustomizePanel() {
+            const panel = getEl('customize-panel');
+            const visual = dashboardConfig.find(v => v.id === selectedVisualId);
+            if (!visual) {
+                panel.innerHTML = '<p class="text-sm text-slate-500 dark:text-slate-400">Selecione um item no dashboard para personalizar.</p>';
+                return;
+            }
+
+            if (!visual.style) visual.style = {};
+
+            const createColorInput = (label, property, value) => `
+                <div class="flex items-center justify-between">
+                    <label class="text-sm">${label}</label>
+                    <input type="color" value="${value || '#000000'}" 
+                        oninput="updateVisualStyleProperty('${visual.id}', '${property}', this.value)"
+                        class="w-8 h-8 p-1 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md cursor-pointer">
+                </div>
+            `;
+
+            const createSizeInput = (label, property, value, placeholder) => `
+                <div>
+                    <label class="text-sm">${label}</label>
+                    <input type="text" placeholder="${placeholder}" value="${(value || '').replace('px', '')}"
+                        onblur="updateVisualStyleProperty('${visual.id}', '${property}', this.value)"
+                        class="w-full mt-1 p-2 text-sm bg-slate-100 dark:bg-slate-700 rounded-md border border-slate-300 dark:border-slate-600">
+                </div>
+            `;
+            
+            const createCheckbox = (label, property, checked) => `
+                 <label class="flex items-center justify-between text-sm">
+                    <span>${label}</span>
+                    <input type="checkbox" onchange="updateVisualStyleProperty('${visual.id}', '${property}', this.checked)" ${checked ? 'checked' : ''}>
+                </label>
+            `;
+            
+            const createSelect = (label, property, value, options) => `
+                <div>
+                    <label class="text-sm">${label}</label>
+                    <select onchange="updateVisualStyleProperty('${visual.id}', '${property}', this.value)" class="w-full mt-1 p-2 text-sm bg-slate-100 dark:bg-slate-700 rounded-md border border-slate-300 dark:border-slate-600">
+                        ${options.map(opt => `<option value="${opt.value}" ${value === opt.value ? 'selected' : ''}>${opt.label}</option>`).join('')}
+                    </select>
+                </div>
+            `;
+
+            let commonControls = `
+                <h4 class="font-semibold text-sm">Fundo do Card</h4>
+                ${createColorInput('Cor de Fundo', 'backgroundColor', visual.style.backgroundColor)}
+            `;
+
+            let specificControls = '';
+            let designSection = '';
+            const isChart = !['kpi', 'textBox', 'table', 'gauge', 'kpiGrid', 'treemap', 'matrix'].includes(visual.type) && !visual.type.includes('3d');
+
+            if (isChart) {
+                specificControls = `
+                    <div class="space-y-2">
+                        <h4 class="font-semibold text-sm mt-4">Título do Gráfico</h4>
+                        ${createColorInput('Cor da Fonte', 'textColor', visual.style.textColor)}
+                        ${createSizeInput('Tamanho da Fonte', 'fontSize', visual.style.fontSize, '16')}
+                    </div>
+                     <div class="space-y-2 mt-4 border-t dark:border-slate-700 pt-4">
+                        <h4 class="font-semibold text-sm">Legenda</h4>
+                        ${createCheckbox('Mostrar Legenda', 'showLegend', visual.style.showLegend !== false)}
+                        ${createSelect('Posição da Legenda', 'legendPosition', visual.style.legendPosition || 'top', 
+                            [{value: 'top', label: 'Topo'}, {value: 'bottom', label: 'Abaixo'}, {value: 'left', label: 'Esquerda'}, {value: 'right', label: 'Direita'}])}
+                        ${createColorInput('Cor da Fonte da Legenda', 'legendTextColor', visual.style.legendTextColor)}
+                        ${createSizeInput('Tamanho da Fonte', 'legendFontSize', visual.style.legendFontSize, '12')}
+                    </div>
+                     <div class="space-y-2 mt-4 border-t dark:border-slate-700 pt-4">
+                        <h4 class="font-semibold text-sm">Eixos e Grades</h4>
+                        ${createCheckbox('Mostrar Grade X', 'showXGrid', visual.style.showXGrid !== false)}
+                        ${createCheckbox('Mostrar Grade Y', 'showYGrid', visual.style.showYGrid !== false)}
+                    </div>
+                `;
+                
+                if (visual.type === 'bubble') {
+                    specificControls += `
+                        <div class="space-y-2 mt-4 border-t dark:border-slate-700 pt-4">
+                           <h4 class="font-semibold text-sm">Bolhas</h4>
+                           ${createSelect('Tamanho da Bolha', 'bubbleSizePreset', visual.style.bubbleSizePreset || 'medium', [
+                               {value: 'small', label: 'Pequeno'},
+                               {value: 'medium', label: 'Médio'},
+                               {value: 'large', label: 'Grande'}
+                           ])}
+                           ${createColorInput('Cor Padrão da Bolha', 'defaultBubbleColor', visual.style.defaultBubbleColor)}
+                        </div>
+                    `;
+                }
+                
+                let transparencyControl = '';
+                const hasFillableSeries = (visual.config.series || []).some(s => s.type === 'line') || visual.type === 'line' || visual.type === 'radar' || visual.type === 'polarArea';
+
+                if (hasFillableSeries) {
+                    transparencyControl = `
+                        <div class="mt-4">
+                            <label for="fill-opacity" class="text-sm font-semibold">Transparência do Preenchimento</label>
+                            <input type="range" id="fill-opacity" min="0" max="1" step="0.1" value="${visual.style.fillOpacity || 0.4}" 
+                                oninput="updateVisualStyleProperty('${visual.id}', 'fillOpacity', this.value)"
+                                class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700">
+                        </div>
+                    `;
+                }
+
+                designSection += `
+                    <h4 class="font-semibold text-sm mt-4">Designs Prontos</h4>
+                    <div class="grid grid-cols-2 gap-2">
+                        ${Object.keys(visualStyles).filter(s => !s.startsWith('kpi')).map(styleName => `
+                            <button onclick="applyVisualStyle('${visual.id}', '${styleName}')" class="p-2 rounded-lg border-2 ${visual.style.preset === styleName ? 'border-cyan-500' : 'border-transparent'} style-preview">
+                                <span class="text-xs font-semibold">${visualStyles[styleName].name}</span>
+                                <div class="flex mt-1">
+                                    ${visualStyles[styleName].palette.slice(0,4).map(color => `<div class="w-1/4 h-3 rounded" style="background-color: ${color}"></div>`).join('')}
+                                </div>
+                            </button>
+                        `).join('')}
+                    </div>
+                    ${transparencyControl}
+                `;
+            } else if (visual.type === 'kpi' || visual.type === 'gauge' || visual.type === 'kpiGrid') {
+                specificControls = `
+                    <h4 class="font-semibold text-sm mt-4">Título do Card</h4>
+                    ${createColorInput('Cor da Fonte', 'textColor', visual.style.textColor)}
+                    ${createSizeInput('Tamanho da Fonte', 'fontSize', visual.style.fontSize, '14')}
+                    <h4 class="font-semibold text-sm mt-4">Valor do Card</h4>
+                    ${createColorInput('Cor do Valor', 'valueColor', visual.style.valueColor)}
+                    ${createSizeInput('Tamanho do Valor', 'valueFontSize', visual.style.valueFontSize, '30')}
+                `;
+
+                designSection = `
+                    <h4 class="font-semibold text-sm mt-4">Estilos Prontos</h4>
+                    <div class="grid grid-cols-2 gap-2">
+                        ${Object.keys(visualStyles).filter(s => s.startsWith('kpi')).map(styleName => `
+                            <button onclick="applyVisualStyle('${visual.id}', '${styleName}')" class="p-2 rounded-lg border-2 text-center ${visual.style.preset === styleName ? 'border-cyan-500' : 'border-transparent'}" style="background-color: ${visualStyles[styleName].style.backgroundColor || ''}; color: ${visualStyles[styleName].style.textColor || ''}">
+                                ${visualStyles[styleName].name}
+                            </button>
+                        `).join('')}
+                    </div>
+                `;
+            } else if (visual.type.includes('3d') || ['treemap', 'matrix'].includes(visual.type)) {
+                 designSection = `
+                    <h4 class="font-semibold text-sm mt-4">Designs Prontos</h4>
+                    <div class="grid grid-cols-2 gap-2">
+                        ${Object.keys(visualStyles).filter(s => !s.startsWith('kpi')).map(styleName => `
+                            <button onclick="applyVisualStyle('${visual.id}', '${styleName}')" class="p-2 rounded-lg border-2 ${visual.style.preset === styleName ? 'border-cyan-500' : 'border-transparent'} style-preview">
+                                <span class="text-xs font-semibold">${visualStyles[styleName].name}</span>
+                                <div class="flex mt-1">
+                                    ${visualStyles[styleName].palette.slice(0,4).map(color => `<div class="w-1/4 h-3 rounded" style="background-color: ${color}"></div>`).join('')}
+                                </div>
+                            </button>
+                        `).join('')}
+                    </div>
+                 `;
+            } else if (visual.type === 'textBox' || visual.type === 'table') {
+                specificControls = `
+                    <h4 class="font-semibold text-sm mt-4">Texto</h4>
+                    ${createColorInput('Cor da Fonte', 'textColor', visual.style.textColor)}
+                    ${createSizeInput('Tamanho da Fonte', 'fontSize', visual.style.fontSize, '16')}
+                `;
+            }
+
+            panel.innerHTML = `
+                <div class="space-y-4">
+                    ${commonControls}
+                    ${specificControls}
+                    ${designSection}
+                    <button onclick="deleteVisual('${visual.id}')" class="w-full mt-6 flex items-center justify-center gap-2 bg-red-500/10 text-red-500 font-semibold py-2 px-4 rounded-lg hover:bg-red-500/20 transition-colors">
+                        <ion-icon name="trash-outline"></ion-icon>
+                        Remover Item
+                    </button>
+                </div>
+            `;
+        }
+        
+        // --- Interactivity & Logic ---
+        function addVisual(item) {
+            if (item.type === 'textBox') { addTextBox(); return; }
+            if (item.type === 'table') { addTable(); return; }
+            if (item.type === 'kpiGrid') { addKpiGrid(); return; }
+            openVisualConfigModal(item);
+        }
+        
+        function addTextBox() {
+            const newId = `text-${Date.now()}`;
+            dashboardConfig.push({
+                id: newId, type: 'textBox',
+                layout: { x: 10, y: 10, w: 300, h: 150 },
+                style: {}, config: { text: '<h3>Novo Título</h3><p>Edite este texto.</p>' }
+            });
+            saveStateToHistory(); renderDashboard();
+        }
+
+        function addTable() {
+            const newId = `table-${Date.now()}`;
+            dashboardConfig.push({
+                id: newId, type: 'table',
+                layout: { x: 10, y: 10, w: 500, h: 350 },
+                style: {}, config: { title: 'Nova Tabela', columns: fields.slice(0, 5).map(f => f.name) }
+            });
+            saveStateToHistory(); renderDashboard();
+        }
+
+        function addKpiGrid() {
+            const newId = `kpiGrid-${Date.now()}`;
+            const numericFields = fields.filter(f => f.type === 'number');
+            const defaultMeasures = numericFields.slice(0, 4).map(f => ({
+                title: f.name,
+                column: f.name,
+                aggregation: 'SUM'
+            }));
+
+            dashboardConfig.push({
+                id: newId, type: 'kpiGrid',
+                layout: { x: 10, y: 10, w: 400, h: 250 },
+                style: {},
+                config: {
+                    title: 'Card de Métricas',
+                    measures: defaultMeasures
+                }
+            });
+            saveStateToHistory(); renderDashboard();
+        }
+
+
+        function deleteVisual(id) {
+            dashboardConfig = dashboardConfig.filter(v => v.id !== id);
+            selectedVisualId = null;
+            saveStateToHistory();
+            renderDashboard();
+        }
+
+        function updateVisualConfig(id, key, value) {
+            const visual = dashboardConfig.find(v => v.id === id);
+            if(visual) {
+                // Special handling for single-value array like in 3D pie chart
+                if (key === 'values' && !Array.isArray(value)) {
+                    visual.config[key] = [value];
+                } else {
+                    visual.config[key] = value;
+                }
+                saveStateToHistory();
+                rerenderVisual(id);
+            }
+        };
+
+        function updateVisualStyleProperty(id, key, value) {
+            const visual = dashboardConfig.find(v => v.id === id);
+            if(visual) {
+                if(!visual.style) visual.style = {};
+                if ((key === 'fontSize' || key === 'valueFontSize' || key === 'legendFontSize') && /^\d+(\.\d+)?$/.test(value)) {
+                    value += 'px';
+                }
+                visual.style[key] = value;
+
+                debouncedSave();
+                saveStateToHistory();
+                rerenderVisual(id);
+            }
+        }
+
+        function updateVisualAxisType(id, type) {
+            const visual = dashboardConfig.find(v => v.id === id);
+            if(visual) {
+                visual.config.axisType = type;
+                if(type === 'funcionarios') {
+                    visual.config.axis = employeeColumn;
+                    visual.config.selectedEmployees = [];
+                    visual.config.values = fields.filter(f=>f.type==='number').length > 0 ? [fields.filter(f=>f.type==='number')[0].name] : [];
+                } else {
+                    visual.config.axis = fields.find(f => f.type === 'text')?.name;
+                    visual.config.values = fields.filter(f=>f.type==='number').length > 0 ? [fields.filter(f=>f.type==='number')[0].name] : [];
+                }
+                saveStateToHistory();
+                rerenderVisual(id);
+            }
+        };
+
+        function updateEmployeeSelection(id, employee, isChecked) {
+             const visual = dashboardConfig.find(v => v.id === id);
+             if (visual) {
+                if (!visual.config.selectedEmployees) {
+                    visual.config.selectedEmployees = [];
+                }
+                if (isChecked) {
+                    visual.config.selectedEmployees.push(employee);
+                } else {
+                    visual.config.selectedEmployees = visual.config.selectedEmployees.filter(e => e !== employee);
+                }
+                saveStateToHistory();
+                rerenderVisual(id);
+            }
+        };
+
+         function updateValueSelection(id, valueName, isChecked) {
+             const visual = dashboardConfig.find(v => v.id === id);
+             if (visual) {
+                if (!visual.config.values) {
+                    visual.config.values = [];
+                }
+                if (isChecked) {
+                    visual.config.values.push(valueName);
+                } else {
+                    visual.config.values = visual.config.values.filter(v => v !== valueName);
+                }
+                saveStateToHistory();
+                rerenderVisual(id);
+            }
+        };
+        
+        function addCompositeSeries(visualId) {
+            const visual = dashboardConfig.find(v => v.id === visualId);
+            if(visual) {
+                if (!visual.config.series) visual.config.series = [];
+                visual.config.series.push({ type: 'bar', values: [], fill: false });
+                saveStateToHistory();
+                rerenderVisual(id);
+            }
+        }
+        
+        function removeCompositeSeries(visualId, index) {
+            const visual = dashboardConfig.find(v => v.id === visualId);
+            if(visual && visual.config.series) {
+                visual.config.series.splice(index, 1);
+                saveStateToHistory();
+                rerenderVisual(id);
+            }
+        }
+        
+        function updateCompositeSeries(visualId, index, key, value) {
+             const visual = dashboardConfig.find(v => v.id === visualId);
+             if(visual && visual.config.series && visual.config.series[index]) {
+                visual.config.series[index][key] = value;
+                saveStateToHistory();
+                rerenderVisual(id);
+             }
+        }
+        
+        function updateCompositeSeriesValue(visualId, seriesIndex, valueName, isChecked) {
+            const visual = dashboardConfig.find(v => v.id === visualId);
+            const serie = visual?.config?.series?.[seriesIndex];
+            if(serie) {
+                if (!serie.values) serie.values = [];
+                if (isChecked) {
+                    if (!serie.values.includes(valueName)) serie.values.push(valueName);
+                } else {
+                    serie.values = serie.values.filter(v => v !== valueName);
+                }
+                saveStateToHistory();
+                rerenderVisual(id);
+            }
+        }
+        
+        function addKpiGridMeasure(visualId) {
+            const visual = dashboardConfig.find(v => v.id === visualId);
+            if(visual) {
+                if (!visual.config.measures) visual.config.measures = [];
+                const firstNumericField = fields.find(f => f.type === 'number');
+                if (firstNumericField) {
+                     visual.config.measures.push({ title: 'Nova Métrica', column: firstNumericField.name, aggregation: 'SUM' });
+                     saveStateToHistory();
+                     rerenderVisual(id);
+                }
+            }
+        }
+
+        function removeKpiGridMeasure(visualId, index) {
+            const visual = dashboardConfig.find(v => v.id === visualId);
+            if(visual && visual.config.measures) {
+                visual.config.measures.splice(index, 1);
+                saveStateToHistory();
+                rerenderVisual(id);
+            }
+        }
+
+        function updateKpiGridMeasure(visualId, index, key, value) {
+             const visual = dashboardConfig.find(v => v.id === visualId);
+             if(visual && visual.config.measures && visual.config.measures[index]) {
+                visual.config.measures[index][key] = value;
+                saveStateToHistory();
+                rerenderVisual(id);
+             }
+        }
+        
+        function handleChartClick(event, elements, chart, visual) {
+            if (elements.length > 0 && visual.config.axis && (visual.config.axisType === 'valores' || visual.type === 'composite')) {
+                const label = chart.data.labels[elements[0].index];
+                const filterColumn = visual.config.axis;
+                activeFilters[filterColumn] = label;
+                getEl('dashboard-title-header').textContent = `${projectName} | ${selectedSheetName} | ${filterColumn}: ${label}`;
+                renderDashboard();
+            }
+        }
+        
+        function setupInteract() {
+            interact('.dashboard-item')
+                .draggable({
+                    inertia: true,
+                    modifiers: [
+                        interact.modifiers.restrictRect({
+                            restriction: 'parent',
+                            endOnly: true
+                        })
+                    ],
+                    autoScroll: true,
+                    listeners: { 
+                        move: dragMoveListener,
+                        end: (event) => {
+                            saveStateToHistory();
+                            debouncedSave();
+                        }
+                    }
+                })
+                .resizable({
+                    edges: { left: true, right: true, bottom: true, top: true },
+                    listeners: { 
+                        move: resizeListener,
+                        end: (event) => {
+                            saveStateToHistory();
+                            debouncedSave();
+                        }
+                    },
+                    modifiers: [
+                        interact.modifiers.restrictSize({ min: { width: 150, height: 100 } })
+                    ]
+                });
+        }
+
+        function dragMoveListener(event) {
+            const target = event.target;
+            const visual = dashboardConfig.find(v => v.id === target.id);
+            const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+            const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+            target.style.transform = `translate(${x}px, ${y}px)`;
+            target.setAttribute('data-x', x);
+            target.setAttribute('data-y', y);
+            if (visual) {
+                visual.layout.x = x;
+                visual.layout.y = y;
+            }
+        }
+
+        function resizeListener(event) {
+            const target = event.target;
+            const visual = dashboardConfig.find(v => v.id === target.id);
+            
+            let x = (parseFloat(target.getAttribute('data-x')) || 0);
+            let y = (parseFloat(target.getAttribute('data-y')) || 0);
+
+            // update the element's style
+            target.style.width = event.rect.width + 'px';
+            target.style.height = event.rect.height + 'px';
+
+            // translate when resizing from top or left edges
+            x += event.deltaRect.left;
+            y += event.deltaRect.top;
+
+            target.style.transform = 'translate(' + x + 'px,' + y + 'px)';
+
+            target.setAttribute('data-x', x);
+            target.setAttribute('data-y', y);
+            
+            if (visual) {
+                visual.layout.w = event.rect.width;
+                visual.layout.h = event.rect.height;
+                visual.layout.x = x;
+                visual.layout.y = y;
+            }
+            
+            const chart = activeCharts.get(visual.id);
+            if (chart) {
+                setTimeout(() => chart.resize(), 50);
+            }
+            const scene3d = active3DScenes.get(visual.id);
+            if (scene3d) {
+                const container = target.querySelector('.three-d-scene-container');
+                if (container) {
+                    const newWidth = container.clientWidth;
+                    const newHeight = container.clientHeight;
+                    scene3d.camera.aspect = newWidth / newHeight;
+                    scene3d.camera.updateProjectionMatrix();
+                    scene3d.renderer.setSize(newWidth, newHeight);
+                    if (scene3d.labelRenderer) {
+                        scene3d.labelRenderer.setSize(newWidth, newHeight);
+                    }
+                }
+            }
+        }
+
+        // --- Data & Calculation Helpers ---
+        function prepareChartData(visual, data) {
+            const { config, type } = visual;
+            
+            if (type === 'bubble' || type === 'scatter') {
+                return prepareScatterBubbleData(data, visual);
+            }
+             if (type === 'gauge') {
+                 return prepareGaugeData(data, config);
+            }
+             if(type === 'composite'){
+                return prepareCompositeChartData(data, config);
+            }
+            if (type === 'treemap') {
+                return prepareTreemapData(data, visual);
+            }
+             if (type === 'matrix') {
+                return prepareMatrixData(data, visual);
+            }
+
+            if (config.axisType === 'funcionarios') {
+                return prepareEmployeeComparisonData(data, config);
+            }
+            
+            if (config.axisType === 'valores') {
+                return prepareValueComparisonData(data, visual);
+            }
+            
+            return { labels: [], datasets: [] };
+        }
+        
+        function prepareGaugeData(data, config) {
+            const { measure } = config;
+            if (!measure) return { datasets: [] };
+            const value = calculateMeasure(data, measure.aggregation, measure.column);
+            const max = measure.max || value * 1.5 || 100; // Use a relative max if not defined
+            const percentage = max > 0 ? (value / max) * 100 : 0;
+
+            let color = '#22c55e'; // Green
+            if (percentage <= 25) {
+                color = '#ef4444'; // Red
+            } else if (percentage <= 50) {
+                color = '#f97316'; // Orange
+            } else if (percentage <= 75) {
+                color = '#eab308'; // Yellow
+            }
+
+            return {
+                datasets: [{
+                    label: config.title,
+                    data: [value, max > value ? max - value : 0],
+                    backgroundColor: [color, appSettings.theme === 'dark' ? '#334155' : '#e5e7eb'],
+                    circumference: 180,
+                    rotation: 270,
+                    borderWidth: 0,
+                }],
+                value: value,
+                maxValue: max
+            };
+        }
+        
+        function prepareScatterBubbleData(data, visual) {
+            const { config, style } = visual;
+            const { xAxis, yAxis, bubbleSize, category } = config;
+            
+            if (!xAxis || !yAxis) return { datasets: [] };
+             if (visual.type === 'bubble' && !bubbleSize) return { datasets: [] };
+
+            const scaleRadius = (value) => {
+                 const sizePreset = style.bubbleSizePreset || 'medium';
+                 const sizeValues = data.map(row => parseFloat(row[bubbleSize]) || 0).filter(v => v > 0);
+                 if (sizeValues.length === 0) return 5;
+                 const min = Math.min(...sizeValues);
+                 const max = Math.max(...sizeValues);
+                 if (max === min) return 10;
+                 
+                 const baseRadius = sizePreset === 'small' ? 3 : (sizePreset === 'large' ? 10 : 6);
+                 const scaleFactor = sizePreset === 'small' ? 12 : (sizePreset === 'large' ? 30 : 20);
+                 
+                 return baseRadius + ((value - min) / (max - min)) * scaleFactor;
+            };
+
+            if (category) {
+                const grouped = data.reduce((acc, row) => {
+                    const key = row[category];
+                    if (key) {
+                       if (!acc[key]) acc[key] = [];
+                        acc[key].push(row);
+                    }
+                    return acc;
+                }, {});
+
+                const datasets = Object.keys(grouped).map(key => ({
+                    label: key,
+                    data: grouped[key].map(row => ({
+                        x: parseFloat(row[xAxis]) || 0,
+                        y: parseFloat(row[yAxis]) || 0,
+                        r: visual.type === 'bubble' ? scaleRadius(parseFloat(row[bubbleSize]) || 0) : 5
+                    }))
+                }));
+                return { datasets };
+            } else {
+                 const dataset = {
+                    label: `${yAxis} por ${xAxis}`,
+                    backgroundColor: style.defaultBubbleColor || 'rgba(6, 182, 212, 0.7)',
+                    data: data.map(row => ({
+                        x: parseFloat(row[xAxis]) || 0,
+                        y: parseFloat(row[yAxis]) || 0,
+                        r: visual.type === 'bubble' ? scaleRadius(parseFloat(row[bubbleSize]) || 0) : 5
+                    }))
+                };
+                return { datasets: [dataset] };
+            }
+        }
+        
+        function prepareCompositeChartData(data, config) {
+            const { axis, series } = config;
+            if (!axis || !series || series.length === 0 || data.length === 0) {
+                 return { labels: [], datasets: [] };
+            }
+            
+            const grouped = data.reduce((acc, row) => {
+                const key = row[axis];
+                if (key) {
+                    if (!acc[key]) {
+                        acc[key] = {};
+                        series.forEach(serie => {
+                           (serie.values || []).forEach(v => acc[key][v] = 0);
+                        });
+                    }
+                    series.forEach(serie => {
+                        (serie.values || []).forEach(v => {
+                             acc[key][v] += parseFloat(row[v]) || 0
+                        });
+                    });
+                }
+                return acc;
+            }, {});
+
+            const labels = Object.keys(grouped);
+            let datasets = [];
+
+            series.forEach(serie => {
+                (serie.values || []).forEach(vKey => {
+                    datasets.push({
+                        label: vKey,
+                        data: labels.map(l => grouped[l][vKey]),
+                        type: serie.type,
+                        fill: serie.fill || false,
+                        order: serie.type === 'line' ? 1 : 2 
+                    });
+                });
+            });
+            
+            return { labels, datasets };
+        }
+
+        function prepareValueComparisonData(data, visual) {
+            const { config } = visual;
+            const { axis, values } = config;
+
+            if (!axis || !values || values.length === 0 || data.length === 0) {
+                 return { labels: [], datasets: [] };
+            }
+
+            const grouped = data.reduce((acc, row) => {
+                const key = row[axis];
+                if (key) {
+                    if (!acc[key]) {
+                         acc[key] = {};
+                         values.forEach(v => acc[key][v] = 0);
+                    }
+                    values.forEach(v => {
+                        acc[key][v] += parseFloat(row[v]) || 0;
+                    });
+                }
+                return acc;
+            }, {});
+            
+            let labels = Object.keys(grouped);
+            const valueKey = values[0]; // Funnel and pie charts use the first metric
+            
+            if (visual.subType === 'funnel') {
+                labels.sort((a,b) => (grouped[b][valueKey] || 0) - (grouped[a][valueKey] || 0));
+                const dataPoints = labels.map(l => grouped[l][valueKey]);
+                const maxValue = dataPoints.length > 0 ? dataPoints[0] : 0;
+                const funnelData = dataPoints.map(v => [(maxValue - v) / 2, v + (maxValue - v) / 2]);
+                return {
+                    labels,
+                    datasets: [{ label: valueKey, data: funnelData }]
+                }
+            }
+
+
+            if (['pie', 'doughnut', 'polarArea', 'pie3d', 'doughnut3d'].includes(visual.type)) {
+                const dataPoints = labels.map(l => grouped[l][valueKey]);
+                return {
+                    labels,
+                    datasets: [{
+                        label: valueKey,
+                        data: dataPoints
+                    }]
+                }
+            }
+
+            const datasets = values.map(vKey => {
+                return {
+                    label: vKey,
+                    data: labels.map(l => grouped[l][vKey])
+                };
+            });
+
+            return { labels, datasets };
+        }
+
+        function prepareEmployeeComparisonData(data, config) {
+            const { selectedEmployees, values } = config;
+            if (!employeeColumn || !selectedEmployees || selectedEmployees.length === 0 || !values || values.length === 0) {
+                return { labels: selectedEmployees, datasets: [] };
+            }
+            
+            const datasets = values.map(metricKey => {
+                const dataPoints = selectedEmployees.map(employee => {
+                    const employeeData = data.filter(row => row[employeeColumn] === employee);
+                    if (employeeData.length === 0) return 0;
+                    return employeeData.reduce((sum, row) => sum + (parseFloat(row[metricKey]) || 0), 0);
+                });
+                return {
+                    label: metricKey,
+                    data: dataPoints
+                }
+            });
+
+            return { labels: selectedEmployees, datasets };
+        }
+
+        function prepareTreemapData(data, visual) {
+            const { labels, value } = visual.config;
+            if (!labels || labels.length === 0 || !value) return { datasets: [] };
+
+            // For simplicity, we'll use the first label as the main grouping.
+            // A true hierarchical treemap would require more complex grouping.
+            const mainLabel = labels[0];
+            const grouped = data.reduce((acc, row) => {
+                const key = row[mainLabel];
+                if (key) {
+                    if (!acc[key]) acc[key] = 0;
+                    acc[key] += parseFloat(row[value]) || 0;
+                }
+                return acc;
+            }, {});
+
+            const tree = Object.entries(grouped).map(([key, val]) => ({
+                label: key,
+                value: val,
+            }));
+
+            return {
+                datasets: [{
+                    tree,
+                    key: 'value',
+                    groups: ['label'],
+                    labels: {
+                        display: true,
+                        color: 'white',
+                        font: { size: 14, weight: 'bold' }
+                    }
+                }]
+            };
+        }
+
+        function prepareMatrixData(data, visual) {
+            const { labels, yAxis, value } = visual.config;
+            if (!labels || labels.length === 0 || !yAxis || !value) return { datasets: [] };
+            
+            const xAxisLabel = labels[0];
+            const xLabels = [...new Set(data.map(d => d[xAxisLabel]))].sort();
+            const yLabels = [...new Set(data.map(d => d[yAxis]))].sort();
+            
+            const dataset = [];
+            yLabels.forEach((y, i) => {
+                xLabels.forEach((x, j) => {
+                    const row = data.find(d => d[xAxisLabel] === x && d[yAxis] === y);
+                    dataset.push({
+                        x: x,
+                        y: y,
+                        v: row ? (parseFloat(row[value]) || 0) : 0,
+                    });
+                });
+            });
+
+            return {
+                labels: xLabels,
+                datasets: [{
+                    label: `${value} by ${xAxisLabel} and ${yAxis}`,
+                    data: dataset,
+                    backgroundColor: (ctx) => {
+                        const v = ctx.dataset.data[ctx.dataIndex].v;
+                        const alpha = v > 0 ? (v / Math.max(...dataset.map(d => d.v))) : 0.1;
+                        return `rgba(6, 182, 212, ${alpha})`;
+                    },
+                    width: ({chart}) => (chart.chartArea || {}).width / xLabels.length - 1,
+                    height: ({chart}) => (chart.chartArea || {}).height / yLabels.length - 1
+                }]
+            };
+        }
+        
+         function calculateMeasure(data, aggregation, column) {
+            if (data.length === 0) return 0;
+            const values = data.map(row => row[column]).filter(v => v !== null && v !== undefined);
+            if (aggregation === 'COUNT') return data.length;
+            if (aggregation === 'DISTINCT_COUNT') return new Set(values).size;
+
+            const numericValues = values.map(v => parseFloat(v) || 0);
+            if (numericValues.length === 0) return 0;
+
+            switch(aggregation) {
+                case 'SUM': return numericValues.reduce((s, v) => s + v, 0);
+                case 'AVERAGE': return numericValues.reduce((s, v) => s + v, 0) / numericValues.length;
+                case 'MAX': return Math.max(...numericValues);
+                case 'MIN': return Math.min(...numericValues);
+                default: return 0;
+            }
+        }
+
+        function getFormatType(columnName) {
+            if (!columnName) return 'decimal';
+            const lowerName = columnName.toLowerCase();
+            if (lowerName.includes('valor') || lowerName.includes('preço') || lowerName.includes('custo') || lowerName.includes('receita') || lowerName.includes('faturado') || lowerName.includes('pago') || lowerName.includes('emitido') || lowerName.includes('r$')) {
+                return 'BRL';
+            }
+            if (lowerName.includes('%') || lowerName.includes('percentual') || lowerName.includes('perc')) {
+                return 'percent';
+            }
+            return 'decimal';
+        }
+        
+        function formatValue(value, style = 'decimal') {
+            if (value === null || typeof value === 'undefined' || isNaN(value)) {
+                return '0'; // Retorna '0' ou um valor padrão se a entrada for inválida
+            }
+            if (style === 'BRL') {
+                return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            }
+             if (style === 'percent') {
+                return value.toFixed(1) + '%';
+            }
+            return value.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+        }
+        
+        // --- Chart Creation & Styling ---
+        const visualStyles = {
+            // Chart Styles
+            cyan: { name: 'Ciano', palette: ['#06b6d4', '#22d3ee', '#67e8f9', '#a5f3fc', '#cffafe', '#ecfeff'], options: { elements: { bar: { borderRadius: 4 }, line: { tension: 0.3 } } } },
+            sunset: { name: 'Pôr do Sol', palette: ['#f97316', '#fb923c', '#fdba74', '#fed7aa', '#ffedd5', '#fff7ed'], options: { elements: { bar: { borderRadius: 8 }, line: { tension: 0.4, pointStyle: 'rectRot', pointRadius: 6 } } } },
+            forest: { name: 'Floresta', palette: ['#16a34a', '#22c55e', '#4ade80', '#86efac', '#bbf7d0', '#dcfce7'], options: { elements: { line: { borderDash: [5, 5] } } } },
+            amethyst: { name: 'Ametista', palette: ['#9333ea', '#a855f7', '#c084fc', '#d8b4fe', '#e9d5ff', '#f3e8ff'], options: { elements: { line: { stepped: true } } } },
+            ocean: { name: 'Oceano', palette: ['#0369a1', '#0ea5e9', '#38bdf8', '#7dd3fc', '#bae6fd', '#e0f2fe'], options: { scales: { x: { grid: { display: false } } } } },
+            executive: { name: 'Executivo', palette: ['#455a64', '#78909c', '#00acc1', '#546e7a', '#90a4ae'], options: { plugins: { legend: { position: 'bottom' } }, elements: { line: { borderWidth: 2 }, bar: { borderWidth: 1, borderColor: '#37474f' } } } },
+            modern: { name: 'Moderno', palette: ['#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6'], options: { elements: { bar: { backgroundColor: (ctx) => createGradient(ctx, visualStyles.modern.palette) } } } },
+            sunrise: { name: 'Amanhecer', palette: ['#f97316', '#facc15', '#a3e635', '#38bdf8', '#818cf8'], options: { elements: { line: { tension: 0.4 } } } },
+            mint: { name: 'Menta', palette: ['#10b981', '#34d399', '#6ee7b7', '#a7f3d0', '#ccfbf1'], options: { elements: { bar: { borderRadius: 6 } } } },
+            berry: { name: 'Frutas Vermelhas', palette: ['#c026d3', '#d946ef', '#ec4899', '#f472b6', '#f9a8d4'], options: { elements: { line: { tension: 0.3, pointStyle: 'star' } } } },
+            earth: { name: 'Terra', palette: ['#57534e', '#a16207', '#16a34a', '#84cc16', '#f59e0b'], options: { elements: { bar: { borderWidth: 1, borderColor: '#44403c' } } } },
+            graphite: { name: 'Grafite', palette: ['#334155', '#475569', '#64748b', '#94a3b8', '#38bdf8'], options: { elements: { line: { stepped: true } } } },
+
+            // KPI Styles
+            kpiDefault: { name: 'Padrão', style: { backgroundColor: '', textColor: '', valueColor: '' } },
+            kpiHighlight: { name: 'Destaque Ciano', style: { backgroundColor: '#06b6d4', textColor: '#fff', valueColor: '#fff' } },
+            kpiInverted: { name: 'Invertido', style: { backgroundColor: '#1e293b', textColor: '#f1f5f9', valueColor: '#38bdf8' } },
+            kpiMinimal: { name: 'Minimalista', style: { backgroundColor: 'transparent', textColor: '', valueColor: '' } },
+            kpiWarning: { name: 'Alerta', style: { backgroundColor: '#fef9c3', textColor: '#a16207', valueColor: '#a16207' } },
+            kpiSuccess: { name: 'Sucesso', style: { backgroundColor: '#dcfce7', textColor: '#166534', valueColor: '#15803d' } },
+        };
+        
+        function createGradient(context, colors) {
+            const chart = context.chart;
+            const {ctx, chartArea} = chart;
+            if (!chartArea) return null;
+            const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+            const colorStop = 1 / (colors.length -1);
+            colors.forEach((color, index) => {
+                gradient.addColorStop(index * colorStop, color);
+            });
+            return gradient;
+        }
+
+
+        window.applyVisualStyle = (id, styleName) => {
+            const visual = dashboardConfig.find(v => v.id === id);
+            if(visual) {
+                visual.style.preset = styleName;
+                const newStyle = visualStyles[styleName].style;
+                if(newStyle) { // This is for KPIs
+                    visual.style.backgroundColor = newStyle.backgroundColor;
+                    visual.style.textColor = newStyle.textColor;
+                    visual.style.valueColor = newStyle.valueColor;
+                    visual.style.fontSize = ''; 
+                    visual.style.valueFontSize = '';
+                }
+                saveStateToHistory();
+                rerenderVisual(id);
+            }
+        }
+        
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? [
+                parseInt(result[1], 16),
+                parseInt(result[2], 16),
+                parseInt(result[3], 16)
+            ] : null;
+        }
+
+        function hexToRgba(hex, alpha) {
+            const rgb = hexToRgb(hex);
+            if (!rgb) return `rgba(0,0,0,${alpha})`;
+            return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha})`;
+        }
+        
+        function createChart(canvasElement, visual, chartData) {
+            const isDark = appSettings.theme === 'dark';
+            const style = visualStyles[visual.style.preset] || visualStyles[appSettings.defaultPalette] || visualStyles.cyan;
+            
+            const baseOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                devicePixelRatio: 2, // Higher resolution
+                animation: { onComplete: () => {} },
+                onClick: (e, el, c) => handleChartClick(e, el, c, visual),
+                plugins: { 
+                    legend: { 
+                        display: visual.style.showLegend !== false && (['pie', 'doughnut', 'polarArea'].includes(visual.type) || (visual.type === 'bubble' && visual.config.category) || chartData.datasets.length > 1) && !['gauge', 'treemap', 'matrix'].includes(visual.type),
+                        position: visual.style.legendPosition || 'top',
+                        labels: {
+                            color: visual.style.legendTextColor || (isDark ? '#f1f5f9' : '#1e293b'),
+                            font: {
+                                size: parseInt(visual.style.legendFontSize) || 12
+                            }
+                        } 
+                    },
+                    tooltip: {
+                        enabled: true,
+                        backgroundColor: isDark ? '#334155' : '#475569',
+                        titleColor: '#f1f5f9',
+                        bodyColor: '#f1f5f9',
+                        titleFont: { family: "'Inter', sans-serif", weight: 'bold' },
+                        bodyFont: { family: "'Inter', sans-serif" },
+                        cornerRadius: 4,
+                        displayColors: true,
+                        callbacks: {
+                            label: function(context) {
+                                const chartType = context.chart.config.type;
+                                if (chartType === 'bubble') {
+                                    const point = context.raw;
+                                    let label = `${context.dataset.label || ''}`;
+                                    if(label) label += ': ';
+                                    label += `(X: ${point.x}, Y: ${point.y})`;
+                                    
+                                    const sizeValue = data.find(d => (parseFloat(d[visual.config.xAxis]) || 0) === point.x && (parseFloat(d[visual.config.yAxis]) || 0) === point.y)?.[visual.config.bubbleSize];
+                                    if (sizeValue) {
+                                        label += `, Tamanho: ${formatValue(sizeValue)}`;
+                                    }
+                                    return label;
+                                }
+                                if (chartType === 'treemap') {
+                                    const item = context.raw;
+                                    return [`${item.label}: ${formatValue(item.value)}`];
+                                }
+                                 
+                                const datasetLabel = context.dataset.label || '';
+                                let value = context.parsed.y ?? context.parsed;
+                                if (visual.subType === 'horizontal' || visual.config.axisType === 'funcionarios') {
+                                        value = context.parsed.x;
+                                }
+                                if(visual.subType === 'funnel' && Array.isArray(context.raw)) {
+                                    value = context.raw[1] - context.raw[0];
+                                }
+
+                                const formatType = getFormatType(datasetLabel || visual.config.yAxis);
+                                return `${datasetLabel}: ${formatValue(value, formatType)}`;
+                            }
+                        }
+                    }
+                }
+            };
+            
+            const mergeOptions = (target, source) => {
+              const isObject = (item) => item && typeof item === 'object' && !Array.isArray(item);
+              const output = { ...target };
+
+              if (isObject(target) && isObject(source)) {
+                Object.keys(source).forEach(key => {
+                  if (isObject(source[key])) {
+                    if (!(key in target) || !isObject(target[key])) {
+                      output[key] = source[key];
+                    } else {
+                      output[key] = mergeOptions(target[key], source[key]);
+                    }
+                  } else {
+                    output[key] = source[key];
+                  }
+                });
+              }
+              return output;
+            };
+
+            let options = mergeOptions(baseOptions, style.options || {});
+            
+            if (visual.subType === 'funnel') {
+                if(options.elements.bar) options.elements.bar.borderRadius = 0;
+            }
+
+            chartData.datasets.forEach((dataset, index) => {
+                const color = style.palette[index % style.palette.length];
+                const isLine = (dataset.type || visual.type) === 'line';
+                
+                 if (['pie', 'doughnut'].includes(visual.type)) {
+                    dataset.backgroundColor = chartData.labels.map((_, i) => style.palette[i % style.palette.length]);
+                    dataset.borderColor = appSettings.dashboardBackground || (isDark ? '#0f172a' : '#f1f5f9');
+                    dataset.borderWidth = 4;
+                    dataset.hoverOffset = 15;
+                    dataset.offset = 8;
+                } else if (['polarArea'].includes(visual.type)) {
+                    dataset.backgroundColor = chartData.labels ? chartData.labels.map((_, i) => hexToRgba(style.palette[i % style.palette.length], 0.8)) : dataset.data.map((_, i) => hexToRgba(style.palette[i % style.palette.length], 0.8));
+                    dataset.borderColor = isDark ? '#1e293b' : '#fff';
+                    dataset.borderWidth = 2;
+                } else if (['bubble', 'scatter'].includes(visual.type) && visual.config.category) {
+                    dataset.backgroundColor = hexToRgba(color, 0.7);
+                    dataset.borderColor = color;
+                    dataset.borderWidth = 2;
+                } else if (visual.subType === 'funnel') {
+                     dataset.backgroundColor = chartData.labels.map((_, i) => style.palette[i % style.palette.length]);
+                } else if (visual.type !== 'gauge' && visual.type !== 'treemap' && visual.type !== 'matrix') {
+                    if(!dataset.backgroundColor) dataset.backgroundColor = isLine ? 'transparent' : color;
+                    dataset.borderColor = color;
+                    dataset.borderWidth = isLine ? 3 : 1;
+                }
+                
+                const fillOpacity = visual.style.fillOpacity !== undefined ? visual.style.fillOpacity : 0.4;
+                
+                if (isLine && (visual.subType === 'area' || dataset.fill)) {
+                   dataset.fill = true;
+                   dataset.backgroundColor = hexToRgba(color, fillOpacity);
+                }
+                
+                if(visual.type === 'doughnut') dataset.cutout = '60%';
+            });
+
+            const chartTypesWithCartesianScales = ['bar', 'line', 'scatter', 'bubble', 'composite', 'matrix'];
+            if (chartTypesWithCartesianScales.includes(visual.type)) {
+                let categoryAxisTitle = visual.config.axis || visual.config.xAxis || '';
+                let valueAxisTitle = (visual.config.values || []).join(', ') || visual.config.yAxis || '';
+
+                const scaleOptions = {
+                    grid: { color: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)' },
+                    ticks: { color: isDark ? '#d1d5db' : '#374151' },
+                    title: {
+                        display: true,
+                        color: isDark ? '#d1d5db' : '#374151',
+                        font: { size: 12, family: "'Inter', sans-serif" },
+                        padding: { top: 10 }
+                    }
+                };
+
+                const xAxis = JSON.parse(JSON.stringify(scaleOptions));
+                xAxis.grid.display = visual.style.showXGrid !== false;
+                
+                const yAxis = JSON.parse(JSON.stringify(scaleOptions));
+                yAxis.grid.display = visual.style.showYGrid !== false;
+
+                if ((visual.subType === 'horizontal' || visual.subType === 'funnel') && visual.type !== 'composite') {
+                    options.indexAxis = 'y';
+                    xAxis.title.text = valueAxisTitle;
+                    yAxis.title.text = categoryAxisTitle;
+                     if(visual.subType === 'funnel') {
+                        options.plugins.legend.display = false;
+                        xAxis.grid.display = false;
+                        xAxis.ticks.display = false;
+                        yAxis.grid.display = false;
+                    }
+                } else {
+                    options.indexAxis = 'x';
+                    xAxis.title.text = categoryAxisTitle;
+                    yAxis.title.text = valueAxisTitle;
+                }
+                
+                options.scales = mergeOptions(options.scales || {}, { x: xAxis, y: yAxis });
+
+            } else if (visual.type === 'radar') {
+                options.scales = mergeOptions(options.scales || {}, {
+                    r: {
+                        angleLines: { color: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)' },
+                        grid: { color: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)' },
+                        pointLabels: {
+                            color: isDark ? '#d1d5db' : '#374151',
+                            font: { size: 12 }
+                        },
+                        ticks: {
+                            color: isDark ? '#d1d5db' : '#374151',
+                            backdropColor: 'transparent'
+                        }
+                    }
+                });
+            } else if (visual.type === 'gauge' || visual.type === 'treemap') {
+                 options.plugins.tooltip.enabled = visual.type === 'treemap';
+                 options.plugins.legend.display = false;
+                 options.scales = {};
+            }
+            
+
+            const finalChartData = {
+                labels: chartData.labels,
+                datasets: chartData.datasets
+            };
+            
+            let chartType = visual.type === 'composite' ? 'bar' : visual.type;
+            if (visual.subType === 'funnel') chartType = 'bar';
+            if (visual.type === 'gauge') chartType = 'doughnut';
+
+            // Custom plugin for gauge text
+            const customPlugins = [{
+                id: 'customAnnotations',
+                afterDraw: (chart) => {
+                    if (chart.config.type === 'doughnut' && visual.type === 'gauge') {
+                         const { ctx, chartArea: { left, right, top, bottom, width, height } } = chart;
+                         const value = chart.config.data.value;
+                         const max = chart.config.data.maxValue;
+                         const formattedValue = formatValue(value, getFormatType(visual.config.measure.column));
+                         const percentage = max > 0 ? (value / max) * 100 : 0;
+                         const formattedPercentage = `${percentage.toFixed(0)}%`;
+
+                         ctx.save();
+                         const centerX = (left + right) / 2;
+                         const centerY = bottom;
+
+                         // Draw the percentage (large)
+                         ctx.font = `bold ${Math.min(width / 4, 40)}px Inter`;
+                         ctx.textAlign = 'center';
+                         ctx.textBaseline = 'bottom';
+                         ctx.fillStyle = isDark ? '#f1f5f9' : '#1e293b';
+                         ctx.fillText(formattedPercentage, centerX, centerY - (height * 0.15));
+
+                         // Draw the value (smaller)
+                         ctx.font = `normal ${Math.min(width / 9, 14)}px Inter`;
+                         ctx.fillStyle = isDark ? '#94a3b8' : '#64748b';
+                         ctx.fillText(formattedValue, centerX, centerY);
+                         
+                         ctx.restore();
+                    }
+                }
+            }];
+
+            return new Chart(canvasElement, { type: chartType, data: finalChartData, options, plugins: customPlugins });
+        }
+        
+        // --- Modals ---
+        
+        function openVisualConfigModal(item) {
+            const modal = getEl('visual-config-modal');
+            let configControlsHTML = '';
+            const defaultTitle = item.config?.title || item.title || `Novo ${item.type}`;
+            const numericFields = fields.filter(f => f.type === 'number');
+            const textFields = fields.filter(f => f.type === 'text');
+
+            if (item.type === 'kpi') {
+                configControlsHTML = `
+                    <div>
+                        <label for="kpi-title" class="text-sm font-medium text-slate-700 dark:text-slate-300">Título do KPI</label>
+                        <input id="kpi-title" type="text" value="${defaultTitle}" class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md border border-slate-300 dark:border-slate-600">
+                    </div>
+                    <div>
+                        <label for="kpi-aggregation" class="text-sm font-medium text-slate-700 dark:text-slate-300">Cálculo</label>
+                        <select id="kpi-aggregation" class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md border border-slate-300 dark:border-slate-600">
+                            <option value="SUM">Soma</option>
+                            <option value="AVERAGE">Média</option>
+                            <option value="PERCENTAGE">Porcentagem</option>
+                            <option value="COUNT">Contagem de Linhas</option>
+                            <option value="DISTINCT_COUNT">Contagem Distinta</option>
+                            <option value="MAX">Máximo</option>
+                            <option value="MIN">Mínimo</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="kpi-column" class="text-sm font-medium text-slate-700 dark:text-slate-300">Coluna</label>
+                        <select id="kpi-column" class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md border border-slate-300 dark:border-slate-600">
+                            ${fields.map(f => `<option value="${f.name}">${f.name}</option>`).join('')}
+                        </select>
+                    </div>
+                `;
+            } else if (item.type === 'gauge') {
+                 configControlsHTML = `
+                    <div>
+                        <label for="gauge-title" class="text-sm font-medium">Título do Medidor</label>
+                        <input id="gauge-title" type="text" value="${defaultTitle}" class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md">
+                    </div>
+                     <div>
+                        <label for="gauge-column" class="text-sm font-medium">Coluna do Valor</label>
+                        <select id="gauge-column" class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md">
+                           ${numericFields.map(f => `<option value="${f.name}">${f.name}</option>`).join('')}
+                        </select>
+                    </div>
+                     <div>
+                        <label for="gauge-aggregation" class="text-sm font-medium">Cálculo</label>
+                        <select id="gauge-aggregation" class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md">
+                           <option value="SUM">Soma</option><option value="AVERAGE">Média</option>
+                        </select>
+                    </div>
+                     <div>
+                        <label for="gauge-max" class="text-sm font-medium">Valor Máximo (Meta)</label>
+                        <input id="gauge-max" type="number" placeholder="Automático se vazio" class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md">
+                    </div>
+                 `;
+            } else if (item.type.includes('3d')) {
+                const isBarOrScatter = item.type === 'bar3d' || item.type === 'scatter3d';
+                if (isBarOrScatter) {
+                    const isBar3d = item.type === 'bar3d';
+                     configControlsHTML = `
+                         <div>
+                            <label for="chart-title" class="text-sm font-medium">Título</label>
+                            <input id="chart-title" type="text" value="${defaultTitle}" class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md">
+                        </div>
+                        <div>
+                            <label for="chart-x-axis" class="text-sm font-medium">Eixo X ${isBar3d ? '(Categoria)' : ''}</label>
+                            <select id="chart-x-axis" class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md">
+                               <option value="">Selecione...</option>
+                               ${(isBar3d ? fields : numericFields).map(f => `<option value="${f.name}">${f.name}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div>
+                            <label for="chart-y-axis" class="text-sm font-medium">Eixo Y ${isBar3d ? '(Altura)' : ''}</label>
+                            <select id="chart-y-axis" class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md">
+                               <option value="">Selecione...</option>
+                               ${numericFields.map(f => `<option value="${f.name}">${f.name}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div>
+                            <label for="chart-z-axis" class="text-sm font-medium">Eixo Z ${isBar3d ? '(Série)' : ''}</label>
+                            <select id="chart-z-axis" class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md">
+                                <option value="">Selecione...</option>
+                                ${(isBar3d ? fields : numericFields).map(f => `<option value="${f.name}">${f.name}</option>`).join('')}
+                            </select>
+                        </div>
+                     `;
+                } else { // 3D Pie / Doughnut
+                    configControlsHTML = `
+                        <div>
+                            <label for="chart-title" class="text-sm font-medium">Título</label>
+                            <input id="chart-title" type="text" value="${defaultTitle}" class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md">
+                        </div>
+                        <div>
+                            <label for="chart-axis" class="text-sm font-medium">Categoria (Fatias)</label>
+                            <select id="chart-axis" class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md">
+                                ${textFields.map(f => `<option value="${f.name}">${f.name}</option>`).join('')}
+                            </select>
+                        </div>
+                         <div>
+                            <label for="chart-values" class="text-sm font-medium">Valor (Tamanho da Fatia)</label>
+                            <select id="chart-values" class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md">
+                                ${numericFields.map(f => `<option value="${f.name}">${f.name}</option>`).join('')}
+                            </select>
+                        </div>
+                    `;
+                }
+            }
+            else if (item.type === 'bubble' || item.type === 'scatter') {
+                configControlsHTML = `
+                    <div>
+                        <label for="chart-title" class="text-sm font-medium">Título do Gráfico</label>
+                        <input id="chart-title" type="text" value="${defaultTitle}" class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md">
+                    </div>
+                    <div>
+                        <label for="chart-x-axis" class="text-sm font-medium">Eixo X</label>
+                        <select id="chart-x-axis" class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md">
+                           <option value="">Selecione...</option>
+                           ${numericFields.map(f => `<option value="${f.name}">${f.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="chart-y-axis" class="text-sm font-medium">Eixo Y</label>
+                        <select id="chart-y-axis" class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md">
+                           <option value="">Selecione...</option>
+                           ${numericFields.map(f => `<option value="${f.name}">${f.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    ${item.type === 'bubble' ? `
+                    <div>
+                        <label for="chart-bubble-size" class="text-sm font-medium">Tamanho da Bolha</label>
+                        <select id="chart-bubble-size" class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md">
+                            <option value="">Selecione...</option>
+                           ${numericFields.map(f => `<option value="${f.name}">${f.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="chart-category" class="text-sm font-medium">Cor da Bolha (Categoria)</label>
+                        <select id="chart-category" class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md">
+                            <option value="">Nenhuma</option>
+                            ${textFields.map(f => `<option value="${f.name}">${f.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    ` : ''}
+                `;
+            } 
+            else if (item.type === 'composite') {
+                 configControlsHTML = `
+                    <div>
+                        <label for="chart-title" class="text-sm font-medium text-slate-700 dark:text-slate-300">Título do Gráfico</label>
+                        <input id="chart-title" type="text" value="${defaultTitle}" class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md border border-slate-300 dark:border-slate-600">
+                    </div>
+                    <div>
+                        <label for="chart-axis" class="text-sm font-medium text-slate-700 dark:text-slate-300">Eixo de Categoria (Eixo X)</label>
+                        <select id="chart-axis" class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md border border-slate-300 dark:border-slate-600">
+                            ${fields.map(f => `<option value="${f.name}">${f.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="border-t dark:border-slate-600 pt-3 mt-3">
+                        <h4 class="text-sm font-semibold mb-2 text-slate-700 dark:text-slate-300">Séries do Gráfico</h4>
+                        <div id="composite-series-container" class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-2"></div>
+                        <button id="add-series-btn" type="button" class="w-full mt-2 text-sm bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 p-2 rounded-md">Adicionar Série</button>
+                    </div>
+                `;
+            } else { // For other charts
+                const compatibleChartTypes = chartTypeOptions.filter(c => c.value === item.type);
+                configControlsHTML = `
+                    <div>
+                        <label for="chart-title" class="text-sm font-medium text-slate-700 dark:text-slate-300">Título do Gráfico</label>
+                        <input id="chart-title" type="text" value="${defaultTitle}" class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md border border-slate-300 dark:border-slate-600">
+                    </div>
+                    <div>
+                        <label for="chart-type-selector" class="text-sm font-medium text-slate-700 dark:text-slate-300">Tipo de Gráfico</label>
+                         <select id="chart-type-selector" class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md border border-slate-300 dark:border-slate-600">
+                            ${compatibleChartTypes.map(opt => `<option value="${opt.value}">${opt.label}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="chart-axis" class="text-sm font-medium text-slate-700 dark:text-slate-300">Eixo de Categoria (Eixo X)</label>
+                        <select id="chart-axis" class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md border border-slate-300 dark:border-slate-600">
+                            ${fields.map(f => `<option value="${f.name}">${f.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium mt-2 block text-slate-700 dark:text-slate-300">Valores (Eixo Y)</label>
+                        <div class="max-h-40 overflow-y-auto custom-scrollbar border rounded-md p-2 mt-1 dark:border-slate-600">
+                            ${numericFields.map(f => `
+                                <label class="flex items-center gap-2 p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700">
+                                    <input type="checkbox" name="chart-values" value="${f.name}" class="h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500">
+                                    <span class="text-sm">${f.name}</span>
+                                </label>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            const previewData = originalData.slice(0, 15);
+            const headers = fields.map(f => f.name);
+            const previewTableHTML = `
+                <div class="overflow-auto custom-scrollbar border rounded-lg dark:border-slate-600 h-full">
+                    <table class="w-full text-xs text-left">
+                        <thead class="bg-slate-50 dark:bg-slate-700 sticky top-0">
+                            <tr>${headers.map(h => `<th class="p-2 font-medium">${h}</th>`).join('')}</tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                            ${previewData.map(row => `<tr>${headers.map(cellHeader => `<td class="p-2 whitespace-nowrap text-slate-500 dark:text-slate-400">${row[cellHeader] === null || row[cellHeader] === undefined ? '' : row[cellHeader]}</td>`).join('')}</tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 max-w-5xl w-full card-glow flex flex-col max-h-[90vh]">
+                    <h3 class="text-xl font-semibold mb-4 text-slate-900 dark:text-white">Configurar Visual: ${defaultTitle}</h3>
+                    <div class="grid md:grid-cols-2 gap-6 flex-grow overflow-hidden">
+                        <div class="flex flex-col space-y-4">
+                            ${configControlsHTML}
+                        </div>
+                        <div class="flex flex-col overflow-hidden">
+                             <h4 class="text-sm font-semibold mb-2 text-slate-700 dark:text-slate-300">Pré-visualização dos Dados</h4>
+                             ${previewTableHTML}
+                        </div>
+                    </div>
+                    <div class="mt-6 flex justify-end gap-3 pt-4 border-t dark:border-slate-700">
+                        <button onclick="closeModal('visual-config-modal')" class="bg-slate-200 dark:bg-slate-700 font-semibold py-2 px-4 rounded-lg">Cancelar</button>
+                        <button id="confirm-visual-creation" class="bg-cyan-500 text-white font-semibold py-2 px-4 rounded-lg">Criar Visual</button>
+                    </div>
+                </div>
+            `;
+
+            modal.classList.remove('hidden');
+
+            if (item.type === 'composite') {
+                getEl('add-series-btn').addEventListener('click', () => addSeriesToModal());
+                addSeriesToModal(); 
+            }
+            
+            if (!['kpi', 'gauge', 'composite', 'bubble', 'scatter'].includes(item.type) && !item.type.includes('3d')) {
+                const titleInput = getEl('chart-title');
+                const axisSelect = getEl('chart-axis');
+                const valueCheckboxes = modal.querySelectorAll('input[name="chart-values"]');
+
+                const updateChartTitlePreview = () => {
+                    const axis = axisSelect.value;
+                    const values = Array.from(valueCheckboxes)
+                                        .filter(cb => cb.checked)
+                                        .map(cb => cb.value);
+
+                    if (axis && values.length > 0) {
+                        titleInput.value = `${values.join(', ')} por ${axis}`;
+                    } else if (!axis && values.length > 0) {
+                        titleInput.value = `${values.join(', ')}`;
+                    } else if (axis && values.length === 0) {
+                        titleInput.value = `Contagem por ${axis}`;
+                    }
+                     else {
+                        titleInput.value = defaultTitle;
+                    }
+                };
+                
+                if (valueCheckboxes.length > 0) {
+                    const firstNumeric = fields.find(f => f.type === 'number');
+                    if(firstNumeric) {
+                        const firstCheckbox = modal.querySelector(`input[value="${firstNumeric.name}"]`);
+                        if(firstCheckbox) firstCheckbox.checked = true;
+                    }
+                }
+
+                axisSelect.addEventListener('change', updateChartTitlePreview);
+                valueCheckboxes.forEach(cb => {
+                    cb.addEventListener('change', updateChartTitlePreview);
+                });
+
+                updateChartTitlePreview();
+            }
+
+            getEl('confirm-visual-creation').onclick = () => confirmAddVisual(item);
+        }
+
+        function addSeriesToModal() {
+            const container = getEl('composite-series-container');
+            const seriesIndex = container.children.length;
+            const seriesId = `series-modal-${seriesIndex}`;
+            const compatibleTypes = [ { value: 'bar', label: 'Barras' }, { value: 'line', label: 'Linha' }];
+
+            const seriesDiv = document.createElement('div');
+            seriesDiv.id = seriesId;
+            seriesDiv.className = 'p-2 border rounded-md dark:border-slate-600 bg-slate-50 dark:bg-slate-800/50';
+            seriesDiv.innerHTML = `
+                <div class="flex justify-between items-center mb-2">
+                    <label class="text-sm font-semibold">Série ${seriesIndex + 1}</label>
+                    <button type="button" class="p-1 rounded-full hover:bg-red-500/10 text-slate-500 hover:text-red-500" onclick="document.getElementById('${seriesId}').remove()">
+                        <ion-icon name="trash-outline"></ion-icon>
+                    </button>
+                 </div>
+                 <select data-role="type" class="w-full mt-1 p-2 bg-slate-100 dark:bg-slate-700 rounded-md text-sm" onchange="toggleAreaFill(this, '${seriesId}')">
+                    ${compatibleTypes.map(t => `<option value="${t.value}">${t.label}</option>`).join('')}
+                 </select>
+                 <div data-role="area-fill-container" class="hidden">
+                     <label class="flex items-center gap-2 mt-2 text-sm">
+                       <input type="checkbox" data-role="fill">
+                       Preencher como área
+                    </label>
+                 </div>
+                 <div class="text-sm mt-2">Valores:</div>
+                 <div class="max-h-24 overflow-y-auto custom-scrollbar border rounded-md p-2 dark:border-slate-600 text-sm mt-1">
+                    ${fields.filter(f => f.type === 'number').map(metric => `
+                        <label class="flex items-center gap-2 p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700">
+                            <input type="checkbox" data-role="value" value="${metric.name}">
+                            <span>${metric.name}</span>
+                        </label>
+                    `).join('')}
+                </div>
+            `;
+            container.appendChild(seriesDiv);
+        }
+        
+        function toggleAreaFill(selectElement, seriesId) {
+            const container = document.getElementById(seriesId).querySelector('[data-role="area-fill-container"]');
+            if (selectElement.value === 'line') {
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+            }
+        }
+
+        function confirmAddVisual(item) {
+            const { type, subType } = item;
+            const newVisual = {
+                id: `${type}-${Date.now()}`,
+                type, subType,
+                layout: { x: 10, y: 10, w: 450, h: 350 },
+                style: { preset: appSettings.defaultPalette },
+                config: {}
+            };
+
+            if (type === 'kpi') {
+                const title = getEl('kpi-title').value;
+                let aggregation = getEl('kpi-aggregation').value;
+                const column = getEl('kpi-column').value;
+                let suffix = '';
+                let prefix = item.config?.measure?.prefix || '';
+                
+                if(getFormatType(column) === 'BRL') prefix = '';
+                if (aggregation === 'PERCENTAGE') {
+                    aggregation = 'AVERAGE';
+                    suffix = '%';
+                    prefix = '';
+                }
+
+                newVisual.layout = { x: 10, y: 10, w: 220, h: 100 };
+                newVisual.config = {
+                    title: title,
+                    measure: { aggregation, column, prefix, suffix }
+                };
+            } else if (type === 'gauge') {
+                 const title = getEl('gauge-title').value;
+                 const column = getEl('gauge-column').value;
+                 const aggregation = getEl('gauge-aggregation').value;
+                 const max = getEl('gauge-max').value;
+                 newVisual.layout = { x: 10, y: 10, w: 250, h: 180 };
+                 newVisual.config = {
+                     title: title,
+                     measure: { column, aggregation, max: parseFloat(max) || null }
+                 };
+            } else if (type.includes('3d')) {
+                 const title = getEl('chart-title').value;
+                 if (type === 'pie3d' || type === 'doughnut3d') {
+                    const axis = getEl('chart-axis').value;
+                    const values = [getEl('chart-values').value];
+                     if (!axis || !values[0]) {
+                        alert("Por favor, selecione uma categoria e um valor.");
+                        return;
+                    }
+                    newVisual.config = { title, axis, values, axisType: 'valores' };
+                 } else { // Bar3D and Scatter3D
+                    const xAxis = getEl('chart-x-axis').value;
+                    const yAxis = getEl('chart-y-axis').value;
+                    const zAxis = getEl('chart-z-axis').value;
+                    if (!xAxis || !yAxis || !zAxis) {
+                        alert("Por favor, preencha todos os eixos (X, Y e Z).");
+                        return;
+                    }
+                    newVisual.config = { title, xAxis, yAxis, zAxis };
+                }
+            } else if (type === 'bubble' || type === 'scatter') {
+                const title = getEl('chart-title').value;
+                const xAxis = getEl('chart-x-axis').value;
+                const yAxis = getEl('chart-y-axis').value;
+                const bubbleSize = type === 'bubble' ? getEl('chart-bubble-size').value : null;
+                const category = type === 'bubble' ? getEl('chart-category').value : null;
+
+                if (!xAxis || !yAxis || (type === 'bubble' && !bubbleSize)) {
+                    alert("Por favor, preencha todos os campos obrigatórios para o gráfico de bolhas/dispersão.");
+                    return;
+                }
+                newVisual.config = { title, xAxis, yAxis, bubbleSize, category };
+            }
+            else if (type === 'composite') {
+                 const title = getEl('chart-title').value;
+                 const axis = getEl('chart-axis').value;
+                 const series = [];
+                 
+                 const seriesElements = getEl('composite-series-container').children;
+                 for (const el of seriesElements) {
+                     const serie = {
+                         type: el.querySelector('[data-role="type"]').value,
+                         values: Array.from(el.querySelectorAll('[data-role="value"]:checked')).map(cb => cb.value),
+                         fill: el.querySelector('[data-role="fill"]').checked
+                     };
+                     series.push(serie);
+                 }
+
+                 if (!axis || series.length === 0 || series.every(s => s.values.length === 0)) {
+                    alert("Por favor, selecione uma categoria e pelo menos um valor para uma série.");
+                    return;
+                }
+                newVisual.config = { title, axis, series };
+            } else { // Other Charts
+                const title = getEl('chart-title').value;
+                const axis = getEl('chart-axis').value;
+                const values = Array.from(document.querySelectorAll('#visual-config-modal input[name="chart-values"]:checked')).map(cb => cb.value);
+                const chartType = getEl('chart-type-selector').value;
+
+                if (!axis || values.length === 0) {
+                    alert("Por favor, selecione uma categoria e pelo menos um valor.");
+                    return;
+                }
+
+                newVisual.type = chartType;
+                newVisual.config = { title, axisType: 'valores', axis, values };
+            }
+
+            dashboardConfig.push(newVisual);
+            selectedVisualId = newVisual.id;
+            closeModal('visual-config-modal');
+            saveStateToHistory();
+            renderDashboard();
+        }
+
+        function openSettingsModal() {
+            const modal = getEl('settings-modal');
+            modal.innerHTML = `
+            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 max-w-lg w-full card-glow">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">Configurações</h3>
+                    <button onclick="closeModal('settings-modal')" class="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
+                        <ion-icon name="close-outline" class="text-2xl"></ion-icon>
+                    </button>
+                </div>
+                <div class="space-y-6">
+                     <div>
+                        <label class="text-sm font-medium text-slate-700 dark:text-slate-300">Tema da Interface</label>
+                        <div class="grid grid-cols-2 gap-4 mt-2">
+                            <button onclick="switchTheme('light')" class="p-4 rounded-lg border-2 flex flex-col items-center gap-2 ${appSettings.theme === 'light' ? 'border-cyan-500' : 'border-slate-300 dark:border-slate-600'}">
+                                <ion-icon name="sunny-outline" class="text-2xl"></ion-icon>
+                                <span>Claro</span>
+                            </button>
+                            <button onclick="switchTheme('dark')" class="p-4 rounded-lg border-2 flex flex-col items-center gap-2 ${appSettings.theme === 'dark' ? 'border-cyan-500' : 'border-slate-300 dark:border-slate-600'}">
+                                <ion-icon name="moon-outline" class="text-2xl"></ion-icon>
+                                <span>Escuro</span>
+                            </button>
+                        </div>
+                    </div>
+                     <div>
+                        <label for="default-palette-select" class="text-sm font-medium text-slate-700 dark:text-slate-300">Paleta de Cores Padrão</label>
+                        <select id="default-palette-select" class="w-full mt-2 p-2 bg-slate-100 dark:bg-slate-700 rounded-md border border-slate-300 dark:border-slate-600">
+                           ${Object.keys(visualStyles).filter(s => !s.startsWith('kpi')).map(styleName => `<option value="${styleName}" ${appSettings.defaultPalette === styleName ? 'selected' : ''}>${visualStyles[styleName].name}</option>`).join('')}
+                        </select>
+                    </div>
+                     <div>
+                        <label class="text-sm font-medium text-slate-700 dark:text-slate-300">Cor de Fundo do Dashboard</label>
+                         <input type="color" id="dashboard-bg-color-input" value="${appSettings.dashboardBackground || (appSettings.theme === 'dark' ? '#0f172a' : '#f1f5f9')}" class="w-full h-10 p-1 mt-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md cursor-pointer">
+                    </div>
+                </div>
+                 <div class="mt-6 flex justify-end gap-3 pt-4 border-t dark:border-slate-700">
+                    <button onclick="closeModal('settings-modal')" class="bg-slate-200 dark:bg-slate-700 font-semibold py-2 px-4 rounded-lg">Fechar</button>
+                    <button id="save-settings-button" class="bg-cyan-500 text-white font-semibold py-2 px-4 rounded-lg">Salvar</button>
+                </div>
+            </div>`;
+            modal.classList.remove('hidden');
+            getEl('save-settings-button').addEventListener('click', () => {
+                appSettings.defaultPalette = getEl('default-palette-select').value;
+                appSettings.dashboardBackground = getEl('dashboard-bg-color-input').value;
+                saveSettings();
+                closeModal('settings-modal');
+            });
+        }
+        
+        function saveSettings() {
+            localStorage.setItem('bi-studio-settings', JSON.stringify(appSettings));
+            applySettings();
+        }
+
+        function loadSettings() {
+            const savedSettings = JSON.parse(localStorage.getItem('bi-studio-settings'));
+            if (savedSettings) {
+                appSettings = savedSettings;
+            }
+            applySettings();
+        }
+
+        function applySettings() {
+             document.documentElement.classList.toggle('dark', appSettings.theme === 'dark');
+             getEl('dashboard-layout').style.backgroundColor = appSettings.dashboardBackground || '';
+             if (originalData.length > 0) renderDashboard();
+        }
+
+        function switchTheme(theme) {
+            appSettings.theme = theme;
+            document.documentElement.classList.toggle('dark', theme === 'dark');
+            saveSettings();
+            if(!getEl('settings-modal').classList.contains('hidden')) openSettingsModal();
+        }
+
+        function generateReportSummary() {
+            if (filteredData.length === 0) {
+                return '<p class="text-slate-500 dark:text-slate-400">Não há dados para gerar um relatório.</p>';
+            }
+
+            const numericFields = fields.filter(f => f.type === 'number');
+            const categoryFields = fields.filter(f => f.type === 'text');
+            
+            let summary = `<h4 class="font-semibold text-lg mb-2 text-slate-800 dark:text-slate-200">Resumo Geral dos Dados</h4>`;
+            summary += `<p class="text-sm text-slate-600 dark:text-slate-300 mb-4">Análise de <strong>${filteredData.length}</strong> registros da aba <strong>${selectedSheetName}</strong>.</p>`;
+
+            if (numericFields.length > 0) {
+                const mainMetric = numericFields[0].name;
+                const total = calculateMeasure(filteredData, 'SUM', mainMetric);
+                const average = calculateMeasure(filteredData, 'AVERAGE', mainMetric);
+                summary += `<div class="grid grid-cols-2 gap-3 mb-4">
+                    <div class="p-3 bg-slate-200/50 dark:bg-slate-700/50 rounded-lg">
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Total de ${mainMetric}</p>
+                        <p class="font-bold text-xl text-cyan-600 dark:text-cyan-400">${formatValue(total, getFormatType(mainMetric))}</p>
+                    </div>
+                     <div class="p-3 bg-slate-200/50 dark:bg-slate-700/50 rounded-lg">
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Média de ${mainMetric}</p>
+                        <p class="font-bold text-xl text-cyan-600 dark:text-cyan-400">${formatValue(average, getFormatType(mainMetric))}</p>
+                    </div>
+                </div>`;
+            }
+            
+             summary += `<h4 class="font-semibold text-lg mt-6 mb-2 text-slate-800 dark:text-slate-200">Análise por Visual</h4>`;
+             summary += '<ul class="space-y-4">';
+
+            dashboardConfig.forEach(visual => {
+                if (visual.type === 'textBox') return;
+
+                const { title } = visual.config;
+                let insight = '';
+                
+                try {
+                     if (['kpi', 'gauge'].includes(visual.type)) {
+                        const { aggregation, column } = visual.config.measure;
+                        const value = calculateMeasure(filteredData, aggregation, column);
+                        insight = `O KPI <strong>${title}</strong> mostra um valor de <strong>${formatValue(value, getFormatType(column))}</strong>.`;
+                    } else if (['pie', 'doughnut', 'bar'].includes(visual.type) && visual.config.axis) {
+                        const data = prepareValueComparisonData(filteredData, visual);
+                        if (data.labels && data.labels.length > 0) {
+                            const values = data.datasets[0].data;
+                            const maxIndex = values.indexOf(Math.max(...values));
+                            const minIndex = values.indexOf(Math.min(...values));
+                            insight = `No gráfico <strong>${title}</strong>, a categoria <strong>${data.labels[maxIndex]}</strong> apresenta o maior valor (${formatValue(values[maxIndex])}), enquanto <strong>${data.labels[minIndex]}</strong> tem o menor valor (${formatValue(values[minIndex])}).`;
+                        }
+                    } else {
+                        insight = 'Este visual apresenta uma análise detalhada dos seus dados.';
+                    }
+                } catch (e) {
+                    insight = 'Não foi possível gerar um insight automático para este visual.';
+                }
+
+                summary += `<li class="p-3 rounded-lg bg-slate-100 dark:bg-slate-900/50">
+                    <p class="font-semibold text-slate-700 dark:text-slate-200">${title || 'Visual sem título'}</p>
+                    <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">${insight}</p>
+                </li>`;
+            });
+            summary += '</ul>';
+
+            return summary;
+        }
+
+
+        function openReportModal() {
+            const modal = getEl('report-modal');
+            const reportContent = generateReportSummary();
+            
+            modal.innerHTML = `
+            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 max-w-2xl w-full card-glow flex flex-col max-h-[90vh]">
+                <div class="flex justify-between items-center mb-4 flex-shrink-0">
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Relatório do Dashboard</h3>
+                    <button onclick="closeModal('report-modal')" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
+                        <ion-icon name="close-outline" class="text-xl text-slate-500 dark:text-slate-300"></ion-icon>
+                    </button>
+                </div>
+                <div class="flex-grow overflow-y-auto custom-scrollbar pr-2">
+                    ${reportContent}
+                </div>
+            </div>`;
+            modal.classList.remove('hidden');
+        }
+
+        window.focusOnVisual = (id) => {
+            closeModal('report-modal');
+            selectedVisualId = id;
+            renderDashboard(); 
+            const element = getEl(id);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        };
+
+
+        function openSheetSelectorModal() {
+            const modal = getEl('sheet-selector-modal');
+            modal.innerHTML = `
+            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 max-w-4xl w-full card-glow flex flex-col max-h-[90vh]">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">Conectar aos Dados</h3><button onclick="closeModal('sheet-selector-modal')" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700"><ion-icon name="close-outline" class="text-xl"></ion-icon></button>
+                </div>
+                <div class="grid grid-cols-3 flex-grow gap-4 overflow-hidden">
+                    <div id="sheet-list" class="col-span-1 overflow-y-auto custom-scrollbar space-y-2 pr-2">
+                         <h4 class="font-semibold mb-2">Selecione uma Aba</h4>
+                        ${currentWorkbook.SheetNames.map(name => `<label class="block p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer"><input type="radio" name="sheet" value="${name}" class="mr-2">${name}</label>`).join('')}
+                    </div>
+                    <div id="sheet-preview" class="col-span-2 overflow-auto custom-scrollbar"></div>
+                </div>
+                <div class="mt-4 pt-4 border-t dark:border-slate-600 flex justify-end gap-2">
+                    <button class="py-2 px-4 rounded-lg bg-slate-200 dark:bg-slate-600" onclick="closeModal('sheet-selector-modal')">Cancelar</button>
+                    <button id="load-sheet-button" class="py-2 px-4 rounded-lg bg-cyan-500 text-white" disabled onclick="loadSelectedSheet()">Carregar</button>
+                </div>
+            </div>`;
+            modal.classList.remove('hidden');
+            modal.querySelectorAll('input[name="sheet"]').forEach(radio => radio.addEventListener('change', previewSheet));
+        }
+
+        function previewSheet(event) {
+            selectedSheetName = event.target.value;
+            const worksheet = currentWorkbook.Sheets[selectedSheetName];
+            const previewData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }).slice(0, 15);
+            getEl('sheet-preview').innerHTML = `<table class="w-full text-xs"><thead><tr>${previewData[0].map(h => `<th class="p-1 border-b dark:border-slate-600 text-left">${h}</th>`).join('')}</tr></thead><tbody>${previewData.slice(1).map(row => `<tr>${row.map(cell => `<td class="p-1 border-b dark:border-slate-700">${cell || ''}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+            getEl('load-sheet-button').disabled = false;
+        }
+        
+        function renderGlobalFilters() {
+            filtersContainer.innerHTML = '';
+            if(mainCategoryColumn) {
+                const categories = ['Todos', ...new Set(originalData.map(row => row[mainCategoryColumn]))].sort();
+                filtersContainer.innerHTML = `
+                    <div class="flex-1">
+                        <label for="category-filter" class="text-sm font-medium text-slate-700 dark:text-slate-300">${mainCategoryColumn}</label>
+                        <select id="category-filter" onchange="filterByCategory(this.value)" class="w-full mt-1 p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm">
+                            ${categories.map(cat => `<option value="${cat === 'Todos' ? 'all' : cat}" ${activeFilters[mainCategoryColumn] === cat ? 'selected' : ''}>${cat}</option>`).join('')}
+                        </select>
+                    </div>
+                `;
+            }
+        }
+
+        function filterByCategory(categoryValue) {
+            if (categoryValue === 'all') {
+                delete activeFilters[mainCategoryColumn];
+            } else {
+                activeFilters[mainCategoryColumn] = categoryValue;
+            }
+            renderDashboard();
+        }
+
+        function closeModal(modalId) { getEl(modalId).classList.add('hidden'); }
+        
+        function showSaveStatus(status) {
+            const statusEl = getEl('save-status');
+            if (!statusEl) return;
+            
+            statusEl.classList.remove('text-green-500', 'dark:text-green-400');
+
+            if (status === 'saving') {
+                statusEl.textContent = 'Salvando...';
+                statusEl.classList.remove('opacity-0');
+            } else if (status === 'saved') {
+                statusEl.textContent = 'Salvo!';
+                statusEl.classList.add('text-green-500', 'dark:text-green-400');
+                statusEl.classList.remove('opacity-0');
+                setTimeout(() => {
+                    statusEl.classList.add('opacity-0');
+                }, 2000); // Fade out after 2 seconds
+            }
+        }
+
+        async function downloadDashboard() {
+            const dashboard = getEl('dashboard-layout');
+            const title = projectName || 'Dashboard';
+            const { jsPDF } = window.jspdf;
+            const isDark = appSettings.theme === 'dark';
+            
+            if (selectedVisualId) getEl(selectedVisualId)?.classList.remove('active');
+            downloadButton.innerHTML = `<div class="spinner w-5 h-5 border-2 border-white/50 border-t-white rounded-full"></div>`;
+            downloadButton.disabled = true;
+
+            const originalStyle = {
+                width: dashboard.style.width,
+                height: dashboard.style.height,
+                minHeight: dashboard.style.minHeight
+            };
+
+            try {
+                // Find the bounding box of all visuals to set the capture size accurately
+                let dashboardWidth = 0;
+                let dashboardHeight = 0;
+                dashboardConfig.forEach(visual => {
+                    const right = visual.layout.x + visual.layout.w;
+                    const bottom = visual.layout.y + visual.layout.h;
+                    if (right > dashboardWidth) dashboardWidth = right;
+                    if (bottom > dashboardHeight) dashboardHeight = bottom;
+                });
+
+                // Add some padding
+                dashboardWidth += 50; 
+                dashboardHeight += 50;
+
+                // Temporarily resize the container to fit all content for the screenshot
+                dashboard.style.width = `${dashboardWidth}px`;
+                dashboard.style.height = `${dashboardHeight}px`;
+                dashboard.style.minHeight = `${dashboardHeight}px`;
+
+                // Brief delay to allow browser to reflow the layout before capturing
+                await new Promise(resolve => setTimeout(resolve, 750));
+
+                const canvas = await html2canvas(dashboard, {
+                    backgroundColor: appSettings.dashboardBackground || (isDark ? '#0f172a' : '#f1f5f9'),
+                    scale: 2.5, // Use a higher scale for better resolution
+                    useCORS: true,
+                    width: dashboardWidth,
+                    height: dashboardHeight,
+                    scrollX: -window.scrollX,
+                    scrollY: -window.scrollY,
+                    onclone: (clonedDoc) => {
+                        // For 3D scenes, render them to a 2D canvas that html2canvas can read
+                        active3DScenes.forEach((scene, id) => {
+                            const originalContainer = clonedDoc.getElementById(id);
+                            if (originalContainer) {
+                                scene.renderer.render(scene.scene, scene.camera);
+                                const imgData = scene.renderer.domElement.toDataURL('image/png');
+                                const img = new Image();
+                                img.src = imgData;
+                                img.style.width = '100%';
+                                img.style.height = '100%';
+                                originalContainer.innerHTML = '';
+                                originalContainer.appendChild(img);
+                            }
+                        });
+                    }
+                });
+                
+                // Restore original dimensions right after capture
+                dashboard.style.width = originalStyle.width;
+                dashboard.style.height = originalStyle.height;
+                dashboard.style.minHeight = originalStyle.minHeight;
+
+                const imgWidth = canvas.width;
+                const imgHeight = canvas.height;
+                
+                const orientation = imgWidth > imgHeight ? 'l' : 'p';
+
+                const pdf = new jsPDF({ 
+                    orientation: orientation, 
+                    unit: 'px', 
+                    format: [imgWidth, imgHeight]
+                });
+                
+                pdf.setProperties({
+                    title: title,
+                    subject: `Relatório de Performance: ${selectedSheetName || ''}`,
+                    author: 'Estúdio BI',
+                });
+
+                pdf.addImage(canvas.toDataURL('image/png', 1.0), 'PNG', 0, 0, imgWidth, imgHeight, undefined, 'FAST');
+                
+                pdf.save(`${title.replace(/\s+/g, '-')}.pdf`);
+
+            } catch(err) {
+                console.error('Erro ao gerar PDF: ', err);
+            } finally {
+                dashboard.style.width = originalStyle.width;
+                dashboard.style.height = originalStyle.height;
+                dashboard.style.minHeight = originalStyle.minHeight;
+
+                if (selectedVisualId) getEl(selectedVisualId)?.classList.add('active');
+                downloadButton.innerHTML = `<ion-icon name="download-outline" class="text-xl"></ion-icon><span class="hidden md:inline">Baixar PDF</span>`;
+                downloadButton.disabled = false;
+            }
+        }
+        
+        // --- History Management ---
+        function saveStateToHistory() {
+            if (historyIndex < history.length - 1) {
+                history = history.slice(0, historyIndex + 1);
+            }
+            history.push(JSON.parse(JSON.stringify(dashboardConfig)));
+            historyIndex = history.length - 1;
+            updateHistoryButtons();
+        }
+
+        function undo() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                dashboardConfig = JSON.parse(JSON.stringify(history[historyIndex]));
+                renderDashboard({ isHistoryChange: true });
+            }
+        }
+
+        function redo() {
+            if (historyIndex < history.length - 1) {
+                historyIndex++;
+                dashboardConfig = JSON.parse(JSON.stringify(history[historyIndex]));
+                renderDashboard({ isHistoryChange: true });
+            }
+        }
+        
+        function updateHistoryButtons() {
+            const undoButton = getEl('undo-button');
+            const redoButton = getEl('redo-button');
+            if (!undoButton || !redoButton) return;
+            
+            undoButton.disabled = historyIndex <= 0;
+            redoButton.disabled = historyIndex >= history.length - 1;
+        }
+
+        // --- 3D Chart Logic (Three.js) ---
+        function render3DChart(visual, container) {
+            const { config, style } = visual;
+            const stylePreset = visualStyles[style.preset] || visualStyles[appSettings.defaultPalette] || visualStyles.cyan;
+
+            const header = document.createElement('h3');
+            header.className = 'text-base font-semibold text-slate-900 dark:text-white mb-2';
+            header.textContent = config.title;
+            container.appendChild(header);
+
+            const threeDContainer = document.createElement('div');
+            threeDContainer.className = 'three-d-container';
+            container.appendChild(threeDContainer);
+            
+            const sceneContainer = document.createElement('div');
+            sceneContainer.className = 'three-d-scene-container flex-grow relative';
+            threeDContainer.appendChild(sceneContainer);
+            
+            const legendContainer = document.createElement('div');
+            legendContainer.className = 'flex-shrink-0';
+            threeDContainer.appendChild(legendContainer);
+
+            // Delay rendering to get correct dimensions
+            setTimeout(() => {
+                const renderWidth = sceneContainer.clientWidth;
+                const renderHeight = sceneContainer.clientHeight;
+                if (renderWidth <= 0 || renderHeight <= 0) return;
+
+                const scene = new THREE.Scene();
+                scene.background = new THREE.Color(style.backgroundColor || (appSettings.theme === 'dark' ? 0x1e293b : 0xffffff));
+
+                const camera = new THREE.PerspectiveCamera(50, renderWidth / renderHeight, 0.1, 1000);
+                camera.position.set(10, 10, 20);
+                
+                const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer.setSize(renderWidth, renderHeight);
+                renderer.setPixelRatio(window.devicePixelRatio * 1.5);
+                renderer.shadowMap.enabled = true;
+                renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                sceneContainer.appendChild(renderer.domElement);
+                
+                const labelRenderer = new THREE.CSS2DRenderer();
+                labelRenderer.setSize(renderWidth, renderHeight);
+                labelRenderer.domElement.style.position = 'absolute';
+                labelRenderer.domElement.style.top = '0px';
+                labelRenderer.domElement.style.pointerEvents = 'none';
+                sceneContainer.appendChild(labelRenderer.domElement);
+
+                const controls = new THREE.OrbitControls(camera, renderer.domElement);
+                controls.enableDamping = true;
+
+                scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(10, 15, 10);
+                directionalLight.castShadow = true;
+                directionalLight.shadow.mapSize.width = 1024;
+                directionalLight.shadow.mapSize.height = 1024;
+                scene.add(directionalLight);
+                
+                if (visual.type === 'bar3d') {
+                    create3DBarChart(scene, filteredData, config, stylePreset, legendContainer);
+                } else if (visual.type === 'scatter3d') {
+                    create3DScatterPlot(scene, filteredData, config, stylePreset, legendContainer);
+                } else if (visual.type === 'pie3d' || visual.type === 'doughnut3d') {
+                    create3DPieChart(scene, filteredData, visual, stylePreset, legendContainer);
+                }
+                
+                let animationId;
+                const animate = () => {
+                    animationId = requestAnimationFrame(animate);
+                    controls.update();
+                    renderer.render(scene, camera);
+                    labelRenderer.render(scene, camera);
+                };
+                animate();
+                
+                active3DScenes.set(visual.id, { scene, camera, renderer, labelRenderer, animationId, controls });
+            }, 100);
+        }
+        
+        function createHTMLLegend(data, stylePreset, container) {
+            container.innerHTML = ''; // Clear previous legend
+            const legend = document.createElement('ul');
+            legend.className = 'chart-legend-3d custom-scrollbar';
+            
+            data.labels.forEach((label, index) => {
+                const color = stylePreset.palette[index % stylePreset.palette.length];
+                const li = document.createElement('li');
+                li.innerHTML = `<span style="background-color: ${color}"></span> ${label}`;
+                legend.appendChild(li);
+            });
+            
+            container.appendChild(legend);
+        }
+
+        function createTextLabel(text) {
+            const div = document.createElement('div');
+            div.className = 'label3d';
+            div.textContent = text;
+            return new THREE.CSS2DObject(div);
+        }
+        
+        function create3DBarChart(scene, data, config, stylePreset, container) {
+            const { xAxis, yAxis, zAxis } = config;
+            if (!xAxis || !yAxis || !zAxis) return;
+
+            const xLabels = [...new Set(data.map(d => d[xAxis]))].sort();
+            const zLabels = [...new Set(data.map(d => d[zAxis]))].sort();
+
+            const yValues = data.map(d => parseFloat(d[yAxis]) || 0);
+            const yMax = Math.max(...yValues, 0);
+            
+            const group = new THREE.Group();
+            const barRadius = 0.4;
+
+            zLabels.forEach((zLabel, zIndex) => {
+                xLabels.forEach((xLabel, xIndex) => {
+                    const row = data.find(d => d[xAxis] === xLabel && d[zAxis] === zLabel);
+                    if (row) {
+                        const value = parseFloat(row[yAxis]) || 0;
+                        if(value <= 0) return;
+                        const height = (value / yMax) * 10; 
+                        
+                        const geometry = new THREE.CylinderGeometry(barRadius, barRadius, height, 24);
+                        const color = stylePreset.palette[zIndex % stylePreset.palette.length];
+                        const material = new THREE.MeshStandardMaterial({ 
+                            color: color, 
+                            metalness: 0.3, 
+                            roughness: 0.6,
+                            transparent: true,
+                            opacity: 0.9
+                        });
+                        const bar = new THREE.Mesh(geometry, material);
+                        bar.castShadow = true;
+                        bar.receiveShadow = true;
+                        
+                        bar.position.set(xIndex * (barRadius * 2 + 0.3), height / 2, zIndex * (barRadius * 2 + 0.3));
+                        
+                        const label = createTextLabel(formatValue(value, getFormatType(yAxis)));
+                        label.position.set(0, height / 2 + 0.5, 0);
+                        bar.add(label);
+                        
+                        group.add(bar);
+                    }
+                });
+            });
+            
+            const box = new THREE.Box3().setFromObject(group);
+            const center = box.getCenter(new THREE.Vector3());
+            group.position.sub(center);
+
+            scene.add(group);
+            
+            createHTMLLegend({ labels: zLabels }, stylePreset, container);
+            
+            const floorGeometry = new THREE.PlaneGeometry(30, 30);
+            const floorMaterial = new THREE.ShadowMaterial({ opacity: 0.3 });
+            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.y = box.min.y + group.position.y - 0.01;
+            floor.receiveShadow = true;
+            scene.add(floor);
+        }
+
+        function create3DScatterPlot(scene, data, config, stylePreset, container) {
+             const { xAxis, yAxis, zAxis } = config;
+             if (!xAxis || !yAxis || !zAxis) return;
+             
+             const xValues = data.map(d => parseFloat(d[xAxis]) || 0);
+             const yValues = data.map(d => parseFloat(d[yAxis]) || 0);
+             const zValues = data.map(d => parseFloat(d[zAxis]) || 0);
+
+             const xMax = Math.max(...xValues); const xMin = Math.min(...xValues);
+             const yMax = Math.max(...yValues); const yMin = Math.min(...yValues);
+             const zMax = Math.max(...zValues); const zMin = Math.min(...zValues);
+             
+             const group = new THREE.Group();
+             const geometry = new THREE.SphereGeometry(0.2, 16, 16);
+
+             data.forEach((row, index) => {
+                const x = (xMax === xMin) ? 0 : (((parseFloat(row[xAxis]) || 0) - xMin) / (xMax - xMin) * 20);
+                const y = (yMax === yMin) ? 0 : (((parseFloat(row[yAxis]) || 0) - yMin) / (yMax - yMin) * 10);
+                const z = (zMax === zMin) ? 0 : (((parseFloat(row[zAxis]) || 0) - zMin) / (zMax - zMin) * 20);
+                
+                const color = new THREE.Color(stylePreset.palette[index % stylePreset.palette.length]);
+                const material = new THREE.MeshStandardMaterial({ 
+                    color: color, 
+                    metalness: 0.1, 
+                    roughness: 0.5,
+                    emissive: color,
+                    emissiveIntensity: 0.3
+                });
+                const point = new THREE.Mesh(geometry, material);
+                point.castShadow = true;
+                point.position.set(x,y,z);
+                group.add(point);
+             });
+            
+             const box = new THREE.Box3().setFromObject(group);
+             const center = box.getCenter(new THREE.Vector3());
+             group.position.sub(center);
+             scene.add(group);
+             
+             const gridHelper = new THREE.GridHelper(22, 10, 0x888888, 0x444444);
+             gridHelper.position.y = box.min.y + group.position.y - 0.01;
+             scene.add(gridHelper);
+        }
+
+        function create3DPieChart(scene, data, visual, stylePreset, container) {
+            const { config } = visual;
+            const { axis, values } = config; 
+            if (!axis || !values || !values.length) return;
+            
+            const chartData = prepareValueComparisonData(data, visual);
+            if (!chartData || !chartData.datasets.length || chartData.datasets[0].data.length === 0) return;
+            
+            const rawData = chartData.datasets[0].data;
+            const total = rawData.reduce((sum, val) => sum + val, 0);
+            if (total === 0) return;
+
+            const maxValIndex = rawData.indexOf(Math.max(...rawData));
+
+            const group = new THREE.Group();
+            const radius = 5;
+            const height = 1.5;
+            const holeRadius = visual.type === 'doughnut3d' ? 3.5 : 0;
+            let startAngle = -Math.PI / 2;
+
+            rawData.forEach((value, index) => {
+                const angle = (value / total) * Math.PI * 2;
+                if(angle === 0) return;
+                
+                const color = new THREE.Color(stylePreset.palette[index % stylePreset.palette.length]);
+
+                const shape = new THREE.Shape();
+                shape.moveTo(holeRadius * Math.cos(startAngle), holeRadius * Math.sin(startAngle));
+                shape.absarc(0, 0, radius, startAngle, startAngle + angle, false);
+                shape.lineTo(holeRadius * Math.cos(startAngle + angle), holeRadius * Math.sin(startAngle + angle));
+                shape.absarc(0, 0, holeRadius, startAngle + angle, startAngle, true);
+                
+                const extrudeSettings = { depth: height, bevelEnabled: true, bevelThickness: 0.1, bevelSize: 0.1, bevelSegments: 2 };
+                const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+                const material = new THREE.MeshStandardMaterial({ color, metalness: 0.1, roughness: 0.8 });
+                const mesh = new THREE.Mesh(geometry, material);
+                
+                mesh.rotation.x = -Math.PI / 2;
+                mesh.position.y = -height / 2;
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                
+                const midAngle = startAngle + angle / 2;
+
+                if (index === maxValIndex) {
+                    const explodeVector = new THREE.Vector3(0.5 * Math.cos(midAngle), 0, 0.5 * Math.sin(midAngle));
+                    mesh.position.add(explodeVector);
+                }
+                
+                const labelRadius = holeRadius + (radius - holeRadius) / 2;
+                const label = createTextLabel(`${chartData.labels[index]}: ${((value/total)*100).toFixed(1)}%`);
+                label.position.set(
+                    labelRadius * Math.cos(midAngle),
+                    0.1,
+                    labelRadius * Math.sin(midAngle)
+                );
+                mesh.add(label);
+                
+                group.add(mesh);
+                startAngle += angle;
+            });
+            
+            createHTMLLegend(chartData, stylePreset, container);
+            
+            const groundMirror = new THREE.Reflector(new THREE.PlaneGeometry(20, 20), {
+                clipBias: 0.003,
+                textureWidth: window.innerWidth * window.devicePixelRatio,
+                textureHeight: window.innerHeight * window.devicePixelRatio,
+                color: 0x889999
+            });
+            groundMirror.position.y = -height - 0.1;
+            groundMirror.rotateX(-Math.PI / 2);
+            scene.add(groundMirror);
+
+
+            scene.add(group);
+            const sceneState = active3DScenes.get(visual.id);
+            if (sceneState && sceneState.camera) {
+                sceneState.camera.position.set(0, 15, 12);
+                sceneState.controls.target.set(0, 0, 0);
+            }
+        }
+
+        // --- AI Assistant ---
+        function openAiAssistant() {
+            const modal = getEl('ai-assistant-modal');
+            const visual = dashboardConfig.find(v => v.id === selectedVisualId);
+            let content = '';
+
+            if (visual) {
+                 content = `
+                    <h4 class="font-semibold text-lg mb-2 text-slate-800 dark:text-slate-200">Dicas para seu: ${visual.config.title || visual.type}</h4>
+                    <ul class="space-y-2 text-sm text-slate-600 dark:text-slate-300 list-disc list-inside">
+                        ${getAITipsForVisual(visual)}
+                    </ul>
+                 `;
+            } else {
+                 content = `
+                    <h4 class="font-semibold text-lg mb-2 text-slate-800 dark:text-slate-200">Como posso te ajudar?</h4>
+                     <p class="text-sm text-slate-600 dark:text-slate-300 mb-3">Selecione um item no seu dashboard para receber dicas específicas ou siga as sugestões gerais abaixo:</p>
+                    <ul class="space-y-2 text-sm text-slate-600 dark:text-slate-300 list-disc list-inside">
+                        <li>Comece adicionando um gráfico de barras para comparar valores entre categorias.</li>
+                        <li>Use um gráfico de pizza ou rosca para mostrar a composição de um todo (ex: vendas por região).</li>
+                        <li>KPIs são ótimos para destacar métricas importantes, como faturamento total ou número de clientes.</li>
+                        <li>Não se esqueça de experimentar os diferentes designs no painel 'Personalizar' para deixar seu dashboard com a sua cara!</li>
+                    </ul>
+                 `;
+            }
+
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 max-w-lg w-full card-glow">
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center gap-3">
+                           <ion-icon name="sparkles" class="text-2xl text-cyan-500 dark:text-cyan-400"></ion-icon>
+                           <h3 class="text-xl font-semibold">Assistente IA</h3>
+                        </div>
+                        <button onclick="closeModal('ai-assistant-modal')" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
+                            <ion-icon name="close-outline" class="text-xl text-slate-500 dark:text-slate-300"></ion-icon>
+                        </button>
+                    </div>
+                    <div class="max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
+                        ${content}
+                    </div>
+                </div>
+            `;
+            modal.classList.remove('hidden');
+        }
+
+        function getAITipsForVisual(visual) {
+            const tips = {
+                'bar': '<li>Gráficos de barras são excelentes para comparar valores. Tente usar uma paleta de cores contrastante para melhor visualização.</li><li>Se tiver muitas categorias, considere usar um gráfico de barras horizontais.</li>',
+                'line': '<li>Gráficos de linha são ideais para mostrar tendências ao longo do tempo. Verifique se seus dados de eixo X estão em ordem cronológica.</li><li>Ative a opção "Preencher como área" na aba de campos para dar mais destaque à tendência.</li>',
+                'pie': '<li>Gráficos de pizza funcionam melhor com poucas categorias (menos de 6). Para mais categorias, um gráfico de barras é mais legível.</li><li>Experimente os designs "Executivo" ou "Moderno" para um visual profissional.</li>',
+                'bubble': '<li>No gráfico de bolhas, use uma métrica de valor para o tamanho da bolha e uma categoria para a cor para visualizar 4 dimensões de dados de uma só vez.</li>',
+                'kpi': '<li>Use um estilo de card com destaque para métricas muito importantes. Menos é mais: não polua seu dashboard com muitos KPIs.</li>',
+                'default': '<li>Explore o painel "Personalizar" para alterar cores, fontes e legendas.</li><li>Combine diferentes tipos de gráficos para contar uma história completa com seus dados.</li>'
+            };
+            return tips[visual.type] || tips['default'];
+        }
+
+        setupEventListeners();
+    </script>
+</body>
+</html>
