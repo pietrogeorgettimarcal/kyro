@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kyro - Processos (Extração Híbrida)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;
+    </script>
+    <style>
+        :root {
+            --cor-principal: #004a91;
+            --cor-secundaria: #007bff;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        th { font-size: 0.7rem; white-space: nowrap; padding: 8px 4px; background-color: #f8fafc; border-bottom: 2px solid #e2e8f0; color: #475569; font-weight: 700; text-transform: uppercase; }
+        td { font-size: 0.7rem; white-space: nowrap; padding: 6px 4px; border-bottom: 1px solid #f1f5f9; color: #334155; }
+        tr:hover td { background-color: #f8fafc; }
+        
+        .col-money { text-align: right; font-family: monospace; min-width: 80px; }
+        .col-center { text-align: center; }
+        
+        .col-sticky { position: sticky; left: 0; background-color: #f8fafc; z-index: 20; border-right: 2px solid #e2e8f0; box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1); }
+        tr:hover .col-sticky { background-color: #f1f5f9; }
+        td.col-sticky { background-color: #ffffff; }
+
+        /* Toggle Switch CSS */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #68D391;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #68D391;
+        }
+        
+        /* Status Dot Pulse */
+        .status-dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; }
+        .status-online { background-color: #48bb78; box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.7); animation: pulse-green 2s infinite; }
+        .status-offline { background-color: #f56565; }
+        @keyframes pulse-green {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(72, 187, 120, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(72, 187, 120, 0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-gray-800">
+
+    <!-- Modal de Alerta -->
+    <div id="alertModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-11/12 md:w-1/3 fade-in">
+            <h3 id="modalTitle" class="text-xl font-bold text-gray-900 mb-4">Aviso</h3>
+            <p id="modalMessage" class="text-gray-700 mb-6"></p>
+            <div class="text-right">
+                <button onclick="closeModal()" class="bg-slate-600 text-white px-4 py-2 rounded-lg hover:bg-slate-700 transition duration-300">Entendi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Principal de Análise -->
+    <div id="iaAssistantModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-[98%] h-[95vh] flex flex-col fade-in overflow-hidden">
+            <div class="flex justify-between items-center mb-4 flex-shrink-0">
+                <h3 class="text-xl font-bold text-gray-900 flex items-center space-x-3">
+                    <i class="fas fa-file-invoice-dollar text-slate-600"></i>
+                    <span>Análise de Processo e Débitos</span>
+                </h3>
+                <button onclick="closeIaModal()" class="text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
+            </div>
+            
+            <div class="flex-grow overflow-y-auto space-y-6 px-2">
+                <!-- Seção de Upload -->
+                <div>
+                    <h4 class="font-semibold text-lg mb-2 text-gray-700">1. Anexar Documentos</h4>
+                    <div id="drop-zone" class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-slate-500 bg-gray-50 transition">
+                        <input type="file" id="file-input" class="hidden" accept=".pdf" multiple>
+                        <i class="fas fa-cloud-upload-alt text-2xl text-gray-400 mb-2"></i>
+                        <p class="text-gray-600 text-sm">Arraste e solte os PDFs aqui ou <span class="text-slate-600 font-semibold">clique para selecionar</span>.</p>
+                    </div>
+                    <div id="file-list" class="mt-2 space-y-1"></div>
+                </div>
+
+                <!-- Seção de Controles -->
+                <div class="bg-gray-100 p-4 rounded-lg border border-gray-200">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-bold text-gray-700 flex items-center gap-2">
+                            <i class="fab fa-python text-lg text-blue-600"></i> Motor de Extração
+                        </span>
+                        
+                        <!-- Toggle Button -->
+                        <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                            <input type="checkbox" name="toggle" id="python-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 transition-all duration-300 left-0" checked/>
+                            <label for="python-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer transition-colors duration-300"></label>
+                        </div>
+                    </div>
+                    
+                    <!-- Server Status Indicator -->
+                    <div id="server-status" class="text-xs flex items-center gap-2 mb-3 p-2 rounded bg-red-100 text-red-700 border border-red-200 transition-all duration-300">
+                        <span class="status-dot status-offline"></span>
+                        <span class="font-bold">Servidor Python Offline</span>
+                        <span class="ml-auto text-[10px] opacity-75">(Usando Modo JS Local)</span>
+                    </div>
+
+                    <p class="text-xs text-gray-500 mb-3" id="engine-desc">
+                        O sistema tentará usar o Python para precisão máxima. Se falhar, usará o navegador.
+                    </p>
+
+                    <button id="analyze-button" class="w-full bg-slate-600 text-white px-6 py-3 rounded-lg hover:bg-slate-700 transition duration-300 font-semibold flex items-center justify-center space-x-2 disabled:bg-slate-300 disabled:cursor-not-allowed">
+                        <i class="fas fa-search"></i>
+                        <span>Processar Arquivos</span>
+                    </button>
+                </div>
+
+                <!-- Resultados -->
+                <div id="analysis-results" class="hidden pb-10">
+                     <h4 class="font-semibold text-lg mb-2 text-gray-700">2. Resultados da Extração</h4>
+                     <div id="loader" class="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600"></div>
+                        <p id="loader-text" class="text-gray-700">Processando dados...</p>
+                     </div>
+                     <div id="results-content" class="hidden mt-4"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Layout Principal (Header e Dashboard) -->
+    <div class="min-h-screen">
+        <header class="bg-white shadow-md w-full h-24 flex-shrink-0">
+            <div class="container mx-auto px-4 md:px-6 h-full flex items-center justify-between">
+              <div class="flex items-center space-x-4">
+                <div class="bg-blue-800 text-white w-12 h-12 rounded-lg flex items-center justify-center font-bold text-xl">P</div>
+                <div>
+                  <h1 class="text-xl font-bold text-gray-800">Prefeitura de Limeira</h1>
+                  <p class="text-sm text-gray-600">Departamento de Dívida Ativa</p>
+                </div>
+              </div>
+              <div class="flex items-center space-x-4">
+                <span class="text-sm text-gray-500">Powered by</span>
+                <span class="text-lg font-bold text-blue-700">KYRO</span>
+              </div>
+            </div>
+        </header>
+
+        <main class="container mx-auto px-6 py-8">
+            <div class="bg-white p-8 rounded-xl shadow-sm mb-8 fade-in">
+                <h2 class="text-2xl font-bold text-slate-800">Bem-vindo, Servidor.</h2>
+                <p class="text-slate-500 mb-6">Painel de extração inteligente de débitos.</p>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 space-y-8">
+                    <div id="start-ia" class="bg-slate-800 p-6 rounded-xl hover:shadow-xl transition cursor-pointer text-white">
+                        <h3 class="font-bold text-xl"><i class="fas fa-file-pdf mr-2"></i> Iniciar Extração</h3>
+                        <p class="text-slate-300 text-sm mt-1">Clique para abrir o painel de upload.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- UTILS ---
+        const alertModal = document.getElementById('alertModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalMessage = document.getElementById('modalMessage');
+
+        function showAlert(title, message) {
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            alertModal.classList.remove('hidden');
+        }
+        function closeModal() { alertModal.classList.add('hidden'); }
+
+        // --- SERVER STATUS CHECKER ---
+        const serverStatusEl = document.getElementById('server-status');
+        let isServerOnline = false;
+
+        async function checkServerStatus() {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 2000); // 2s timeout
+                
+                const response = await fetch('http://localhost:8000/', { 
+                    method: 'GET',
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+
+                if (response.ok) {
+                    isServerOnline = true;
+                    updateStatusUI(true);
+                } else {
+                    throw new Error('Server returned error');
+                }
+            } catch (e) {
+                isServerOnline = false;
+                updateStatusUI(false);
+            }
+        }
+
+        function updateStatusUI(online) {
+            if (online) {
+                serverStatusEl.className = "text-xs flex items-center gap-2 mb-3 p-2 rounded bg-green-100 text-green-700 border border-green-200 transition-all duration-300";
+                serverStatusEl.innerHTML = `
+                    <span class="status-dot status-online"></span>
+                    <span class="font-bold">Servidor Python Online</span>
+                    <span class="ml-auto text-[10px] opacity-75">(Pronto para uso)</span>
+                `;
+            } else {
+                serverStatusEl.className = "text-xs flex items-center gap-2 mb-3 p-2 rounded bg-red-100 text-red-700 border border-red-200 transition-all duration-300";
+                serverStatusEl.innerHTML = `
+                    <span class="status-dot status-offline"></span>
+                    <span class="font-bold">Servidor Offline</span>
+                    <span class="ml-auto text-[10px] opacity-75">(Usando Backup JS)</span>
+                `;
+            }
+        }
+
+        // Check status on load and every 5 seconds when modal is open
+        setInterval(() => {
+            if(!iaAssistantModal.classList.contains('hidden')) checkServerStatus();
+        }, 5000);
+
+        // --- UPLOAD LOGIC ---
+        const iaAssistantModal = document.getElementById('iaAssistantModal');
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const fileList = document.getElementById('file-list');
+        const analyzeButton = document.getElementById('analyze-button');
+        const analysisResults = document.getElementById('analysis-results');
+        const loader = document.getElementById('loader');
+        const resultsContent = document.getElementById('results-content');
+        
+        let uploadedFiles = [];
+
+        function openIaModal() { 
+            iaAssistantModal.classList.remove('hidden'); 
+            checkServerStatus(); // Check immediately when opening
+        }
+        function closeIaModal() { iaAssistantModal.classList.add('hidden'); resetIaModalState(); }
+        
+        function resetIaModalState() {
+            uploadedFiles = [];
+            updateFileList();
+            analysisResults.classList.add('hidden');
+            resultsContent.innerHTML = '';
+        }
+
+        document.getElementById('start-ia').addEventListener('click', openIaModal);
+        
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-slate-500', 'bg-slate-50'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-slate-500', 'bg-slate-50'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-slate-500', 'bg-slate-50');
+            if (e.dataTransfer.files.length > 0) handleFiles(e.dataTransfer.files);
+        });
+        fileInput.addEventListener('change', () => { if (fileInput.files.length > 0) handleFiles(fileInput.files); });
+
+        function handleFiles(files) {
+            [...files].forEach(file => {
+                if (!uploadedFiles.some(f => f.name === file.name && f.size === file.size)) uploadedFiles.push(file);
+            });
+            updateFileList();
+        }
+
+        function updateFileList() {
+            fileList.innerHTML = '';
+            analyzeButton.disabled = uploadedFiles.length === 0;
+            uploadedFiles.forEach((file, index) => {
+                fileList.innerHTML += `
+                    <div class="flex items-center justify-between p-2 bg-gray-100 rounded-lg text-sm">
+                        <div class="flex items-center space-x-2 overflow-hidden">
+                            <i class="fas fa-file-pdf text-red-500"></i>
+                            <span class="truncate">${file.name}</span>
+                        </div>
+                        <button onclick="removeFile(${index})" class="text-red-500 font-bold px-2">&times;</button>
+                    </div>`;
+            });
+        }
+        function removeFile(index) { uploadedFiles.splice(index, 1); updateFileList(); }
+
+        // --- ENGINE JAVASCRIPT (FALLBACK) ---
+        const JsExtractor = {
+            parse: async (file) => {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+                let fullText = '';
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    fullText += textContent.items.map(item => item.str + (item.hasEOL ? '\n' : ' ')).join('');
+                }
+                
+                const lines = fullText.split('\n');
+                const debts = [];
+                // Simple Fallback Logic
+                lines.forEach(line => {
+                    const moneyMatch = line.match(/[\d.]+\d+,\d{2}/);
+                    if(moneyMatch && (line.includes('/') || line.includes('NORMAL') || line.includes('AJUIZADA'))) {
+                        debts.push({
+                            id: 'JS-BKP',
+                            nat: 'N/A',
+                            orig: line.substring(0, 30) + '...',
+                            vTotal: moneyMatch[0],
+                            sitDiv: 'Verifique (Modo Local)'
+                        });
+                    }
+                });
+                return debts;
+            }
+        };
+
+        // --- RENDERIZAÇÃO ---
+        function renderDebtResults(debtData, fileName) {
+            if (!debtData || debtData.length === 0) return `<div class="p-4 bg-red-50 text-red-700 rounded mb-4 border border-red-200"><strong class="block mb-1">Sem dados encontrados em: ${fileName}</strong><span class="text-sm">Se estiver usando o Modo Local JS, o PDF pode ser muito complexo. Tente ativar o servidor Python.</span></div>`;
+            
+            const rows = debtData.map(d => `
+                <tr class="hover:bg-slate-50 text-[10px]">
+                    <td class="col-center border-r font-mono bg-slate-50 text-gray-400 col-sticky">${d.id || '-'}</td>
+                    <td class="border-r">${d.nat || ''}</td>
+                    <td class="border-r font-bold truncate max-w-[150px]" title="${d.orig || ''}">${d.orig || ''}</td>
+                    <td class="col-center border-r font-mono text-blue-700 font-bold">${d.icRed || ''}</td>
+                    <td class="col-center border-r font-mono">${d.ic || ''}</td>
+                    <td class="col-center border-r font-bold">${d.comp || ''}</td>
+                    <td class="col-center border-r">${d.venc || ''}</td>
+                    <td class="col-money border-r text-gray-400">${d.vPrincRef || '-'}</td>
+                    <td class="col-money border-r font-bold">${d.vPrinc || '0,00'}</td>
+                    <td class="col-money border-r text-gray-400">${d.vDesc || '-'}</td>
+                    <td class="col-money border-r text-gray-400">${d.vPago || '-'}</td>
+                    <td class="col-money border-r text-gray-400">${d.vSaldoP || '-'}</td>
+                    <td class="col-money border-r">${d.vMulta || '0,00'}</td>
+                    <td class="col-money border-r">${d.vJuros || '0,00'}</td>
+                    <td class="col-money border-r">${d.vCorr || '0,00'}</td>
+                    <td class="col-money border-r">${d.vHon || '0,00'}</td>
+                    <td class="col-money border-r">${d.vDilig || '-'}</td>
+                    <td class="col-money border-r bg-green-50 text-green-700 font-bold border-l-2 border-green-200">${d.vTotal || '0,00'}</td>
+                    <td class="col-center border-r text-[9px]">${d.sitLanc || ''}</td>
+                    <td class="col-center border-r font-semibold ${d.sitDiv === 'AJUIZADA' ? 'text-red-600' : 'text-blue-600'}">${d.sitDiv || ''}</td>
+                    <td class="col-center border-r font-mono text-[9px] bg-yellow-50 font-bold text-blue-800">${d.procF || ''}</td>
+                    <td class="col-center border-r font-mono text-[9px]">${d.procD || ''}</td>
+                    <td class="col-center font-mono text-[9px] font-bold text-slate-700">${d.cda || ''}</td>
+                </tr>
+            `).join('');
+
+            return `
+            <div class="bg-white rounded-lg shadow border border-gray-200 overflow-hidden mb-8">
+                <div class="p-3 bg-slate-100 border-b border-gray-200 flex justify-between items-center">
+                    <h5 class="font-bold text-slate-700 text-sm">Extrato: ${fileName}</h5>
+                    <span class="text-xs text-slate-500 bg-white px-2 py-1 rounded border">${debtData.length} registros</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr>
+                                <th class="border-r col-sticky">#</th><th class="border-r">Nat.</th><th class="border-r">Origem</th>
+                                <th class="border-r">I.C Red</th><th class="border-r">I.C</th><th class="border-r">Comp.</th>
+                                <th class="border-r">Venc.</th><th class="border-r text-right">Prin. Ref</th><th class="border-r text-right">Principal</th>
+                                <th class="border-r text-right">Desc/Abat</th><th class="border-r text-right">Pago</th><th class="border-r text-right">Saldo</th>
+                                <th class="border-r text-right">Multa</th><th class="border-r text-right">Juros</th><th class="border-r text-right">Corr.</th>
+                                <th class="border-r text-right">Honor.</th><th class="border-r text-right">Dilig.</th><th class="border-r text-right bg-green-50">Total</th>
+                                <th class="border-r text-center">Sit. Lanc</th><th class="border-r text-center">Sit. Div</th>
+                                <th class="border-r text-center bg-yellow-100">Fórum</th>
+                                <th class="border-r text-center">Pro. DA</th><th class="text-center">CDA</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+            </div>`;
+        }
+
+        // --- EXECUÇÃO PRINCIPAL ---
+        const pythonToggle = document.getElementById('python-toggle');
+
+        analyzeButton.addEventListener('click', async () => {
+            if (uploadedFiles.length === 0) return;
+            analysisResults.classList.remove('hidden');
+            loader.classList.remove('hidden');
+            resultsContent.innerHTML = '';
+            
+            // Tenta usar Python se o usuário quer E o servidor estiver online
+            const usePython = pythonToggle.checked && isServerOnline;
+
+            try {
+                const results = [];
+                
+                for (const file of uploadedFiles) {
+                    if (usePython) {
+                        const formData = new FormData();
+                        formData.append('file', file);
+
+                        try {
+                            const response = await fetch('http://localhost:8000/extract', {
+                                method: 'POST',
+                                body: formData
+                            });
+
+                            if (!response.ok) throw new Error('Erro na API Python');
+                            
+                            const json = await response.json();
+                            results.push(renderDebtResults(json.data, file.name));
+                            
+                        } catch (err) {
+                            console.error(err);
+                            const data = await JsExtractor.parse(file);
+                            results.push(renderDebtResults(data, file.name + " (Erro Servidor - Fallback JS)"));
+                        }
+
+                    } else {
+                        // Modo JS Puro
+                        const data = await JsExtractor.parse(file);
+                        results.push(renderDebtResults(data, file.name + " (Modo JS Local)"));
+                    }
+                }
+                resultsContent.innerHTML = results.join('');
+                
+            } catch (e) {
+                console.error(e);
+                showAlert('Erro Crítico', 'Falha ao processar arquivos.');
+            } finally {
+                loader.classList.add('hidden');
+                resultsContent.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

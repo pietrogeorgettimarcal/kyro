@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kyro - Processos (Extração Inteligente)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="shortcut icon" href="https://placehold.co/32x32/003366/FFFFFF?text=L" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;
+    </script>
+    <style>
+        :root {
+            --cor-principal: #004a91;
+            --cor-secundaria: #007bff;
+            --cor-sucesso: #28a745;
+            --cor-perigo: #dc3545;
+            --cor-aviso: #ffc107;
+            --cor-fundo: #f4f7fa;
+            --cor-borda: #ccc;
+            --cor-texto: #333;
+            --cor-destaque: #e9ecef;
+        }
+
+        body { font-family: 'Inter', sans-serif; }
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Estilos Personalizados Tabela */
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        th { font-size: 0.7rem; white-space: nowrap; padding: 8px 4px; background-color: #f8fafc; border-bottom: 2px solid #e2e8f0; color: #475569; font-weight: 700; text-transform: uppercase; }
+        td { font-size: 0.7rem; white-space: nowrap; padding: 6px 4px; border-bottom: 1px solid #f1f5f9; color: #334155; }
+        tr:hover td { background-color: #f8fafc; }
+        
+        .col-money { text-align: right; font-family: monospace; min-width: 80px; }
+        .col-center { text-align: center; }
+        
+        /* Coluna Fixa na Esquerda */
+        .col-sticky { position: sticky; left: 0; background-color: #f8fafc; z-index: 20; border-right: 2px solid #e2e8f0; box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1); }
+        tr:hover .col-sticky { background-color: #f1f5f9; }
+        td.col-sticky { background-color: #ffffff; }
+
+        nav { display: flex; justify-content: center; background-color: transparent; padding: 0; position: static; }
+        nav a { margin: 0 15px; text-decoration: none; color: var(--cor-secundaria); font-weight: bold; transition: color 0.3s; font-size: 1.1rem; }
+        nav a:hover { color: var(--cor-principal); }
+    </style>
+</head>
+<body class="bg-slate-50 text-gray-800">
+
+    <!-- Modal de Alerta -->
+    <div id="alertModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-11/12 md:w-1/3 fade-in">
+            <h3 id="modalTitle" class="text-xl font-bold text-gray-900 mb-4">Aviso</h3>
+            <p id="modalMessage" class="text-gray-700 mb-6"></p>
+            <div class="text-right">
+                <button onclick="closeModal()" class="bg-slate-600 text-white px-4 py-2 rounded-lg hover:bg-slate-700 transition duration-300">Entendi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Configurações -->
+    <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-11/12 md:w-1/3 fade-in relative">
+            <button onclick="closeSettingsModal()" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-xl font-bold">&times;</button>
+            <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <i class="fas fa-cog text-slate-600"></i> Configurações
+            </h3>
+            <div class="mb-4">
+                <label for="apiKeyInput" class="block text-sm font-medium text-gray-700 mb-1">Chave API do Google (Opcional)</label>
+                <input type="password" id="apiKeyInput" placeholder="Cole sua chave aqui (AIza...)" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <p class="text-xs text-gray-500 mt-1">Se deixar em branco, o sistema usará o <strong>Modo de Extração Local</strong> (sem IA).</p>
+            </div>
+            <div class="text-right">
+                <button onclick="saveApiKey()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300">Salvar Configuração</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Principal de Análise -->
+    <div id="iaAssistantModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-[98%] h-[95vh] flex flex-col fade-in overflow-hidden">
+            <div class="flex justify-between items-center mb-4 flex-shrink-0">
+                <h3 class="text-xl font-bold text-gray-900 flex items-center space-x-3">
+                    <i class="fas fa-file-invoice-dollar text-slate-600"></i>
+                    <span>Análise de Processo e Débitos</span>
+                </h3>
+                <button onclick="closeIaModal()" class="text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
+            </div>
+            
+            <div class="flex-grow overflow-y-auto space-y-6 px-2">
+                <div>
+                    <h4 class="font-semibold text-lg mb-2 text-gray-700">1. Anexar Documentos</h4>
+                    <div id="drop-zone" class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-slate-500 bg-gray-50 transition">
+                        <input type="file" id="file-input" class="hidden" accept=".pdf" multiple>
+                        <i class="fas fa-cloud-upload-alt text-2xl text-gray-400 mb-2"></i>
+                        <p class="text-gray-600 text-sm">Arraste e solte os PDFs aqui ou <span class="text-slate-600 font-semibold">clique para selecionar</span>.</p>
+                    </div>
+                    <div id="file-list" class="mt-2 space-y-1"></div>
+                </div>
+
+                <div>
+                    <div class="flex items-center space-x-2 mb-2">
+                        <div id="mode-badge" class="px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wide bg-gray-200 text-gray-600">
+                            Modo Local (Estruturado)
+                        </div>
+                    </div>
+                    <button id="analyze-button" class="w-full bg-slate-600 text-white px-6 py-3 rounded-lg hover:bg-slate-700 transition duration-300 font-semibold flex items-center justify-center space-x-2 disabled:bg-slate-300 disabled:cursor-not-allowed">
+                        <i class="fas fa-search"></i>
+                        <span>Extrair Todas as Colunas</span>
+                    </button>
+                </div>
+
+                <div id="analysis-results" class="hidden pb-10">
+                     <h4 class="font-semibold text-lg mb-2 text-gray-700">2. Resultados da Extração</h4>
+                     <div id="loader" class="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600"></div>
+                        <p id="loader-text" class="text-gray-700">Interpretando colunas...</p>
+                     </div>
+                     <div id="results-content" class="hidden mt-4"></div>
+                     
+                     <div class="mt-4 text-right">
+                         <button onclick="toggleRawText()" class="text-xs text-blue-600 underline hover:text-blue-800">Ver Texto Extraído (Debug)</button>
+                     </div>
+                     <div id="raw-text-container" class="hidden mt-2 p-2 bg-gray-100 border border-gray-300 rounded text-xs font-mono max-h-40 overflow-y-auto whitespace-pre-wrap text-gray-600"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Layout Principal do Site -->
+    <div class="min-h-screen">
+        <header class="bg-white shadow-md w-full h-24 flex-shrink-0">
+            <div class="container mx-auto px-4 md:px-6 h-full flex items-center justify-between">
+              <div class="flex items-center space-x-4">
+                <div class="bg-blue-800 text-white w-12 h-12 rounded-lg flex items-center justify-center font-bold text-xl">P</div>
+                <div>
+                  <h1 class="text-xl font-bold text-gray-800">Prefeitura de Limeira</h1>
+                  <p class="text-sm text-gray-600">Departamento de Dívida Ativa</p>
+                </div>
+              </div>
+              <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2">
+                    <span class="text-sm text-gray-500">Powered by</span>
+                    <span class="text-lg font-bold text-blue-700">KYRO</span>
+                </div>
+                <button onclick="openSettingsModal()" class="text-gray-400 hover:text-gray-600 transition-colors" title="Configurações (API Key)">
+                    <i class="fas fa-cog text-xl"></i>
+                </button>
+              </div>
+              <nav>
+                <div class="nav-links" id="navLinks">
+                  <a href="#">Início</a>
+                </div>
+              </nav>
+            </div>
+        </header>
+
+        <main class="container mx-auto px-6 py-8">
+            <div class="bg-white p-8 rounded-xl shadow-sm mb-8 fade-in">
+                <h2 class="text-2xl font-bold text-slate-800">Bem-vindo, Servidor.</h2>
+                <p class="text-slate-500 mb-6">Inicie um novo processo ou busque por um existente abaixo.</p>
+                <div class="relative">
+                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" placeholder="Digite o CPF/CNPJ, nº do processo ou nome" class="w-full pl-12 pr-4 py-4 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 transition-all">
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 space-y-8">
+                    <div class="fade-in" style="animation-delay: 0.1s;">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div id="start-ia" class="group relative bg-slate-800 p-6 rounded-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden">
+                                <div class="absolute -top-8 -right-8 text-slate-700 text-8xl opacity-50 group-hover:scale-110 group-hover:opacity-100 transition-all duration-300">
+                                    <i class="fas fa-database"></i>
+                                </div>
+                                <div class="relative z-10">
+                                    <h3 class="font-bold text-xl text-white">Extração Completa (23 Colunas)</h3>
+                                    <p class="text-sm text-slate-300 mt-1">Extraia todos os campos do extrato de débitos seguindo a ordem exata.</p>
+                                </div>
+                            </div>
+                            <!-- Card de consulta (estático) -->
+                            <div class="group relative bg-white border border-slate-200 p-6 rounded-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden">
+                                 <div class="absolute -top-8 -right-8 text-slate-200 text-8xl opacity-80 group-hover:scale-110 group-hover:text-slate-300 transition-all duration-300">
+                                    <i class="fas fa-folder-open"></i>
+                                </div>
+                                 <div class="relative z-10">
+                                    <h3 class="font-bold text-xl text-slate-800">Consultar Processos</h3>
+                                    <p class="text-sm text-slate-500 mt-1">Visualize e acompanhe processos físicos e digitais em andamento.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Sidebar (estático) -->
+                <div class="space-y-8">
+                    <div class="bg-white p-6 rounded-xl shadow-sm fade-in" style="animation-delay: 0.3s;">
+                        <h2 class="text-xl font-semibold mb-4 text-slate-800">Minhas Contas</h2>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <span class="font-medium">Prefeitura Limeira</span>
+                                </div>
+                                <span class="text-green-600 font-bold flex items-center space-x-1"><i class="fas fa-check-circle"></i><span>OK</span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- UTILITÁRIOS ---
+        const alertModal = document.getElementById('alertModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalMessage = document.getElementById('modalMessage');
+        const rawTextContainer = document.getElementById('raw-text-container');
+
+        function showAlert(title, message) {
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            alertModal.classList.remove('hidden');
+        }
+        function closeModal() { alertModal.classList.add('hidden'); }
+        function toggleRawText() { rawTextContainer.classList.toggle('hidden'); }
+
+        // --- CONFIGURAÇÃO ---
+        const settingsModal = document.getElementById('settingsModal');
+        const apiKeyInput = document.getElementById('apiKeyInput');
+        const modeBadge = document.getElementById('mode-badge');
+
+        function openSettingsModal() {
+            apiKeyInput.value = localStorage.getItem('kyro_gemini_api_key') || '';
+            settingsModal.classList.remove('hidden');
+        }
+        function closeSettingsModal() { settingsModal.classList.add('hidden'); }
+        function saveApiKey() {
+            const key = apiKeyInput.value.trim();
+            if (key) {
+                localStorage.setItem('kyro_gemini_api_key', key);
+                showAlert('Sucesso', 'Chave API salva!');
+            } else {
+                localStorage.removeItem('kyro_gemini_api_key');
+                showAlert('Local', 'Chave removida.');
+            }
+            closeSettingsModal();
+        }
+
+        // --- LÓGICA DE UPLOAD ---
+        const iaAssistantModal = document.getElementById('iaAssistantModal');
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const fileList = document.getElementById('file-list');
+        const analyzeButton = document.getElementById('analyze-button');
+        const analysisResults = document.getElementById('analysis-results');
+        const loader = document.getElementById('loader');
+        const resultsContent = document.getElementById('results-content');
+        
+        let uploadedFiles = [];
+
+        function openIaModal() { iaAssistantModal.classList.remove('hidden'); }
+        function closeIaModal() { iaAssistantModal.classList.add('hidden'); resetIaModalState(); }
+        
+        function resetIaModalState() {
+            uploadedFiles = [];
+            updateFileList();
+            analysisResults.classList.add('hidden');
+            resultsContent.innerHTML = '';
+            rawTextContainer.innerHTML = '';
+            rawTextContainer.classList.add('hidden');
+        }
+
+        document.getElementById('start-ia').addEventListener('click', openIaModal);
+        
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-slate-500', 'bg-slate-50'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-slate-500', 'bg-slate-50'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-slate-500', 'bg-slate-50');
+            if (e.dataTransfer.files.length > 0) handleFiles(e.dataTransfer.files);
+        });
+        fileInput.addEventListener('change', () => { if (fileInput.files.length > 0) handleFiles(fileInput.files); });
+
+        function handleFiles(files) {
+            [...files].forEach(file => {
+                if (!uploadedFiles.some(f => f.name === file.name && f.size === file.size)) uploadedFiles.push(file);
+            });
+            updateFileList();
+        }
+
+        function updateFileList() {
+            fileList.innerHTML = '';
+            analyzeButton.disabled = uploadedFiles.length === 0;
+            uploadedFiles.forEach((file, index) => {
+                fileList.innerHTML += `
+                    <div class="flex items-center justify-between p-2 bg-gray-100 rounded-lg text-sm">
+                        <div class="flex items-center space-x-2 overflow-hidden">
+                            <i class="fas fa-file-pdf text-red-500"></i>
+                            <span class="truncate">${file.name}</span>
+                        </div>
+                        <button onclick="removeFile(${index})" class="text-red-500 font-bold px-2">&times;</button>
+                    </div>`;
+            });
+        }
+        function removeFile(index) { uploadedFiles.splice(index, 1); updateFileList(); }
+
+
+        // --- ENGINE DE EXTRAÇÃO LOCAL ESTRUTURADA ---
+        const LocalExtractor = {
+            identifyType: (text) => {
+                if (/INFORMAÇÃO\s+CADASTRAL|BIC|ESPELHO\s+CADASTRAL/i.test(text.toUpperCase())) return "BIC";
+                return "EXTRATO_DEBITOS";
+            },
+
+            parseDebt: (text) => {
+                const cleanText = text.replace(/\r\n/g, '\n');
+                const lines = cleanText.split('\n');
+                const headerText = lines.slice(0, 30).join('\n');
+                const headerData = {
+                    nome: (headerText.match(/(?:NOME|CONTRIBUINTE|RAZÃO SOCIAL)\s*[:.]?\s*([A-ZÀ-ÿ\s&.-]+?)(?=\s*(?:CPF|CNPJ|INSCR|ENDEREÇO|$))/i) || [])[1]?.trim() || '',
+                    cpfCnpj: (headerText.match(/(\d{2,3}\.\d{3}\.\d{3}[-\/]\d{2}(?:-\d{2})?)/) || [])[0] || '',
+                };
+
+                const debts = [];
+
+                lines.forEach(line => {
+                    const trimmedLine = line.trim();
+                    if (!trimmedLine) return;
+
+                    // 1. Normalização Básica (remover espaços em números)
+                    let normalizedLine = trimmedLine.replace(/(\d)\s+([.,])\s+(\d)/g, '$1$2$3')
+                                                    .replace(/(\d)\s+([.,])(\d)/g, '$1$2$3')
+                                                    .replace(/(\d)([.,])\s+(\d)/g, '$1$2$3');
+
+                    // 2. Extração de Dinheiro (antes de limpar as vírgulas estruturais)
+                    const moneyMatches = normalizedLine.match(/(?:R\$\s*)?[\d.]*\d+,\d{2}\b/gi) || [];
+                    const moneyValues = moneyMatches.map(v => v.replace(/R\$\s*/gi, '').trim());
+
+                    if (moneyValues.length > 0) {
+                        
+                        // 3. LIMPEZA AVANÇADA PARA FORMATOS COM ASPAS/CSV
+                        // Substitui a sequência "," por espaço e trata múltiplos espaços
+                        let processingLine = normalizedLine.replace(/"\s*,\s*"/g, ' '); 
+                        processingLine = processingLine.replace(/"\s*,\s*,+\s*"/g, ' '); // Múltiplas vírgulas
+                        processingLine = processingLine.replace(/["']/g, ''); // Remove aspas
+                        processingLine = processingLine.replace(/\s+/g, ' '); // Normaliza espaços
+                        processingLine = processingLine.trim();
+
+                        // 4. ANCORAGEM (Ano e Data) na linha limpa
+                        const yearMatch = processingLine.match(/\b(19|20)\d{2}(?:\/\d{1,2})?\b/);
+                        const competencia = yearMatch ? yearMatch[0] : '';
+                        const dateMatch = processingLine.match(/\b\d{2}\/\d{2}\/\d{4}\b/);
+                        const vencimento = dateMatch ? dateMatch[0] : '';
+                        
+                        // Extração do Ano Numérico para Lógica Condicional
+                        let compYear = 0;
+                        if (competencia) {
+                            const y = parseInt(competencia.split('/')[0]);
+                            if (!isNaN(y)) compYear = y;
+                        }
+
+                        // Remove dados já extraídos para processar o resto (Situações e IDs)
+                        let remainder = processingLine;
+                        if(competencia) remainder = remainder.replace(competencia, '');
+                        if(vencimento) remainder = remainder.replace(vencimento, '');
+                        moneyMatches.forEach(m => remainder = remainder.replace(m, ''));
+
+                        // 5. Situations (Busca e Remoção)
+                        const sitKeywords = ['NORMAL', 'COMPLEMENTAR', 'OFICIO', 'AI', 'PARCELADO', 'ABERTO', 'SUSPENSO', 'AJUIZADA', 'CANCELADA', 'PAGO', 'ATIVO', 'INSCRITA', 'CORRENTE'];
+                        const situationsFound = [];
+                        sitKeywords.forEach(kw => {
+                            const regex = new RegExp(`\\b${kw}\\b`, 'i');
+                            if (regex.test(remainder)) {
+                                situationsFound.push(kw);
+                                remainder = remainder.replace(regex, ''); 
+                            }
+                        });
+
+                        let sitLanc = 'ABERTO';
+                        let sitDivida = 'CORRENTE';
+
+                        if(situationsFound.length > 0) {
+                             const divStatus = situationsFound.find(s => ['AJUIZADA', 'INSCRITA', 'CORRENTE', 'ATIVO', 'CANCELADA', 'PAGO'].includes(s));
+                             if(divStatus) sitDivida = divStatus;
+                             
+                             const lancStatus = situationsFound.find(s => ['NORMAL', 'COMPLEMENTAR', 'OFICIO', 'AI', 'PARCELADO', 'SUSPENSO'].includes(s));
+                             if(lancStatus) {
+                                if (lancStatus === 'NORMAL') sitLanc = 'ABERTO';
+                                else sitLanc = lancStatus;
+                             }
+                        }
+
+                        // 6. IDs e Colunas Iniciais (LÓGICA CORRIGIDA E FLEXÍVEL)
+                        let preYearText = "";
+                        if (yearMatch && yearMatch.index > 0) {
+                            // Pega o texto antes do ano na linha limpa
+                            preYearText = processingLine.substring(0, yearMatch.index).trim();
+                        }
+                        
+                        let tokens = preYearText.split(/\s+/).filter(t => t.trim() !== '');
+                        
+                        let idLanc = '';
+                        let nat = '';
+                        let orig = '';
+                        let icRed = '';
+                        let ic = '';
+
+                        // PASSO 1: O identificador (#) é quase sempre o primeiro token
+                        if (tokens.length > 0 && /^[\d.]+$/.test(tokens[0])) {
+                            idLanc = tokens[0];
+                            tokens.shift(); // Remove o ID da lista
+                        }
+
+                        // PASSO 2: Procurar Natureza (RESTRITA: MOBIL ou IMOB)
+                        // Qualquer outra coisa vai para Origem
+                        const naturezasRestritas = ['MOBIL', 'IMOBIL', 'IMOB'];
+                        const natIndex = tokens.findIndex(t => naturezasRestritas.includes(t.toUpperCase()));
+                        
+                        if (natIndex !== -1) {
+                            nat = tokens[natIndex];
+                            tokens.splice(natIndex, 1); // Remove Natureza encontrada
+                        }
+
+                        // PASSO 3: Identificar Inscrições Cadastrais (Números restantes)
+                        // Tudo o que é texto vai para Origem. Tudo o que é número vai para IC.
+                        const numericTokens = tokens.filter(t => /^[\d.-]+$/.test(t) && t.replace(/\D/g,'').length > 2);
+                        const textTokens = tokens.filter(t => !(/^[\d.-]+$/.test(t) && t.replace(/\D/g,'').length > 2)); 
+
+                        if (numericTokens.length > 0) {
+                            ic = numericTokens.pop(); // Último número -> IC Principal
+                            if (numericTokens.length > 0) {
+                                icRed = numericTokens.pop(); // Penúltimo -> IC Reduzido
+                            }
+                        }
+
+                        // PASSO 4: Tudo que sobrou de texto é a Origem (inclui TFA, ISSQN, etc.)
+                        orig = textTokens.join(' ');
+
+
+                        // 7. IDs do Final (Processos e CDA)
+                        let remainderClean = remainder.replace(/(\d)\s*\/\s*(\d)/g, '$1/$2').trim();
+                        const idTokens = remainderClean.match(/[\d\.\-\/]+/g) || [];
+                        const compYearStr = competencia ? competencia.split('/')[0] : null;
+                        
+                        const validTokens = idTokens.filter(t => {
+                            const raw = t.replace(/[^\d]/g, '');
+                            if (raw.length < 3) return false;
+                            if (t === compYearStr) return false;
+                            if (t === ic || t === icRed || t === idLanc) return false;
+                            return true;
+                        });
+
+                        let cda = '';
+                        let procDa = '';
+                        let procForum = '';
+
+                        if (sitDivida === 'AJUIZADA') {
+                            const cnjIndex = validTokens.findIndex(t => /\d{7}-\d{2}/.test(t));
+                            if (cnjIndex !== -1) {
+                                procForum = validTokens[cnjIndex];
+                                const afterCnj = validTokens.slice(cnjIndex + 1);
+                                if (afterCnj.length >= 2) {
+                                    procDa = afterCnj[afterCnj.length - 2];
+                                    cda = afterCnj[afterCnj.length - 1];
+                                } else if (afterCnj.length === 1) {
+                                    cda = afterCnj[0];
+                                }
+                            } else {
+                                if (validTokens.length >= 3) {
+                                    cda = validTokens.pop();
+                                    procDa = validTokens.pop();
+                                    procForum = validTokens.pop();
+                                } else if (validTokens.length === 2) {
+                                    cda = validTokens.pop();
+                                    procForum = validTokens.pop();
+                                }
+                            }
+                        } else {
+                            if (validTokens.length >= 2) {
+                                cda = validTokens.pop();
+                                procDa = validTokens.pop();
+                            } else if (validTokens.length === 1) {
+                                cda = validTokens.pop();
+                            }
+                        }
+
+                        // 8. Valores
+                        const v = (idx) => moneyValues[idx] || '0,00';
+                        const count = moneyValues.length;
+                        let vals = {};
+                        if (count >= 11) {
+                            vals = {
+                                ref: v(0), princ: v(1), desc: v(2), pago: v(3), saldoP: v(4),
+                                multa: v(5), juros: v(6), corr: v(7), hon: v(8), dilig: v(9), total: v(10)
+                            };
+                        } else {
+                            vals.total = count > 0 ? moneyValues[count-1] : '0,00';
+                            vals.princ = count > 1 ? moneyValues[0] : '0,00';
+                            if (count >= 5) {
+                                vals.juros = moneyValues[count-2];
+                                vals.multa = moneyValues[count-3];
+                                vals.corr = moneyValues[count-4];
+                            }
+                        }
+
+                        // Verifica Total
+                        const isTotalLine = /TOTAL/i.test(normalizedLine);
+                        if(isTotalLine) {
+                            sitLanc = ''; sitDivida = ''; procDa = ''; cda = ''; procForum = '';
+                            vals.total = moneyValues[moneyValues.length-1]; 
+                        }
+
+                        debts.push({
+                            id: idLanc, nat: nat, orig: orig, icRed: icRed, ic: ic,
+                            comp: competencia, venc: vencimento,
+                            vPrincRef: vals.ref || '-', vPrinc: vals.princ || '0,00', vDesc: vals.desc || '-',
+                            vPago: vals.pago || '-', vSaldoP: vals.saldoP || '-', vMulta: vals.multa || '0,00',
+                            vJuros: vals.juros || '0,00', vCorr: vals.corr || '0,00', vHon: vals.hon || '0,00',
+                            vDilig: vals.dilig || '-', vTotal: vals.total || '0,00',
+                            sitLanc: sitLanc, sitDiv: sitDivida,
+                            procF: procForum, procD: procDa, cda: cda
+                        });
+                    }
+                });
+
+                if (debts.length > 0) {
+                    const lastIndex = debts.length - 1;
+                    debts[lastIndex].sitLanc = ''; debts[lastIndex].sitDiv = '';
+                    debts[lastIndex].procF = ''; debts[lastIndex].procD = ''; debts[lastIndex].cda = '';
+                    debts[lastIndex].id = ''; debts[lastIndex].orig = 'TOTAL'; 
+                }
+
+                return debts;
+            },
+            
+            parseBic: (text) => {
+                 const inscricao = (text.match(/Inscrição\s*Cadastral\s*[:.]?\s*([\d.-]+)/i) || [])[1] || '-';
+                 return { inscricaoCadastral: inscricao };
+            }
+        };
+
+        // --- RENDERIZAÇÃO ---
+        function renderDebtResults(debtData, fileName) {
+            if (!debtData || debtData.length === 0) return `<div class="p-4 bg-red-50 text-red-700 rounded">Sem dados.</div>`;
+            const rows = debtData.map(d => `
+                <tr class="hover:bg-slate-50 text-[10px]">
+                    <td class="col-center border-r font-mono bg-slate-50 text-gray-400 col-sticky">${d.id || '-'}</td>
+                    <td class="border-r">${d.nat}</td>
+                    <td class="border-r font-bold">${d.orig}</td>
+                    <td class="col-center border-r font-mono text-blue-700 font-bold">${d.icRed}</td>
+                    <td class="col-center border-r font-mono">${d.ic}</td>
+                    <td class="col-center border-r font-bold">${d.comp}</td>
+                    <td class="col-center border-r">${d.venc}</td>
+                    <td class="col-money border-r text-gray-400">${d.vPrincRef}</td>
+                    <td class="col-money border-r font-bold">${d.vPrinc}</td>
+                    <td class="col-money border-r text-gray-400">${d.vDesc}</td>
+                    <td class="col-money border-r text-gray-400">${d.vPago}</td>
+                    <td class="col-money border-r text-gray-400">${d.vSaldoP}</td>
+                    <td class="col-money border-r">${d.vMulta}</td>
+                    <td class="col-money border-r">${d.vJuros}</td>
+                    <td class="col-money border-r">${d.vCorr}</td>
+                    <td class="col-money border-r">${d.vHon}</td>
+                    <td class="col-money border-r">${d.vDilig}</td>
+                    <td class="col-money border-r bg-green-50 text-green-700 font-bold border-l-2 border-green-200">${d.vTotal}</td>
+                    <td class="col-center border-r text-[9px]">${d.sitLanc}</td>
+                    <td class="col-center border-r font-semibold ${d.sitDiv === 'AJUIZADA' ? 'text-red-600' : 'text-blue-600'}">${d.sitDiv}</td>
+                    <td class="col-center border-r font-mono text-[9px] bg-yellow-50 font-bold text-blue-800">${d.procF}</td>
+                    <td class="col-center border-r font-mono text-[9px]">${d.procD}</td>
+                    <td class="col-center font-mono text-[9px] font-bold text-slate-700">${d.cda}</td>
+                </tr>
+            `).join('');
+
+            return `
+            <div class="bg-white rounded-lg shadow border border-gray-200 overflow-hidden mb-8">
+                <div class="p-3 bg-slate-100 border-b border-gray-200 flex justify-between items-center">
+                    <h5 class="font-bold text-slate-700 text-sm">Extrato: ${fileName}</h5>
+                    <span class="text-xs text-slate-500">${debtData.length} registros</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr>
+                                <th class="border-r col-sticky">#</th><th class="border-r">Nat.</th><th class="border-r">Origem</th>
+                                <th class="border-r">I.C Red</th><th class="border-r">I.C</th><th class="border-r">Comp.</th>
+                                <th class="border-r">Venc.</th><th class="border-r text-right">Prin. Ref</th><th class="border-r text-right">Principal</th>
+                                <th class="border-r text-right">Desc/Abat</th><th class="border-r text-right">Pago</th><th class="border-r text-right">Saldo</th>
+                                <th class="border-r text-right">Multa</th><th class="border-r text-right">Juros</th><th class="border-r text-right">Corr.</th>
+                                <th class="border-r text-right">Honor.</th><th class="border-r text-right">Dilig.</th><th class="border-r text-right bg-green-50">Total</th>
+                                <th class="border-r text-center">Sit. Lanc</th><th class="border-r text-center">Sit. Div</th>
+                                <th class="border-r text-center bg-yellow-100">Fórum</th>
+                                <th class="border-r text-center">Pro. DA</th><th class="text-center">CDA</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+            </div>`;
+        }
+        
+        function renderBicResult(bicData, fileName) {
+             return `<div class="p-4 bg-white border rounded mb-4"><h5 class="font-bold">BIC Encontrado: ${fileName}</h5><p>Inscrição: ${bicData.inscricaoCadastral}</p></div>`;
+        }
+
+        function renderUnknownResult(fileName) {
+             return `<div class="p-4 bg-red-50 border border-red-200 rounded mb-4 text-red-700">Arquivo não reconhecido: ${fileName}</div>`;
+        }
+
+        // --- EXECUÇÃO ---
+        analyzeButton.addEventListener('click', async () => {
+            if (uploadedFiles.length === 0) return;
+            analysisResults.classList.remove('hidden');
+            loader.classList.remove('hidden');
+            resultsContent.innerHTML = '';
+            rawTextContainer.textContent = ''; 
+
+            try {
+                const results = [];
+                for (const file of uploadedFiles) {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+                    let fullText = '';
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const textContent = await page.getTextContent();
+                        fullText += textContent.items.map(item => item.str + (item.hasEOL ? '\n' : ' ')).join('');
+                    }
+                    
+                    rawTextContainer.textContent += `--- ${file.name} ---\n${fullText}\n\n`; 
+
+                    const type = LocalExtractor.identifyType(fullText);
+                    if(type === 'EXTRATO_DEBITOS') {
+                        const data = LocalExtractor.parseDebt(fullText);
+                        results.push(renderDebtResults(data, file.name));
+                    } else if (type === 'BIC') {
+                        const data = LocalExtractor.parseBic(fullText);
+                        results.push(renderBicResult(data, file.name));
+                    } else {
+                        const data = LocalExtractor.parseDebt(fullText);
+                        if(data.length > 0) results.push(renderDebtResults(data, file.name));
+                        else results.push(renderUnknownResult(file.name));
+                    }
+                }
+                resultsContent.innerHTML = results.join('');
+            } catch (e) {
+                console.error(e);
+                showAlert('Erro', 'Falha ao processar PDF.');
+            } finally {
+                loader.classList.add('hidden');
+                resultsContent.classList.remove('hidden');
+            }
+        });
+
+        window.addEventListener('click', (e) => { if (e.target == settingsModal) closeSettingsModal(); });
+    </script>
+</body>
+</html>

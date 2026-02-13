@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-br" class="h-full">
+<html lang="pt-br" class="h-full antialiased">
 
 <head>
   <meta charset="UTF-8">
@@ -11,367 +11,396 @@
       darkMode: 'class',
       theme: {
         extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            serif: ['Playfair Display', 'serif'],
+          },
           colors: {
-            slate: {
-              850: '#1e293b', 
+            brand: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              900: '#0c4a6e',
             }
           },
           animation: {
-            'slide-in': 'slideIn 0.3s ease-out',
-            'fade-out': 'fadeOut 0.3s ease-in forwards',
+            'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+            'fade-in': 'fadeIn 0.2s ease-out',
           },
           keyframes: {
-            slideIn: {
-              '0%': { transform: 'translateX(100%)', opacity: '0' },
-              '100%': { transform: 'translateX(0)', opacity: '1' },
+            slideUp: {
+              '0%': { transform: 'translateY(20px)', opacity: '0' },
+              '100%': { transform: 'translateY(0)', opacity: '1' },
             },
-            fadeOut: {
-              '0%': { opacity: '1' },
-              '100%': { opacity: '0' },
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' },
             }
           }
         }
       }
     }
   </script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <style>
-    body { font-family: 'Inter', sans-serif; }
-    h1, h2, h3 { font-family: 'Playfair Display', serif; }
+    /* Scrollbar Minimalista */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    .dark ::-webkit-scrollbar-thumb { background: #334155; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-    /* Estilos de Scrollbar */
-    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-    .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-    /* Toggle Switch */
-    .toggle-checkbox:checked {
-      right: 0;
-      border-color: #10b981;
-    }
-    .toggle-checkbox:checked + .toggle-label {
-      background-color: #10b981;
-    }
-
-    /* Toast Container */
-    #toast-container {
-        position: fixed;
-        top: 1rem;
-        right: 1rem;
-        z-index: 100;
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
+    /* Utilitários de Impressão */
     @media print {
       body * { visibility: hidden; }
       #printable-area, #printable-area * { visibility: visible; }
       #printable-area { 
         position: absolute; left: 0; top: 0; width: 100%; 
-        background: white; padding: 40px; color: black; 
+        background: white; padding: 2cm; color: black; 
       }
       .no-print { display: none !important; }
     }
+
+    /* Efeitos de foco sutis */
+    .btn-action { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+    .btn-action:active { transform: scale(0.98); }
+    
+    /* Input Switch */
+    .toggle-checkbox:checked { right: 0; border-color: #0ea5e9; }
+    .toggle-checkbox:checked + .toggle-label { background-color: #0ea5e9; }
   </style>
 </head>
 
-<body class="flex flex-col h-screen overflow-hidden text-slate-800 bg-slate-50 dark:bg-slate-900 dark:text-slate-200 transition-colors duration-300">
+<body class="flex flex-col h-screen overflow-hidden bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 transition-colors duration-300 font-sans selection:bg-brand-100 selection:text-brand-900 dark:selection:bg-brand-900 dark:selection:text-brand-100">
 
   <!-- TOAST CONTAINER -->
-  <div id="toast-container"></div>
+  <div id="toast-container" class="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none"></div>
 
   <!-- HEADER -->
-  <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 h-16 flex-shrink-0 z-20 shadow-sm no-print transition-colors relative">
-    <div class="container mx-auto px-4 h-full flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="bg-blue-900 text-white w-10 h-10 rounded flex items-center justify-center text-lg font-serif font-bold shadow-sm">
-          K
-        </div>
-        <div class="leading-tight">
-          <h1 class="text-lg text-slate-900 dark:text-white tracking-tight">Kyro Suite <span class="text-xs bg-indigo-100 text-indigo-800 px-1 rounded ml-1 font-bold">PRO v5.4</span></h1>
-          <p class="text-xs text-slate-500 dark:text-slate-400 font-sans uppercase tracking-wider">Jurídico Inteligente</p>
+  <header class="h-16 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 flex-shrink-0 z-30 transition-colors no-print">
+    <div class="max-w-[1600px] mx-auto px-4 h-full flex items-center justify-between">
+      
+      <!-- Logo -->
+      <div class="flex items-center gap-3 select-none">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 text-white flex items-center justify-center font-serif font-bold text-lg shadow-lg shadow-slate-200 dark:shadow-none">K</div>
+        <div>
+          <h1 class="text-sm font-semibold tracking-wide text-slate-900 dark:text-white">Kyro Suite</h1>
+          <p class="text-[10px] text-slate-500 uppercase tracking-widest font-medium">Jurídico Inteligente</p>
         </div>
       </div>
-      
-      <div class="flex items-center gap-4">
+
+      <!-- Controls -->
+      <div class="flex items-center gap-2 md:gap-4">
         
-        <!-- Toggle Modo IA / Offline -->
-        <div class="flex items-center gap-2 mr-4 border-r border-slate-200 dark:border-slate-700 pr-4">
-            <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Offline</span>
-            <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
-                <input type="checkbox" name="toggle" id="ai-mode-toggle" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-slate-300 left-0 transition-all duration-300" onclick="handleToggleClick()">
-                <label for="ai-mode-toggle" class="toggle-label block overflow-hidden h-5 rounded-full bg-slate-300 cursor-pointer transition-colors duration-300"></label>
+        <!-- Toggle Switch -->
+        <div class="flex items-center gap-3 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600">
+            <div class="relative inline-block w-8 align-middle select-none">
+                <input type="checkbox" id="ai-mode-toggle" class="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-2 border-slate-300 appearance-none cursor-pointer left-0 transition-all duration-300" onclick="handleToggleClick()">
+                <label for="ai-mode-toggle" class="toggle-label block overflow-hidden h-4 rounded-full bg-slate-300 cursor-pointer transition-colors duration-300"></label>
             </div>
-            <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400" id="mode-label">Modo Offline</span>
+            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 min-w-[60px] text-center" id="mode-label">Offline</span>
         </div>
 
-        <!-- Botão Histórico -->
-        <button onclick="toggleHistory()" class="text-slate-500 hover:text-blue-700 dark:text-slate-400 dark:hover:text-blue-400 transition-colors p-2" title="Histórico">
-            <i class="fa-solid fa-clock-rotate-left text-lg"></i>
-        </button>
+        <div class="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
 
-        <!-- Botão Configuração -->
-        <button onclick="toggleConfigModal()" class="text-slate-500 hover:text-blue-700 dark:text-slate-400 dark:hover:text-blue-400 transition-colors p-2 relative" title="Configurar API Key">
-            <i class="fa-solid fa-gear text-lg"></i>
-            <span id="config-badge" class="hidden absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+        <!-- Toolbar Icons -->
+        <button onclick="toggleHistory()" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-brand-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" title="Histórico">
+            <i class="fa-solid fa-clock-rotate-left"></i>
         </button>
-
-        <!-- Botão Dark Mode -->
-        <button onclick="toggleTheme()" class="text-slate-500 hover:text-yellow-600 dark:text-slate-400 dark:hover:text-yellow-400 transition-colors p-2">
-            <i class="fa-solid fa-moon dark:hidden text-lg"></i>
-            <i class="fa-solid fa-sun hidden dark:inline text-lg"></i>
+        <button onclick="toggleConfigModal()" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-brand-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors relative" title="Configurações">
+            <i class="fa-solid fa-sliders"></i>
+            <span id="config-badge" class="hidden absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full border border-white dark:border-slate-800"></span>
+        </button>
+        <button onclick="toggleTheme()" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-amber-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+            <i class="fa-solid fa-moon dark:hidden"></i>
+            <i class="fa-solid fa-sun hidden dark:inline"></i>
         </button>
       </div>
     </div>
   </header>
 
-  <div class="flex flex-1 overflow-hidden relative">
+  <!-- MAIN CONTENT -->
+  <main class="flex-1 flex overflow-hidden relative max-w-[1600px] mx-auto w-full">
     
-    <!-- SIDEBAR HISTÓRICO -->
-    <div id="history-sidebar" class="absolute top-0 right-0 h-full w-80 bg-white dark:bg-slate-800 shadow-2xl border-l border-slate-200 dark:border-slate-700 z-40 transform translate-x-full transition-transform duration-300 flex flex-col no-print">
-        <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-800">
-            <h3 class="font-bold text-slate-700 dark:text-white"><i class="fa-solid fa-clock-rotate-left mr-2"></i> Histórico</h3>
-            <button onclick="toggleHistory()" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-times"></i></button>
+    <!-- SIDEBAR HISTÓRICO (Slide Over) -->
+    <aside id="history-sidebar" class="absolute top-0 right-0 h-full w-80 bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl shadow-2xl border-l border-slate-200 dark:border-slate-700 z-40 transform translate-x-full transition-transform duration-300 flex flex-col no-print">
+        <div class="p-5 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+            <h3 class="font-serif font-bold text-slate-800 dark:text-white text-lg">Histórico</h3>
+            <button onclick="toggleHistory()" class="text-slate-400 hover:text-red-500 transition-colors"><i class="fa-solid fa-times"></i></button>
         </div>
-        <div id="history-list" class="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
-            <!-- Itens inseridos via JS -->
-            <div class="text-center text-slate-400 text-xs mt-10">Nenhum histórico recente.</div>
+        <div id="history-list" class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+            <div class="text-center text-slate-400 text-sm mt-10">Nenhum registro recente.</div>
         </div>
-        <div class="p-3 border-t border-slate-200 dark:border-slate-700">
-            <button onclick="clearHistory()" class="w-full py-2 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition">Limpar Histórico</button>
+        <div class="p-4 border-t border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50">
+            <button onclick="clearHistory()" class="w-full py-2.5 text-xs font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition border border-transparent hover:border-red-100">Limpar Histórico</button>
         </div>
-    </div>
+    </aside>
 
-    <!-- MODAL DE CONFIGURAÇÃO -->
-    <div id="config-modal" class="hidden absolute top-4 right-4 w-96 bg-white dark:bg-slate-800 shadow-2xl rounded-lg border border-slate-200 dark:border-slate-600 z-50 p-6 animate-fade-in no-print">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="font-bold text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-robot text-blue-600"></i> Configuração Google Gemini</h3>
-          <button onclick="toggleConfigModal()" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-times"></i></button>
+    <!-- MODAL CONFIGURAÇÃO -->
+    <div id="config-modal" class="hidden absolute top-20 right-4 w-96 bg-white dark:bg-slate-800 shadow-2xl rounded-2xl border border-slate-200 dark:border-slate-700 z-50 p-6 animate-slide-up no-print">
+        <div class="flex justify-between items-center mb-6">
+          <div>
+            <h3 class="font-serif font-bold text-lg text-slate-800 dark:text-white">Configuração API</h3>
+            <p class="text-xs text-slate-500">Google Gemini 2.5 Integration</p>
+          </div>
+          <button onclick="toggleConfigModal()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center justify-center transition-colors"><i class="fa-solid fa-times"></i></button>
         </div>
         
-        <p class="text-xs text-blue-600 dark:text-blue-400 mb-3 bg-blue-50 dark:bg-blue-900/20 p-2 rounded border border-blue-200 dark:border-blue-800">
-            <i class="fa-solid fa-circle-info"></i> <b>Nota:</b> Chave compartilhada com o módulo de Processos.
-        </p>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2 uppercase tracking-wide">Chave de Acesso</label>
+                <input type="password" id="api-key-input" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all font-mono text-slate-600 dark:text-slate-300 placeholder-slate-400" placeholder="AIzaSy...">
+            </div>
 
-        <div id="manual-input-area">
-            <p class="text-xs text-slate-600 dark:text-slate-300 mb-2 font-semibold">Chave API Google Gemini:</p>
-            <input type="password" id="api-key-input" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded p-2 text-sm mb-2 focus:ring-2 focus:ring-blue-500 outline-none font-mono" placeholder="Cole aqui (começa com AIzaSy...)">
-            
-            <div class="flex gap-2 mb-3">
-                <button onclick="testApiKey()" class="flex-1 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 py-2 rounded text-xs font-medium transition">
-                    <i class="fa-solid fa-plug"></i> Testar
+            <div class="flex gap-3 pt-2">
+                <button onclick="testApiKey()" class="flex-1 px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 text-xs font-semibold transition-colors">
+                    Testar Conexão
                 </button>
-                <button onclick="saveApiKey()" class="flex-1 bg-blue-700 hover:bg-blue-800 text-white font-medium py-2 rounded text-xs transition shadow-sm">
-                    <i class="fa-solid fa-check"></i> Salvar
+                <button onclick="saveApiKey()" class="flex-1 px-4 py-2 rounded-lg bg-slate-900 dark:bg-brand-600 hover:bg-slate-800 dark:hover:bg-brand-500 text-white text-xs font-semibold shadow-lg shadow-slate-200 dark:shadow-none transition-colors">
+                    Salvar Chave
                 </button>
             </div>
             
-            <div id="test-result" class="hidden mb-3 p-2 rounded text-xs"></div>
-            <button onclick="clearApiKey()" class="w-full text-red-500 text-xs hover:underline text-center">Remover Chave</button>
+            <div id="test-result" class="hidden p-3 rounded-lg text-xs bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700"></div>
+            
+            <div class="pt-4 border-t border-slate-100 dark:border-slate-700 text-center">
+                <button onclick="clearApiKey()" class="text-xs text-red-400 hover:text-red-600 hover:underline transition-colors">Remover credenciais salvas</button>
+            </div>
         </div>
     </div>
 
-    <!-- ÁREA DE TRABALHO -->
-    <main class="flex-1 flex flex-col md:flex-row overflow-hidden bg-white dark:bg-slate-900 relative transition-colors">
+    <!-- WORKSPACE -->
+    <div class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-0 lg:gap-px bg-slate-200 dark:bg-slate-700 h-full">
       
-      <!-- COLUNA DA ESQUERDA: INPUT -->
-      <section class="flex-1 flex flex-col border-r border-slate-200 dark:border-slate-700 min-w-0 no-print">
-        <div class="p-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
-          <h3 class="font-semibold text-slate-700 dark:text-slate-200 text-sm flex items-center gap-2">
-            <i class="fa-regular fa-pen-to-square text-blue-600 dark:text-blue-400"></i> Entrada
-          </h3>
-          
-          <div class="flex items-center gap-2">
-              <button onclick="toggleDictation()" id="mic-btn" class="text-xs border border-slate-300 dark:border-slate-600 rounded px-2 py-1 bg-white dark:bg-slate-700 hover:text-red-500 transition" title="Ditado"><i class="fa-solid fa-microphone"></i></button>
-              
-              <select onchange="insertTemplate(this.value); this.value=''" class="text-xs border border-slate-300 dark:border-slate-600 rounded px-2 py-1 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 max-w-[120px]">
-                <option value="">📋 Modelos...</option>
-                <option value="deferimento">Deferimento</option>
-                <option value="citacao">Citação Edital</option>
-                <option value="prescricao">Prescrição</option>
-              </select>
-          </div>
-        </div>
+      <!-- ESQUERDA: EDITOR -->
+      <section class="bg-white dark:bg-slate-900 flex flex-col h-full overflow-hidden relative group no-print">
         
-        <div class="flex-1 p-0 relative group bg-white dark:bg-slate-900">
-          <textarea id="input-text" spellcheck="true"
-            class="w-full h-full p-6 resize-none focus:outline-none focus:bg-blue-50/20 dark:focus:bg-blue-900/10 transition-colors font-mono text-sm leading-relaxed text-slate-700 dark:text-slate-300 bg-transparent placeholder-slate-400 dark:placeholder-slate-600"
-            placeholder="Digite aqui seu texto..." oninput="updateCounters('input')"></textarea>
+        <!-- Toolbar Superior -->
+        <div class="px-6 py-4 flex justify-between items-center border-b border-slate-100 dark:border-slate-800">
+            <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                <i class="fa-solid fa-feather-pointed text-slate-400"></i> Entrada
+            </h2>
+            <div class="flex gap-2">
+                <button onclick="toggleDictation()" class="p-2 text-slate-400 hover:text-brand-600 transition-colors" title="Ditado">
+                    <i class="fa-solid fa-microphone"></i>
+                </button>
+                <div class="relative group/tooltip">
+                    <select onchange="insertTemplate(this.value); this.value=''" class="appearance-none bg-slate-50 dark:bg-slate-800 border-none text-xs font-medium text-slate-600 dark:text-slate-300 py-1.5 pl-3 pr-8 rounded-md cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors focus:ring-0">
+                        <option value="">Inserir Modelo...</option>
+                        <option value="deferimento">Deferimento Padrão</option>
+                        <option value="citacao">Citação Edital</option>
+                        <option value="prescricao">Prescrição CTN</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
+                        <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Textarea -->
+        <div class="flex-1 relative">
+            <textarea id="input-text" spellcheck="true"
+            class="w-full h-full p-6 resize-none focus:outline-none bg-transparent font-mono text-base text-slate-700 dark:text-slate-300 placeholder-slate-300 dark:placeholder-slate-700 leading-relaxed custom-scrollbar"
+            placeholder="Comece a digitar ou cole seu texto jurídico aqui..." oninput="updateCounters('input')"></textarea>
             
-            <div class="absolute bottom-2 right-4 text-[10px] text-slate-400 bg-white/80 dark:bg-slate-800/80 px-2 rounded backdrop-blur-sm pointer-events-none">
+            <!-- Contador -->
+            <div class="absolute bottom-4 right-6 text-[10px] font-medium text-slate-300 dark:text-slate-600 bg-white dark:bg-slate-900 px-2 py-1 rounded-md border border-slate-100 dark:border-slate-800 shadow-sm pointer-events-none">
                <span id="input-counter">0 palavras</span>
             </div>
         </div>
 
-        <!-- BARRA DE AÇÕES -->
-        <div class="p-3 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10">
-          <div class="grid grid-cols-2 md:grid-cols-6 gap-2">
-            
-            <button onclick="routeProcess('correcao')" class="flex flex-col items-center justify-center p-2 rounded border border-slate-200 dark:border-slate-600 hover:bg-blue-50 dark:hover:bg-slate-700 transition active:scale-95 group" title="Corrigir gramática">
-              <i class="fa-solid fa-spell-check text-blue-600 dark:text-blue-400 mb-1"></i>
-              <span class="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">Correção</span>
-            </button>
+        <!-- Action Bar (Floating Grid) -->
+        <div class="p-4 bg-slate-50/80 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 backdrop-blur-sm">
+            <div class="grid grid-cols-6 gap-2">
+                
+                <!-- Ferramenta: Correção -->
+                <button onclick="routeProcess('correcao')" class="btn-action flex flex-col items-center justify-center p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-brand-300 dark:hover:border-brand-700 hover:shadow-md transition-all group">
+                    <i class="fa-solid fa-wand-magic-sparkles text-slate-400 group-hover:text-brand-500 mb-2 text-lg"></i>
+                    <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-white uppercase">Corrigir</span>
+                </button>
 
-            <button onclick="routeProcess('rebuscado')" class="flex flex-col items-center justify-center p-2 rounded border border-slate-200 dark:border-slate-600 hover:bg-amber-50 dark:hover:bg-slate-700 transition active:scale-95 group" title="Tornar mais formal">
-              <i class="fa-solid fa-scroll text-amber-600 dark:text-amber-500 mb-1"></i>
-              <span class="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">Erudito</span>
-            </button>
-            
-            <!-- NOVA FERRAMENTA: SIMPLIFICAR -->
-            <button onclick="routeProcess('simplificar')" class="flex flex-col items-center justify-center p-2 rounded border border-slate-200 dark:border-slate-600 hover:bg-cyan-50 dark:hover:bg-slate-700 transition active:scale-95 group" title="Traduzir Juridiquês">
-              <i class="fa-solid fa-language text-cyan-600 dark:text-cyan-500 mb-1"></i>
-              <span class="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">Simplificar</span>
-            </button>
+                <!-- Ferramenta: Erudito -->
+                <button onclick="routeProcess('rebuscado')" class="btn-action flex flex-col items-center justify-center p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-md transition-all group">
+                    <i class="fa-solid fa-scroll text-slate-400 group-hover:text-amber-500 mb-2 text-lg"></i>
+                    <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-white uppercase">Formalizar</span>
+                </button>
 
-            <button onclick="routeProcess('tecnico')" class="flex flex-col items-center justify-center p-2 rounded border border-slate-200 dark:border-slate-600 bg-emerald-50/50 dark:bg-emerald-900/20 hover:bg-emerald-50 dark:hover:bg-slate-700 transition active:scale-95 col-span-2 md:col-span-1 border-b-2 border-b-emerald-500" title="Gerar Despacho Completo">
-              <i class="fa-solid fa-gavel text-emerald-700 dark:text-emerald-500 mb-1"></i>
-              <span class="text-[10px] uppercase font-bold text-slate-800 dark:text-slate-200">Despacho</span>
-            </button>
+                <!-- Ferramenta: Simplificar -->
+                <button onclick="routeProcess('simplificar')" class="btn-action flex flex-col items-center justify-center p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-cyan-300 dark:hover:border-cyan-700 hover:shadow-md transition-all group">
+                    <i class="fa-solid fa-comments text-slate-400 group-hover:text-cyan-500 mb-2 text-lg"></i>
+                    <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-white uppercase">Simplificar</span>
+                </button>
 
-            <button onclick="routeProcess('resumo')" class="flex flex-col items-center justify-center p-2 rounded border border-slate-200 dark:border-slate-600 hover:bg-purple-50 dark:hover:bg-slate-700 transition active:scale-95 group">
-              <i class="fa-solid fa-compress-arrows-alt text-purple-600 dark:text-purple-400 mb-1"></i>
-              <span class="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">Resumir</span>
-            </button>
+                <!-- Ferramenta: Despacho (Destaque) -->
+                <button onclick="routeProcess('tecnico')" class="btn-action col-span-2 md:col-span-1 flex flex-col items-center justify-center p-3 rounded-xl bg-slate-800 dark:bg-slate-700 border border-slate-900 dark:border-slate-600 hover:bg-slate-700 dark:hover:bg-slate-600 shadow-lg shadow-slate-200 dark:shadow-none transition-all group">
+                    <i class="fa-solid fa-gavel text-white/90 mb-2 text-lg"></i>
+                    <span class="text-[10px] font-bold text-white uppercase tracking-wide">Despacho</span>
+                </button>
 
-            <button onclick="routeProcess('extracao')" class="flex flex-col items-center justify-center p-2 rounded border border-slate-200 dark:border-slate-600 hover:bg-pink-50 dark:hover:bg-slate-700 transition active:scale-95 group">
-              <i class="fa-solid fa-magnifying-glass-chart text-pink-600 dark:text-pink-400 mb-1"></i>
-              <span class="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">Extrair</span>
-            </button>
+                <!-- Ferramenta: Resumir -->
+                <button onclick="routeProcess('resumo')" class="btn-action flex flex-col items-center justify-center p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-700 hover:shadow-md transition-all group">
+                    <i class="fa-solid fa-list-check text-slate-400 group-hover:text-purple-500 mb-2 text-lg"></i>
+                    <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-white uppercase">Resumir</span>
+                </button>
 
-          </div>
+                <!-- Ferramenta: Extrair -->
+                <button onclick="routeProcess('extracao')" class="btn-action flex flex-col items-center justify-center p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-pink-300 dark:hover:border-pink-700 hover:shadow-md transition-all group">
+                    <i class="fa-solid fa-fingerprint text-slate-400 group-hover:text-pink-500 mb-2 text-lg"></i>
+                    <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-white uppercase">Dados</span>
+                </button>
+
+            </div>
         </div>
       </section>
 
-      <!-- COLUNA DA DIREITA: RESULTADO -->
-      <section class="flex-1 flex flex-col min-w-0 bg-slate-50/50 dark:bg-slate-900/50">
-        <div class="p-3 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center shadow-sm no-print">
-            <h3 class="font-semibold text-slate-700 dark:text-slate-200 text-sm flex items-center gap-2">
-                <i class="fa-solid fa-file-signature text-amber-600 dark:text-amber-500"></i> Resultado
-                <span id="badge-mode" class="text-[10px] bg-gray-200 text-gray-600 px-2 rounded-full ml-2">Aguardando</span>
-            </h3>
+      <!-- DIREITA: RESULTADO -->
+      <section class="bg-slate-50 dark:bg-[#0f172a] flex flex-col h-full overflow-hidden relative">
+        
+        <!-- Header Resultado -->
+        <div class="px-6 py-4 flex justify-between items-center border-b border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm no-print">
+            <h2 class="text-sm font-semibold text-brand-600 dark:text-brand-400 uppercase tracking-widest flex items-center gap-2">
+                <i class="fa-solid fa-file-signature"></i> Resultado
+                <span id="badge-mode" class="text-[9px] bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full ml-2 font-medium">Aguardando</span>
+            </h2>
             
             <div class="flex gap-2">
-                <button onclick="exportToWord()" class="text-xs flex items-center gap-1 text-blue-700 border border-blue-200 bg-blue-50 px-3 py-1 rounded hover:bg-blue-100 transition">
+                <button onclick="exportToWord()" class="text-xs font-medium flex items-center gap-2 text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-brand-900/30 px-3 py-1.5 rounded-lg hover:bg-brand-100 dark:hover:bg-brand-900/50 transition-colors">
                     <i class="fa-solid fa-file-word"></i> Word
                 </button>
-                <button onclick="copyToClipboard()" id="btn-copy" class="text-xs flex items-center gap-1 text-slate-600 border border-slate-200 px-3 py-1 rounded hover:bg-slate-50 transition">
-                    <i class="fa-regular fa-copy"></i>
+                <button onclick="copyToClipboard()" id="btn-copy" class="text-xs font-medium flex items-center gap-2 text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
+                    <i class="fa-regular fa-copy"></i> Copiar
                 </button>
             </div>
         </div>
 
-        <!-- Container do Documento -->
-        <div class="flex-1 p-6 overflow-y-auto custom-scrollbar relative" id="output-container">
-          
-          <!-- Área de Impressão -->
-          <div id="printable-area" class="hidden">
-            <div class="border-b-2 border-black mb-6 pb-2 text-center">
-                <h1 class="text-xl font-bold font-serif uppercase">Prefeitura Municipal de Limeira</h1>
-                <h2 class="text-sm font-sans uppercase">Secretaria de Assuntos Jurídicos</h2>
+        <!-- Conteúdo -->
+        <div class="flex-1 p-8 md:p-12 overflow-y-auto custom-scrollbar relative" id="output-container">
+            
+            <!-- Impressão -->
+            <div id="printable-area" class="hidden">
+                <div class="border-b-2 border-black mb-8 pb-4 text-center">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Bras%C3%A3o_de_Limeira.svg/1200px-Bras%C3%A3o_de_Limeira.svg.png" style="height: 60px; display: block; margin: 0 auto 10px auto;" class="grayscale">
+                    <h1 class="text-xl font-bold font-serif uppercase tracking-widest">Prefeitura Municipal de Limeira</h1>
+                    <h2 class="text-xs font-sans uppercase tracking-widest mt-1">Secretaria de Assuntos Jurídicos</h2>
+                </div>
+                <div id="print-content" class="text-justify font-serif text-lg leading-loose"></div>
             </div>
-            <div id="print-content" class="text-justify font-serif text-lg leading-relaxed"></div>
-          </div>
 
-          <!-- UI de Estado -->
-          <div id="placeholder-state" class="h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-600 opacity-60 no-print">
-            <i class="fa-solid fa-scale-balanced text-5xl mb-4 text-slate-200 dark:text-slate-700"></i>
-            <p class="text-sm font-medium">Selecione uma ferramenta para iniciar.</p>
-            <p class="text-xs mt-2">Dica: Use "Simplificar" para traduzir termos difíceis.</p>
-          </div>
+            <!-- Estado Vazio -->
+            <div id="placeholder-state" class="h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-600 no-print select-none">
+                <div class="w-24 h-24 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                    <i class="fa-solid fa-scale-balanced text-4xl text-slate-300 dark:text-slate-600"></i>
+                </div>
+                <h3 class="text-lg font-serif font-medium text-slate-600 dark:text-slate-400 mb-2">Área de Processamento</h3>
+                <p class="text-sm text-slate-400 max-w-xs text-center">Selecione uma ferramenta na barra inferior esquerda para transformar seu texto.</p>
+            </div>
 
-          <div id="loader-state" class="hidden h-full flex flex-col items-center justify-center no-print">
-            <div class="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
-            <p class="text-sm text-slate-600 animate-pulse" id="loader-msg">Processando com Gemini 2.5...</p>
-          </div>
+            <!-- Loading -->
+            <div id="loader-state" class="hidden h-full flex flex-col items-center justify-center no-print">
+                <div class="relative w-16 h-16 mb-4">
+                    <div class="absolute top-0 left-0 w-full h-full border-4 border-slate-100 dark:border-slate-800 rounded-full"></div>
+                    <div class="absolute top-0 left-0 w-full h-full border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+                <p class="text-sm font-medium text-slate-500 dark:text-slate-400 animate-pulse" id="loader-msg">Processando...</p>
+            </div>
 
-          <div id="content-state" class="hidden h-full flex flex-col no-print">
-            <div id="output-text" class="prose prose-slate dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 leading-relaxed text-justify whitespace-pre-wrap font-serif text-lg flex-1 outline-none focus:ring-0" contenteditable="true"></div>
-          </div>
+            <!-- Resultado Editável -->
+            <div id="content-state" class="hidden h-full flex flex-col no-print animate-fade-in">
+                <div id="output-text" class="prose prose-slate dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 leading-8 text-justify whitespace-pre-wrap font-serif text-lg outline-none focus:ring-0" contenteditable="true"></div>
+            </div>
+
         </div>
       </section>
 
-    </main>
-  </div>
+    </div>
+  </main>
 
   <script>
-    // --- CONFIGURAÇÃO ---
+    // --- ESTADO DO SISTEMA ---
     let userApiKey = ""; 
     let useAI = false; 
     let history = JSON.parse(localStorage.getItem('kyro_history') || '[]');
 
-    // --- TOAST NOTIFICATIONS (Substituto Moderno do Alert) ---
+    // --- NOTIFICAÇÕES TOAST (Design Refinado) ---
     function showToast(message, type = 'info') {
         const container = document.getElementById('toast-container');
         const toast = document.createElement('div');
+        container.style.pointerEvents = 'none';
         
-        let icon = '<i class="fa-solid fa-info-circle"></i>';
-        let bgClass = 'bg-slate-800';
-        
-        if (type === 'success') { icon = '<i class="fa-solid fa-check-circle"></i>'; bgClass = 'bg-emerald-600'; }
-        if (type === 'error') { icon = '<i class="fa-solid fa-triangle-exclamation"></i>'; bgClass = 'bg-red-600'; }
-        if (type === 'warning') { icon = '<i class="fa-solid fa-exclamation-circle"></i>'; bgClass = 'bg-amber-500'; }
+        const types = {
+            success: { icon: 'fa-check', bg: 'bg-emerald-500', border: 'border-emerald-400' },
+            error:   { icon: 'fa-xmark', bg: 'bg-rose-500', border: 'border-rose-400' },
+            warning: { icon: 'fa-exclamation', bg: 'bg-amber-500', border: 'border-amber-400' },
+            info:    { icon: 'fa-info', bg: 'bg-slate-800', border: 'border-slate-700' }
+        };
+        const style = types[type] || types.info;
 
-        toast.className = `${bgClass} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 text-sm animate-slide-in min-w-[300px] border border-white/10`;
-        toast.innerHTML = `${icon} <span>${message}</span>`;
+        toast.className = `transform transition-all duration-300 ease-out translate-x-10 opacity-0 pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-lg shadow-xl backdrop-blur-md ${style.bg} text-white border ${style.border} min-w-[280px] max-w-sm`;
+        toast.innerHTML = `
+            <div class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                <i class="fa-solid ${style.icon} text-xs"></i>
+            </div>
+            <span class="text-xs font-medium tracking-wide">${message}</span>
+        `;
         
         container.appendChild(toast);
         
+        // Animação de entrada
+        requestAnimationFrame(() => {
+            toast.classList.remove('translate-x-10', 'opacity-0');
+        });
+
         setTimeout(() => {
-            toast.classList.add('animate-fade-out');
+            toast.classList.add('translate-x-10', 'opacity-0');
             setTimeout(() => toast.remove(), 300);
-        }, 3000);
+        }, 3500);
     }
 
-    // --- TOGGLE SWITCH ---
+    // --- TOGGLE IA / OFFLINE ---
     function handleToggleClick() {
         const checkbox = document.getElementById('ai-mode-toggle');
+        const label = document.getElementById('mode-label');
+
         if (checkbox.checked) {
             const sharedKey = localStorage.getItem('kyro_gemini_api_key');
-            
             if (!sharedKey || sharedKey.length < 5) {
                 checkbox.checked = false; 
                 document.getElementById('config-badge').classList.remove('hidden');
-                showToast("Configure sua Chave API (Gemini) primeiro.", "warning");
+                showToast("Configure a Chave API primeiro.", "warning");
                 toggleConfigModal(); 
                 return;
             }
             userApiKey = sharedKey;
             useAI = true;
-            updateModeUI(true);
-            showToast("Modo IA Ativado", "success");
+            label.textContent = "IA Online";
+            label.className = "text-xs font-bold text-brand-600 dark:text-brand-400 min-w-[60px] text-center";
+            showToast("Gemini 2.5 Ativado", "success");
         } else {
             useAI = false;
-            updateModeUI(false);
-            showToast("Modo Offline Ativado", "info");
-        }
-    }
-    
-    function updateModeUI(isAI) {
-        const label = document.getElementById('mode-label');
-        if(isAI) {
-            label.innerText = "IA (Gemini 2.5)";
-            label.className = "text-xs font-bold text-blue-600 dark:text-blue-400";
-        } else {
-            label.innerText = "Modo Offline";
-            label.className = "text-xs font-bold text-emerald-600 dark:text-emerald-400";
+            label.textContent = "Offline";
+            label.className = "text-xs font-bold text-slate-500 dark:text-slate-400 min-w-[60px] text-center";
+            showToast("Modo Local Ativado", "info");
         }
     }
 
-    // --- ROTEAMENTO ---
+    // --- LÓGICA DE PROCESSAMENTO ---
     function routeProcess(type) {
         const text = document.getElementById("input-text").value.trim();
-        if (!text) { showToast("Digite algo na caixa de entrada primeiro.", "warning"); return; }
+        if (!text) { 
+            showToast("A caixa de texto está vazia.", "warning"); 
+            document.getElementById("input-text").focus();
+            return; 
+        }
 
         if (useAI) {
             if(!userApiKey) {
                 userApiKey = localStorage.getItem('kyro_gemini_api_key');
                 if(!userApiKey) {
-                    showToast("Chave API perdida. Mudando para Offline.", "error");
+                    showToast("Chave API não encontrada.", "error");
                     document.getElementById('ai-mode-toggle').checked = false;
                     handleToggleClick(); 
                     processOffline(type, text);
@@ -384,134 +413,76 @@
         }
     }
 
-    // --- HISTÓRICO ---
-    function toggleHistory() {
-        const sidebar = document.getElementById('history-sidebar');
-        sidebar.classList.toggle('translate-x-full');
-        renderHistory();
-    }
-
-    function addToHistory(type, input, output) {
-        const item = {
-            id: Date.now(),
-            date: new Date().toLocaleString(),
-            type: type,
-            inputSnippet: input.substring(0, 30) + (input.length > 30 ? '...' : ''),
-            output: output
-        };
-        history.unshift(item);
-        if (history.length > 20) history.pop(); // Mantém apenas os últimos 20
-        localStorage.setItem('kyro_history', JSON.stringify(history));
-    }
-
-    function renderHistory() {
-        const list = document.getElementById('history-list');
-        list.innerHTML = '';
-        
-        if(history.length === 0) {
-            list.innerHTML = '<div class="text-center text-slate-400 text-xs mt-10">Nenhum histórico recente.</div>';
-            return;
-        }
-
-        history.forEach(item => {
-            const el = document.createElement('div');
-            el.className = "bg-white dark:bg-slate-700 p-2 rounded border border-slate-200 dark:border-slate-600 text-xs hover:shadow-md transition cursor-pointer group";
-            el.onclick = () => {
-                document.getElementById('output-text').innerText = item.output;
-                document.getElementById('print-content').innerHTML = item.output.replace(/\n/g, '<br>');
-                setOutputState('content');
-                toggleHistory();
-                showToast("Histórico restaurado!", "success");
-            };
-            el.innerHTML = `
-                <div class="flex justify-between text-slate-500 dark:text-slate-400 mb-1">
-                    <span class="uppercase font-bold text-[10px]">${item.type}</span>
-                    <span class="text-[10px]">${item.date.split(' ')[1]}</span>
-                </div>
-                <div class="text-slate-700 dark:text-slate-200 truncate font-medium">"${item.inputSnippet}"</div>
-                <div class="text-blue-500 opacity-0 group-hover:opacity-100 text-[10px] mt-1 text-right">Clique para restaurar</div>
-            `;
-            list.appendChild(el);
-        });
-    }
-
-    function clearHistory() {
-        if(confirm("Limpar todo o histórico?")) {
-            history = [];
-            localStorage.removeItem('kyro_history');
-            renderHistory();
-            showToast("Histórico limpo.", "info");
-        }
-    }
-
-    // --- MODO OFFLINE ---
+    // --- MODO OFFLINE (Lógica Simples) ---
     function processOffline(type, text) {
         setOutputState('loading', 'Processando localmente...');
-        updateBadge('Offline (Local)');
+        updateBadge('Modo Offline');
 
         setTimeout(() => { 
             let result = "";
+            const today = new Date().toLocaleDateString('pt-BR');
+
             switch(type) {
                 case 'simplificar':
-                    // Simulação simples offline
                     result = text.replace(/outrossim/gi, "além disso")
                                  .replace(/destarte/gi, "dessa forma")
                                  .replace(/data vênia/gi, "com todo respeito")
                                  .replace(/adimplir/gi, "pagar");
-                    result += "\n\n(Nota: A simplificação Offline é limitada a vocabulário básico. Ative a IA para traduções completas de 'juridiquês'.)";
+                    result += "\n\n(Nota: A simplificação Offline é baseada em dicionário simples.)";
                     break;
                 case 'extracao':
                     const monies = text.match(/R\$\s?[\d.,]+/gi) || [];
                     const dates = text.match(/\d{2}\/\d{2}\/\d{4}/g) || [];
-                    const processes = text.match(/\d{4}\.\d{3}\.\d{6}-\d/g) || ["Nenhum padrão encontrado"];
-                    result = `📌 DADOS (OFFLINE):\n\n💰: ${monies.join(', ') || '-'}\n📅: ${dates.join(', ') || '-'}\n⚖️: ${processes.join(', ')}`;
+                    const processes = text.match(/\d{4}\.\d{3}\.\d{6}-\d/g) || ["Não detectado"];
+                    result = `📌 DADOS EXTRAÍDOS (OFFLINE):\n\n💰 Valores: ${monies.join(', ') || '-'}\n📅 Datas: ${dates.join(', ') || '-'}\n⚖️ Processos: ${processes.join(', ')}`;
                     break;
                 case 'tecnico':
-                    result = `DESPACHO (Offline)\n\nAnálise referente a: ${text.substring(0, 50)}...\n\nCONSIDERANDO os fatos: "${text}"\n\nCONCLUSÃO:\nEncaminhe-se para providências.\n\nLimeira, ${new Date().toLocaleDateString()}.`;
+                    result = `DESPACHO ADMINISTRATIVO\n\nReferência: Análise preliminar\nData: ${today}\n\n1. Trata-se de análise referente ao texto apresentado.\n2. CONSIDERANDO o teor: "${text.substring(0, 100)}..."\n3. Encaminhe-se ao setor competente para as providências cabíveis.\n\nAtenciosamente,\n\nJurídico Limeira.`;
                     break;
                 case 'rebuscado':
-                    const dictionary = { "pedido": "pleito", "pedir": "requerer", "diz": "aduz", "fala": "relata", "dinheiro": "pecúnia", "pagar": "adimplir", "não": "negativo", "sim": "positivo" };
+                    const dict = { "pedido": "pleito", "pedir": "requerer", "diz": "aduz", "fala": "relata", "dinheiro": "pecúnia", "pagar": "adimplir", "não": "negativo", "sim": "positivo" };
                     result = text;
-                    for (const [key, value] of Object.entries(dictionary)) {
+                    for (const [key, value] of Object.entries(dict)) {
                         const regex = new RegExp(`\\b${key}\\b`, 'gi');
                         result = result.replace(regex, value.toUpperCase());
                     }
                     break;
                 case 'resumo':
-                    result = `RESUMO OFFLINE:\n\n${text.split(/[.!?]/).slice(0, 2).join('. ') + '.'}`;
+                    result = `SÍNTESE DOS FATOS:\n\n${text.split(/[.!?]/).slice(0, 2).join('. ') + '.'}`;
                     break;
                 case 'correcao':
                     result = text;
-                    showToast("Use o corretor do navegador no modo Offline.", "info");
+                    showToast("No modo Offline, use o corretor do navegador.", "info");
                     break;
             }
             
             if(result) {
                 renderOutput(result);
-                addToHistory(type + ' (Off)', text, result);
+                addToHistory(type + ' (Local)', text, result);
             }
-        }, 500);
+        }, 600); // Delay artificial para UX
     }
 
-    // --- MODO IA ---
+    // --- MODO IA (Integração Gemini) ---
     async function processWithAI(type, text) {
-        setOutputState('loading', 'Consultando Gemini 2.5...');
-        updateBadge('IA (Gemini 2.5)');
+        setOutputState('loading', 'Gemini 2.5 trabalhando...');
+        updateBadge('IA Gemini 2.5');
 
-        const baseContext = "Você é um Assistente Jurídico Oficial na Prefeitura de Limeira.";
+        const baseContext = "Você é um Assistente Jurídico Sênior da Prefeitura de Limeira. Responda apenas com o texto solicitado, sem introduções como 'Aqui está o texto'.";
         let prompt = "";
 
         switch (type) {
-            case 'correcao': prompt = `${baseContext} Corrija formalmente, mantendo o tom jurídico, apenas o texto: "${text}"`; break;
-            case 'rebuscado': prompt = `${baseContext} Reescreva com tom jurídico erudito e culto: "${text}"`; break;
-            case 'simplificar': prompt = `${baseContext} Você é especialista em Linguagem Simples (Plain Language) e Legal Design. Traduza o texto jurídico abaixo para uma linguagem clara, direta e acessível a um cidadão sem conhecimento jurídico, mantendo o sentido original mas removendo o excesso de formalidade e termos em latim: "${text}"`; break;
-            case 'tecnico': prompt = `${baseContext} Elabore um despacho técnico jurídico de alta complexidade e profundidade. Utilize vocabulário rebuscado, terminologia técnica avançada, latim forense se cabível, e mantenha um tom de autoridade e engajamento institucional. O texto deve ser denso e extremamente formal. Baseie-se nisto: "${text}"`; break;
-            case 'resumo': prompt = `${baseContext} Resuma os fatos principais e pontos chave em tópicos: "${text}"`; break;
-            case 'extracao': prompt = `${baseContext} Liste datas, valores monetários, nomes e números de processo em formato de lista simples: "${text}"`; break;
+            case 'correcao': prompt = `${baseContext} Realize uma revisão gramatical e ortográfica rigorosa, mantendo o tom jurídico formal: "${text}"`; break;
+            case 'rebuscado': prompt = `${baseContext} Eleve o nível do texto para um padrão jurídico erudito, culto e formal: "${text}"`; break;
+            case 'simplificar': prompt = `${baseContext} Aplique técnicas de Legal Design e Linguagem Simples (Plain Language). Traduza o texto para que um cidadão leigo entenda perfeitamente, sem juridiquês: "${text}"`; break;
+            case 'tecnico': prompt = `${baseContext} Elabore um despacho jurídico técnico completo, com fundamentação teórica implícita, tom de autoridade e estrutura formal, baseando-se nestes fatos: "${text}"`; break;
+            case 'resumo': prompt = `${baseContext} Crie um resumo executivo em tópicos (bullet points) destacando os fatos principais e requerimentos: "${text}"`; break;
+            case 'extracao': prompt = `${baseContext} Extraia e liste: Datas, Valores Monetários (R$), Nomes de Envolvidos e Números de Processos/Leis. Formate como uma ficha técnica: "${text}"`; break;
         }
 
         try {
             const apiKey = userApiKey || localStorage.getItem('kyro_gemini_api_key');
+            // Usando endpoint padrão de geração
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
             
             const response = await fetch(apiUrl, {
@@ -523,173 +494,239 @@
                 })
             });
 
-            if (!response.ok) throw new Error("Erro na API Gemini: " + response.status);
+            if (!response.ok) throw new Error("Falha na API");
             
             const data = await response.json();
             const resultText = data.candidates[0].content.parts[0].text;
 
             renderOutput(resultText);
             addToHistory(type, text, resultText);
-            showToast("Processamento concluído!", "success");
+            showToast("Processamento concluído", "success");
 
         } catch (error) {
             console.error(error);
-            showToast(`Erro IA: ${error.message}`, "error");
-            document.getElementById('ai-mode-toggle').checked = false;
-            handleToggleClick();
+            showToast("Erro na conexão com IA.", "error");
+            document.getElementById('ai-mode-toggle').click(); // Volta para offline
         }
     }
 
-    // --- FUNÇÕES AUXILIARES ---
+    // --- FUNÇÕES DE ARQUIVO E API ---
     async function testApiKey() {
         const key = document.getElementById('api-key-input').value.trim();
         const resultDiv = document.getElementById('test-result');
         
-        if(key.length < 10) {
-            showToast("Chave muito curta.", "error");
-            return;
-        }
+        if(key.length < 10) { showToast("Chave inválida.", "warning"); return; }
 
-        resultDiv.innerHTML = '<span class="text-blue-500"><i class="fa-solid fa-spinner fa-spin"></i> Testando...</span>';
-        resultDiv.className = "mb-3 p-2 rounded text-xs bg-blue-50 dark:bg-blue-900/20 block";
-        resultDiv.classList.remove('hidden');
+        resultDiv.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Verificando...';
+        resultDiv.classList.remove('hidden', 'text-green-600', 'text-red-600');
+        resultDiv.classList.add('text-slate-500');
 
         try {
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`;
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: "OK" }] }] })
+                body: JSON.stringify({ contents: [{ parts: [{ text: "Teste" }] }] })
             });
 
             if (response.ok) {
-                resultDiv.innerHTML = '<span class="text-green-600 font-bold"><i class="fa-solid fa-check"></i> Conexão OK!</span>';
-                resultDiv.className = "mb-3 p-2 rounded text-xs bg-green-50 dark:bg-green-900/20 block border border-green-200";
-                showToast("Conexão estabelecida com sucesso!", "success");
-            } else {
-                throw new Error(response.status);
-            }
+                resultDiv.innerHTML = '<i class="fa-solid fa-check-circle"></i> Chave Válida e Operacional';
+                resultDiv.classList.replace('text-slate-500', 'text-green-600');
+            } else { throw new Error(); }
         } catch (e) {
-            resultDiv.innerHTML = `<span class="text-red-600 font-bold">Falha: ${e.message || "Erro de Rede"}</span>`;
-            resultDiv.className = "mb-3 p-2 rounded text-xs bg-red-50 dark:bg-red-900/20 block border border-red-200";
-            showToast("Falha na verificação da chave.", "error");
+            resultDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Chave Inválida ou Erro de Rede';
+            resultDiv.classList.replace('text-slate-500', 'text-red-600');
         }
     }
 
+    function saveApiKey() {
+        const key = document.getElementById('api-key-input').value.trim();
+        if(key.length > 10) {
+            localStorage.setItem('kyro_gemini_api_key', key);
+            userApiKey = key;
+            toggleConfigModal();
+            showToast("Chave API salva com sucesso", "success");
+            
+            // Auto-ativar
+            const checkbox = document.getElementById('ai-mode-toggle');
+            if(!checkbox.checked) checkbox.click();
+            document.getElementById('config-badge').classList.add('hidden');
+        }
+    }
+
+    function clearApiKey() {
+        if(confirm("Deseja remover a chave API deste navegador?")) {
+            localStorage.removeItem('kyro_gemini_api_key');
+            userApiKey = "";
+            document.getElementById('api-key-input').value = "";
+            document.getElementById('test-result').classList.add('hidden');
+            const checkbox = document.getElementById('ai-mode-toggle');
+            if(checkbox.checked) checkbox.click();
+            toggleConfigModal();
+            showToast("Credenciais removidas", "info");
+        }
+    }
+
+    // --- UI HELPERS ---
     function renderOutput(text) {
         document.getElementById('output-text').innerText = text;
+        // Prepara para impressão (preserva quebras de linha)
         document.getElementById('print-content').innerHTML = text.replace(/\n/g, '<br>');
         setOutputState('content');
     }
 
-    function setOutputState(state, msg = "Processando...") {
-        document.getElementById('placeholder-state').classList.add('hidden');
-        document.getElementById('loader-state').classList.add('hidden');
-        document.getElementById('content-state').classList.add('hidden');
-        
+    function setOutputState(state, msg = "") {
+        const states = ['placeholder-state', 'loader-state', 'content-state'];
+        states.forEach(s => document.getElementById(s).classList.add('hidden'));
+
         if (state === 'loading') {
             document.getElementById('loader-state').classList.remove('hidden');
             document.getElementById('loader-msg').innerText = msg;
+        } else if (state === 'content') {
+            document.getElementById('content-state').classList.remove('hidden');
+        } else {
+            document.getElementById('placeholder-state').classList.remove('hidden');
         }
-        else if (state === 'content') document.getElementById('content-state').classList.remove('hidden');
-        else document.getElementById('placeholder-state').classList.remove('hidden');
     }
 
     function updateBadge(text) {
         document.getElementById('badge-mode').innerText = text;
     }
 
-    function saveApiKey() {
-        const key = document.getElementById('api-key-input').value.trim();
-        if(key && key.length > 10) {
-            localStorage.setItem('kyro_gemini_api_key', key);
-            userApiKey = key;
-            toggleConfigModal();
-            showToast("Chave salva e integrada!", "success");
-            const checkbox = document.getElementById('ai-mode-toggle');
-            checkbox.checked = true;
-            useAI = true;
-            updateModeUI(true);
-            document.getElementById('config-badge').classList.add('hidden');
-        } else {
-            showToast("Chave inválida.", "error");
+    function toggleConfigModal() { document.getElementById('config-modal').classList.toggle('hidden'); }
+    
+    function toggleTheme() { 
+        document.documentElement.classList.toggle('dark'); 
+        localStorage.setItem('kyro_theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    }
+
+    function updateCounters(id) {
+        const text = document.getElementById(id + '-text').value;
+        const count = text.trim() === '' ? 0 : text.split(/\s+/).filter(w=>w).length;
+        document.getElementById(id + '-counter').innerText = `${count} palavras`;
+    }
+
+    function insertTemplate(v) { 
+        const templates = {
+            'deferimento': 'Defiro o pedido de parcelamento do débito em 36 parcelas mensais e sucessivas, com fundamento na Lei Complementar Municipal vigente. Encaminhe-se à Divisão de Rendas para emissão das guias.',
+            'citacao': 'Certifico que o réu encontra-se em local incerto e não sabido, esgotadas as tentativas de localização via sistemas conveniados (Bacenjud, Renajud). Requer-se, portanto, a citação via Edital, nos termos do art. 256 do CPC.',
+            'prescricao': 'Verifica-se a ocorrência da prescrição do crédito tributário, haja vista o decurso de prazo superior a 5 anos desde a constituição definitiva sem causa interruptiva, conforme art. 174 do CTN. Opina-se pela extinção da execução.'
+        };
+        if(v && templates[v]) {
+            const input = document.getElementById('input-text');
+            input.value = input.value ? input.value + "\n\n" + templates[v] : templates[v];
+            updateCounters('input');
         }
     }
 
-    function clearApiKey() {
-        if(confirm("Remover chave de TODA a suite?")) {
-            localStorage.removeItem('kyro_gemini_api_key');
-            userApiKey = "";
-            document.getElementById('api-key-input').value = "";
-            document.getElementById('test-result').classList.add('hidden');
-            const checkbox = document.getElementById('ai-mode-toggle');
-            checkbox.checked = false;
-            useAI = false;
-            updateModeUI(false);
-            toggleConfigModal();
-            showToast("Chave removida.", "info");
-        }
+    function copyToClipboard() {
+        const text = document.getElementById('output-text').innerText;
+        if(!text) return;
+        navigator.clipboard.writeText(text);
+        showToast("Copiado para a área de transferência", "success");
     }
-    
-    // Init 
+
+    function exportToWord() {
+        const content = document.getElementById('output-text').innerText;
+        if(!content) { showToast("Nada para exportar", "warning"); return; }
+        
+        const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Documento</title></head><body>";
+        const footer = "</body></html>";
+        const sourceHTML = header + content.replace(/\n/g, "<br>") + footer;
+        
+        const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
+        const fileDownload = document.createElement("a");
+        document.body.appendChild(fileDownload);
+        fileDownload.href = source;
+        fileDownload.download = 'Documento_Kyro.doc';
+        fileDownload.click();
+        document.body.removeChild(fileDownload);
+        showToast("Download iniciado", "success");
+    }
+
+    // --- HISTÓRICO ---
+    function toggleHistory() {
+        const sidebar = document.getElementById('history-sidebar');
+        sidebar.classList.toggle('translate-x-full');
+        if(!sidebar.classList.contains('translate-x-full')) renderHistory();
+    }
+
+    function addToHistory(type, input, output) {
+        const item = {
+            id: Date.now(),
+            date: new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}),
+            type: type,
+            inputSnippet: input.substring(0, 40) + (input.length > 40 ? '...' : ''),
+            output: output
+        };
+        history.unshift(item);
+        if (history.length > 15) history.pop();
+        localStorage.setItem('kyro_history', JSON.stringify(history));
+    }
+
+    function renderHistory() {
+        const list = document.getElementById('history-list');
+        list.innerHTML = '';
+        
+        if(history.length === 0) {
+            list.innerHTML = '<div class="flex flex-col items-center justify-center h-40 text-slate-400"><i class="fa-regular fa-folder-open text-2xl mb-2"></i><span class="text-xs">Sem histórico</span></div>';
+            return;
+        }
+
+        history.forEach(item => {
+            const el = document.createElement('div');
+            el.className = "bg-white dark:bg-slate-700/50 p-3 rounded-xl border border-slate-100 dark:border-slate-600 hover:shadow-md hover:border-brand-200 dark:hover:border-brand-800 transition-all cursor-pointer group";
+            el.onclick = () => {
+                document.getElementById('output-text').innerText = item.output;
+                document.getElementById('print-content').innerHTML = item.output.replace(/\n/g, '<br>');
+                setOutputState('content');
+                toggleHistory();
+                showToast("Histórico restaurado", "info");
+            };
+            el.innerHTML = `
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/20 px-1.5 py-0.5 rounded">${item.type}</span>
+                    <span class="text-[10px] text-slate-400">${item.date}</span>
+                </div>
+                <div class="text-xs text-slate-600 dark:text-slate-300 font-medium truncate mb-1">"${item.inputSnippet}"</div>
+                <div class="text-[10px] text-slate-400 group-hover:text-brand-500 transition-colors text-right">Toque para restaurar <i class="fa-solid fa-arrow-right ml-1"></i></div>
+            `;
+            list.appendChild(el);
+        });
+    }
+
+    function clearHistory() {
+        history = [];
+        localStorage.removeItem('kyro_history');
+        renderHistory();
+        showToast("Histórico limpo", "info");
+    }
+
+    function toggleDictation() {
+        showToast("O navegador pode solicitar permissão de microfone.", "info");
+        // Implementação futura de Web Speech API
+    }
+
+    // Inicialização
     window.onload = () => {
         const savedKey = localStorage.getItem('kyro_gemini_api_key');
         const checkbox = document.getElementById('ai-mode-toggle');
+        const label = document.getElementById('mode-label');
         
         if(savedKey) {
             userApiKey = savedKey;
             document.getElementById('api-key-input').value = savedKey;
             checkbox.checked = true;
             useAI = true;
-            updateModeUI(true);
+            label.textContent = "IA Online";
+            label.className = "text-xs font-bold text-brand-600 dark:text-brand-400 min-w-[60px] text-center";
         } else {
-            userApiKey = "";
-            checkbox.checked = false;
-            useAI = false;
-            updateModeUI(false);
             document.getElementById('config-badge').classList.remove('hidden');
         }
         
         if (localStorage.getItem('kyro_theme') === 'dark') document.documentElement.classList.add('dark');
     }
 
-    function toggleConfigModal() { document.getElementById('config-modal').classList.toggle('hidden'); }
-    function toggleTheme() { 
-        document.documentElement.classList.toggle('dark'); 
-        localStorage.setItem('kyro_theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-    }
-    function updateCounters(id) {
-        const text = document.getElementById(id + '-text').value;
-        const count = text.trim() === '' ? 0 : text.split(/\s+/).filter(w=>w).length;
-        document.getElementById(id + '-counter').innerText = `${count} palavras`;
-    }
-    
-    function toggleDictation() {
-        showToast("Ditado requer permissão do navegador.", "info");
-    }
-
-    function insertTemplate(v) { 
-        const templates = {
-            'deferimento': 'Defiro o pedido de parcelamento em 36x, com base na Lei Complementar nº...',
-            'citacao': 'Certifico que o réu está em local incerto e não sabido, necessitando citação via edital...',
-            'prescricao': 'O crédito tributário encontra-se prescrito conforme art. 174 do CTN...'
-        };
-        if(v) document.getElementById('input-text').value += templates[v];
-    }
-    function copyToClipboard() {
-        navigator.clipboard.writeText(document.getElementById('output-text').innerText);
-        showToast("Copiado com sucesso!", "success");
-    }
-    function exportToWord() {
-        const content = document.getElementById('output-text').innerText;
-        const blob = new Blob(['\ufeff', content], {type: 'application/msword'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'Documento_Kyro.doc';
-        a.click();
-        showToast("Download iniciado!", "success");
-    }
   </script>
 </body>
 </html>

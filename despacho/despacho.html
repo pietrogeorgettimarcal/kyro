@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="pt-br" class="h-full">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kyro V18.0 - Magnum Opus Lex</title>
+  <title>Kyro - Magnum Opus Lex</title>
+  <link rel="shortcut icon" href="https://placehold.co/32x32/003366/FFFFFF?text=K" type="image/x-icon">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -43,6 +43,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <style>
+    @charset "UTF-8";
+
     body { font-family: 'Inter', sans-serif; }
     h1, h2, h3 { font-family: 'Playfair Display', serif; }
 
@@ -64,14 +66,15 @@
         gap: 0.5rem;
     }
 
-    /* ESTILO A4 JURÍDICO - FUNDO ÚNICO E SEM DIVISÕES */
+    /* ESTILO A4 JURÍDICO - CORREÇÃO DE ALTURA */
     .legal-doc {
         font-family: 'Times New Roman', Times, serif;
         line-height: 1.5; 
         text-align: justify;
         padding: 3cm 2.5cm 3cm 3cm;
         width: 21cm; 
-        min-height: 29.7cm; 
+        min-height: 29.7cm;
+        height: auto !important; /* Permite crescimento infinito */
         margin: 0 auto;
         transition: background-color 0.3s ease, color 0.3s ease;
         background-color: white !important;
@@ -187,10 +190,10 @@
   <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 h-16 flex-shrink-0 z-20 shadow-sm no-print transition-colors relative">
     <div class="container mx-auto px-4 h-full flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="bg-lime-800 text-white w-10 h-10 rounded flex items-center justify-center text-lg font-serif font-bold shadow-sm">L</div>
+        <div class="bg-lime-800 text-white w-10 h-10 rounded flex items-center justify-center text-lg font-serif font-bold shadow-sm">K</div>
         <div class="leading-tight">
-          <h1 class="text-lg text-slate-900 dark:text-white tracking-tight">Kyro Suite <span class="text-xs bg-lime-100 dark:bg-lime-900 dark:text-lime-200 text-lime-800 px-1 rounded ml-1 font-bold">V18.0 MAGNUM</span></h1>
-          <p class="text-xs text-slate-500 dark:text-slate-400 font-sans uppercase tracking-wider">PGM Limeira - Dívida Ativa</p>
+          <h1 class="text-lg text-slate-900 dark:text-white tracking-tight">Redator de Despachos Técnico-Administrativos<span class="text-xs bg-lime-100 dark:bg-lime-900 dark:text-lime-200 text-lime-800 px-1 rounded ml-1 font-bold">offline</span></h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400 font-sans uppercase tracking-wider">Limeira - Dívida Ativa</p>
         </div>
       </div>
       
@@ -263,7 +266,7 @@
             
             <button onclick="routeProcess('tecnico')" class="col-span-2 flex items-center justify-center gap-3 p-3 rounded border border-lime-200 dark:border-lime-900 bg-lime-600 text-white hover:bg-lime-700 transition shadow-md active:scale-95 group" title="Gerar Parecer Jurídico Especializado da PGM">
               <i class="fa-solid fa-gavel"></i>
-              <span class="text-xs uppercase font-extrabold tracking-widest">Protocolo Magnum Opus</span>
+              <span class="text-xs uppercase font-extrabold tracking-widest">Gerar Despacho</span>
             </button>
 
           </div>
@@ -287,6 +290,7 @@
             </div>
         </div>
 
+        <!-- CONTAINER PRINCIPAL DO SCROLL - ALTERAÇÃO IMPORTANTE -->
         <div class="flex-1 p-0 overflow-y-auto custom-scrollbar relative" id="output-container">
           <div id="printable-area" class="hidden">
             <div id="print-content" class="legal-doc"></div>
@@ -303,7 +307,8 @@
             <p class="text-sm text-slate-600 dark:text-slate-400 animate-pulse font-bold" id="loader-msg">Compilando Argumentação Jurídica...</p>
           </div>
 
-          <div id="content-state" class="hidden h-full flex flex-col no-print items-center py-8 overflow-auto">
+          <!-- WRAPPER DO DOCUMENTO - ALTERADO PARA PERMITIR CRESCIMENTO (min-h-full em vez de h-full) -->
+          <div id="content-state" class="hidden w-full min-h-full flex flex-col items-center py-8 no-print">
             <div id="output-text" class="legal-doc shadow-2xl outline-none" contenteditable="true"></div>
           </div>
         </div>

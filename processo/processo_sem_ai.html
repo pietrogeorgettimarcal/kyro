@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kyro - Automação PDF para TXT (Corrigido v5)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;
+    </script>
+    <style>
+        :root {
+            --cor-principal: #004a91;
+            --cor-fundo: #f4f7fa;
+        }
+
+        body { font-family: 'Inter', sans-serif; background-color: var(--cor-fundo); }
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        th { font-size: 0.7rem; white-space: nowrap; padding: 8px 4px; background-color: #f8fafc; border-bottom: 2px solid #e2e8f0; color: #475569; font-weight: 700; text-transform: uppercase; }
+        td { font-size: 0.7rem; white-space: nowrap; padding: 6px 4px; border-bottom: 1px solid #f1f5f9; color: #334155; }
+        tr:hover td { background-color: #f0f9ff; }
+        
+        .col-money { text-align: right; font-family: monospace; min-width: 80px; }
+        .col-center { text-align: center; }
+        
+        .txt-preview {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 11px;
+            white-space: pre;
+            overflow-x: auto;
+            background-color: #1e293b;
+            color: #4ade80;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            max-height: 200px;
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-white shadow-md w-full h-24 flex-shrink-0">
+        <div class="container mx-auto px-4 md:px-6 h-full flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+            <!-- Logo Placeholder - Substitua pela imagem real se disponível -->
+            <div class="bg-blue-800 text-white w-12 h-12 rounded-lg flex items-center justify-center font-bold text-xl">
+            P
+            </div>
+            <div>
+            <h1 class="text-xl font-bold text-gray-800">Prefeitura de Limeira</h1>
+            <p class="text-sm text-gray-600">Departamento de Dívida Ativa</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2">
+            <span class="text-sm text-gray-500">Powered by</span>
+            <!-- Logo Kyro Placeholder -->
+            <span class="text-lg font-bold text-blue-700">KYRO</span>
+        </div>
+        </div>
+     </header>
+
+        <!-- Main Content -->
+        <main class="flex-grow container mx-auto px-4 py-8">
+            
+            <!-- Upload Section -->
+            <div class="bg-white rounded-xl shadow-sm p-8 mb-8 fade-in">
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">1. Selecionar Arquivo</h2>
+                <p class="text-slate-500 mb-6">O sistema transformará o arquivo de PDF para TXT para realizar a extração de dados.</p>
+                
+                <div id="drop-zone" class="border-2 border-dashed border-slate-300 rounded-xl p-10 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition duration-300">
+                    <input type="file" id="file-input" class="hidden" accept=".pdf">
+                    <i class="fas fa-file-pdf text-4xl text-slate-400 mb-4"></i>
+                    <p class="text-lg font-medium text-slate-700">Clique para carregar o <span class="text-blue-600">[Arquivo]</span></p>
+                    <p class="text-sm text-slate-400 mt-2">Suporte à arquivos PDF</p>
+                </div>
+                <div id="file-info" class="hidden mt-4 flex items-center justify-between bg-blue-50 p-3 rounded-lg border border-blue-100">
+                    <span id="file-name" class="font-medium text-blue-800"></span>
+                    <button id="remove-file" class="text-red-500 hover:text-red-700 font-bold">&times;</button>
+                </div>
+            </div>
+
+            <!-- Process Button -->
+            <div class="text-center mb-8 fade-in hidden" id="action-section">
+                <button id="btn-process" class="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold text-lg shadow-lg hover:bg-blue-700 hover:shadow-xl transition transform hover:-translate-y-1 flex items-center justify-center mx-auto space-x-2">
+                    <i class="fas fa-cogs"></i>
+                    <span>Transformar em TXT e Extrair</span>
+                </button>
+            </div>
+
+            <!-- Loader -->
+            <div id="loader" class="hidden flex flex-col items-center justify-center py-10">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+                <p class="text-slate-600 animate-pulse">Lendo PDF...</p>
+                <p id="step-text" class="text-xs text-slate-400 mt-1">Passo 1/3: Interpretando layout...</p>
+            </div>
+
+            <!-- Results Section -->
+            <div id="results-container" class="hidden space-y-8 fade-in">
+                
+                <!-- Step 2: The Generated TXT -->
+                <div class="bg-slate-800 rounded-xl shadow-lg p-6 border border-slate-700">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-white font-bold flex items-center gap-2">
+                            <i class="fas fa-file-alt text-green-400"></i> 
+                            2. Arquivo Intermediário Gerado (relatorio.txt)
+                        </h3>
+                        <div class="flex space-x-3">
+                            <button onclick="copyTxt()" class="text-xs bg-slate-700 text-white px-3 py-1.5 rounded hover:bg-slate-600 border border-slate-600">
+                                <i class="fas fa-copy"></i> Copiar
+                            </button>
+                            <button onclick="downloadTxt()" class="text-xs bg-green-600 text-white px-3 py-1.5 rounded hover:bg-green-700 font-bold shadow">
+                                <i class="fas fa-download"></i> Baixar .txt
+                            </button>
+                        </div>
+                    </div>
+                    <div class="txt-preview scrollbar-hide" id="txt-content"></div>
+                    <p class="text-slate-400 text-xs mt-2 italic">* A extração abaixo é realizada lendo estritamente este conteúdo de texto.</p>
+                </div>
+
+                <!-- Step 3: The Extracted Table -->
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <h3 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <i class="fas fa-table text-blue-600"></i>
+                        3. Dados Extraídos do TXT
+                    </h3>
+                    <div id="table-container" class="overflow-x-auto rounded-lg border border-gray-200">
+                        <!-- Tabela será injetada aqui -->
+                    </div>
+                    <div class="mt-4 text-right">
+                         <div class="inline-block bg-blue-50 text-blue-800 px-4 py-2 rounded-lg text-sm font-bold">
+                            Total Calculado: <span id="total-sum">R$ 0,00</span>
+                         </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // --- ELEMENTOS DO DOM ---
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const fileInfo = document.getElementById('file-info');
+        const fileNameDisplay = document.getElementById('file-name');
+        const removeFileBtn = document.getElementById('remove-file');
+        const actionSection = document.getElementById('action-section');
+        const btnProcess = document.getElementById('btn-process');
+        const loader = document.getElementById('loader');
+        const stepText = document.getElementById('step-text');
+        const resultsContainer = document.getElementById('results-container');
+        const txtContentDisplay = document.getElementById('txt-content');
+        const tableContainer = document.getElementById('table-container');
+        const totalSumDisplay = document.getElementById('total-sum');
+
+        let currentFile = null;
+        let generatedTxt = "";
+
+        // --- EVENT LISTENERS ---
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('bg-blue-50', 'border-blue-500'); });
+        dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('bg-blue-50', 'border-blue-500'); });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('bg-blue-50', 'border-blue-500');
+            if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+        });
+        fileInput.addEventListener('change', () => { if (fileInput.files.length) handleFile(fileInput.files[0]); });
+        
+        removeFileBtn.addEventListener('click', () => {
+            currentFile = null;
+            fileInput.value = '';
+            fileInfo.classList.add('hidden');
+            dropZone.classList.remove('hidden');
+            actionSection.classList.add('hidden');
+            resultsContainer.classList.add('hidden');
+        });
+
+        btnProcess.addEventListener('click', processPipeline);
+
+        function handleFile(file) {
+            if (file.type !== 'application/pdf') {
+                alert('Por favor, envie um arquivo PDF.');
+                return;
+            }
+            currentFile = file;
+            fileNameDisplay.textContent = file.name;
+            dropZone.classList.add('hidden');
+            fileInfo.classList.remove('hidden');
+            actionSection.classList.remove('hidden');
+            resultsContainer.classList.add('hidden');
+        }
+
+        // --- PIPELINE PRINCIPAL ---
+        async function processPipeline() {
+            if (!currentFile) return;
+
+            actionSection.classList.add('hidden');
+            loader.classList.remove('hidden');
+            resultsContainer.classList.add('hidden');
+
+            try {
+                // ETAPA 1: Ler PDF Bruto
+                updateStep("Lendo arquivo PDF bruto...");
+                const rawPdfText = await extractTextFromPDF(currentFile);
+
+                // ETAPA 2: Transformar PDF em Dados Estruturados
+                updateStep("Interpretando layout, limpando headers e unindo linhas...");
+                await new Promise(r => setTimeout(r, 800)); 
+                const structuredData = parseRawPdfToData(rawPdfText);
+                
+                // ETAPA 3: Gerar TXT
+                generatedTxt = convertDataToTxt(structuredData);
+                
+                // ETAPA 4: Extrair Dados do TXT
+                updateStep("Extraindo dados finais do arquivo TXT...");
+                const finalData = parseTxtToData(generatedTxt);
+
+                renderTxtPreview(generatedTxt);
+                renderTable(finalData);
+                
+                loader.classList.add('hidden');
+                resultsContainer.classList.remove('hidden');
+
+            } catch (error) {
+                console.error(error);
+                alert("Erro ao processar o arquivo. Verifique se é um extrato válido.");
+                loader.classList.add('hidden');
+                actionSection.classList.remove('hidden');
+            }
+        }
+
+        function updateStep(msg) {
+            stepText.textContent = msg;
+        }
+
+        // --- FUNÇÕES DE LÓGICA ---
+
+        // 1. Extração PDF.js
+        async function extractTextFromPDF(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+            let fullText = '';
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                fullText += textContent.items.map(item => item.str + (item.hasEOL ? '\n' : ' ')).join('');
+            }
+            return fullText;
+        }
+
+        // 2. Parser Inteligente (Com Correção de Quebra de Linha + Correção IC/Processos)
+        function parseRawPdfToData(text) {
+            const cleanText = text.replace(/\r\n/g, '\n');
+            const lines = cleanText.split('\n');
+            const debts = [];
+            
+            let pendingBuffer = ""; 
+
+            // Regex de detecção de dados: aceita YYYY ou MM/YYYY ou DD/MM/YYYY
+            const regexDate = /\b(19|20)\d{2}(?:\/\d{1,2})?\b|\b\d{2}\/\d{2}\/\d{4}\b/;
+            const regexMoney = /(?:R\$\s*)?[\d.]*\d+,\d{2}\b/;
+            
+            // Regex de LIXO/Header que deve limpar o buffer e ser ignorado
+            const regexHeader = /(NATUREZA|ORIGEM|PRINCIPAL|CORREÇÃO|JUROS|MULTA|TOTAL|VENCIMENTO|PÁGINA|EMISSÃO|SALDO|ATUALIZADO|SIT\.\s*LANC|SIT\.\s*DÍVIDA|Nº\s*PROCESSO|CDA|NEGO\.)/i;
+
+            lines.forEach(line => {
+                const trimmedLine = line.trim();
+                if (!trimmedLine) return;
+
+                const isDataLine = regexDate.test(trimmedLine) && regexMoney.test(trimmedLine);
+                const isHeaderOrFooter = regexHeader.test(trimmedLine);
+
+                if (isDataLine) {
+                    if (/SALDO ATUALIZADO|TOTAL/i.test(trimmedLine)) {
+                        pendingBuffer = "";
+                        return; // Pula linha de resumo
+                    }
+
+                    const fullLine = (pendingBuffer + " " + trimmedLine).trim();
+                    pendingBuffer = ""; 
+
+                    // --- LÓGICA DE EXTRAÇÃO REVISADA ---
+                    
+                    let normalizedLine = fullLine.replace(/(\d)\s+([.,])\s+(\d)/g, '$1$2$3')
+                                                 .replace(/(\d)\s+([.,])(\d)/g, '$1$2$3');
+
+                    // 1. Extrair e remover valores monetários primeiro
+                    const moneyMatches = normalizedLine.match(/(?:R\$\s*)?[\d.]*\d+,\d{2}\b/gi) || [];
+                    const moneyValues = moneyMatches.map(v => v.replace(/R\$\s*/gi, '').trim());
+                    
+                    // Limpeza básica da linha (sem valores monetários)
+                    let processingLine = normalizedLine;
+                    moneyMatches.forEach(m => processingLine = processingLine.replace(m, ''));
+                    processingLine = processingLine.replace(/"\s*,\s*"/g, ' ').replace(/["']/g, '').replace(/\s+/g, ' ').trim();
+
+                    // 2. Extrair Vencimento (DD/MM/AAAA)
+                    const dateMatch = processingLine.match(/\b\d{2}\/\d{2}\/\d{4}\b/);
+                    const vencimento = dateMatch ? dateMatch[0] : '';
+                    if (vencimento) processingLine = processingLine.replace(vencimento, '').trim();
+
+                    // 3. Tokenizar para processamento posicional
+                    let tokens = processingLine.split(/\s+/).filter(t => t);
+
+                    // 4. Encontrar Situação (Divisor de águas entre Origem e Processos)
+                    const keywords = ['NORMAL', 'COMPLEMENTAR', 'OFICIO', 'AI', 'PARCELADO', 'ABERTO', 'SUSPENSO', 'AJUIZADA', 'CANCELADA', 'PAGO', 'ATIVO', 'INSCRITA', 'CORRENTE'];
+                    
+                    let sitLanc = 'ABERTO';
+                    let sitDiv = 'CORRENTE';
+                    let splitIndex = tokens.length; // Default: tudo é esquerda se não achar situação
+
+                    // Procura keywords da direita para esquerda para achar o ponto de corte
+                    for (let i = tokens.length - 1; i >= 0; i--) {
+                        const tokenUpper = tokens[i].toUpperCase();
+                        if (keywords.includes(tokenUpper)) {
+                             // Achamos uma keyword de situação. Este é o divisor.
+                             splitIndex = i; // Tudo antes disso é Origem
+                             // Ajusta Situação
+                             if (['AJUIZADA', 'INSCRITA', 'CORRENTE', 'ATIVO', 'CANCELADA', 'PAGO'].includes(tokenUpper)) sitDiv = tokenUpper;
+                             if (['NORMAL', 'COMPLEMENTAR', 'OFICIO', 'AI', 'PARCELADO', 'SUSPENSO', 'ABERTO'].includes(tokenUpper)) {
+                                 sitLanc = (tokenUpper === 'NORMAL') ? 'ABERTO' : tokenUpper;
+                             }
+                        }
+                    }
+
+                    // Divide tokens em Parte Esquerda (Dados) e Parte Direita (Processos)
+                    const leftTokens = tokens.slice(0, splitIndex).filter(t => !keywords.includes(t.toUpperCase()));
+                    const rightTokens = tokens.slice(splitIndex).filter(t => !keywords.includes(t.toUpperCase()));
+
+                    // --- PROCESSAMENTO DA ESQUERDA (Origem, Nego, Comp, ID, IC) ---
+                    
+                    let id = '', nat = '', orig = '', nego = '', icRed = '', ic = '', competencia = '';
+
+                    if (leftTokens.length > 0) {
+                        // A. ID (Primeiro token numérico)
+                        if (/^[\d.]+$/.test(leftTokens[0])) {
+                            id = leftTokens.shift();
+                        }
+
+                        // B. Natureza (IMOB, OUTRAS...)
+                        const natIndex = leftTokens.findIndex(t => ['MOBIL', 'IMOBIL', 'IMOB', 'OUTRAS'].includes(t.toUpperCase()));
+                        if (natIndex !== -1) {
+                            nat = leftTokens[natIndex];
+                            leftTokens.splice(natIndex, 1);
+                        }
+
+                        // C. Competência (Busca Reverso)
+                        let compIndex = -1;
+                        for (let i = leftTokens.length - 1; i >= 0; i--) {
+                            const t = leftTokens[i];
+                            // Match MM/YYYY
+                            if (/^(0[1-9]|1[0-2])\/\d{4}$/.test(t)) {
+                                competencia = t;
+                                compIndex = i;
+                                break; 
+                            }
+                            // Match YYYY
+                            if (/^(19|20)\d{2}$/.test(t) && !competencia) {
+                                competencia = t;
+                                compIndex = i;
+                                break;
+                            }
+                        }
+                        if (compIndex !== -1) leftTokens.splice(compIndex, 1);
+
+                        // D. Negociação (Busca por N.../AAAA)
+                        const negoIndex = leftTokens.findIndex(t => /^\d+\/(19|20)\d{2}$/.test(t));
+                        if (negoIndex !== -1) {
+                            nego = leftTokens[negoIndex];
+                            leftTokens.splice(negoIndex, 1);
+                        }
+
+                        // E. IC / IC Red (Números no final da esquerda)
+                        // Lógica de sufixo para pegar qualquer número no final dos dados como IC/ICRed.
+                        const isNumeric = (t) => /^[\d.-]+$/.test(t);
+                        let numericSuffix = [];
+                        
+                        // Consome números estritamente do final da lista para o início
+                        while (leftTokens.length > 0 && isNumeric(leftTokens[leftTokens.length - 1])) {
+                            numericSuffix.unshift(leftTokens.pop());
+                        }
+
+                        if (numericSuffix.length >= 2) {
+                            // Se tiver 2 ou mais, os dois últimos são IC e IC Red
+                            ic = numericSuffix.pop();
+                            icRed = numericSuffix.pop();
+                            
+                            // Se houver "excesso" de números (ex: parte da origem era número), devolve para leftTokens
+                            while(numericSuffix.length > 0) {
+                                leftTokens.push(numericSuffix.shift());
+                            }
+                        } else if (numericSuffix.length === 1) {
+                            const token = numericSuffix[0];
+                            // Heurística simples: IC Reduzido costuma ser inteiro curto, IC costuma ser longo ou formatado
+                            if (token.length > 8 || token.includes('.') || token.includes('-')) {
+                                ic = token; 
+                            } else {
+                                icRed = token;
+                            }
+                        }
+
+                        // F. Origem (O que sobrou de texto)
+                        orig = leftTokens.join(' ');
+                    }
+
+                    // --- PROCESSAMENTO DA DIREITA (Processos e CDA) ---
+                    let cda = '', procDa = '', procForum = '';
+                    
+                    const validRightTokens = rightTokens.filter(t => t.replace(/\D/g,'').length >= 3);
+
+                    // 1. Identificar Fórum (Prioridade Máxima por sufixo específico ou padrão CNJ)
+                    const specificForumIdx = validRightTokens.findIndex(t => t.replace(/[\-\.]/g, '').endsWith('8260320'));
+                    if (specificForumIdx !== -1) {
+                        procForum = validRightTokens[specificForumIdx];
+                        validRightTokens.splice(specificForumIdx, 1);
+                    } 
+                    else if (sitDiv === 'AJUIZADA') {
+                        const cnjIdx = validRightTokens.findIndex(t => /\d{7}-\d{2}/.test(t));
+                        if (cnjIdx !== -1) {
+                            procForum = validRightTokens[cnjIdx];
+                            validRightTokens.splice(cnjIdx, 1);
+                        }
+                    }
+
+                    // 2. Identificar Processo DA (Formato Específico: 2021.083.2154.010.00855769)
+                    // Regex busca padrão: 4dig.3dig.4dig.3dig.Digitos
+                    const procDaIdx = validRightTokens.findIndex(t => /^\d{4}\.\d{3,}\.\d{3,}\.\d{3,}\.\d+/.test(t));
+                    if (procDaIdx !== -1) {
+                        procDa = validRightTokens[procDaIdx];
+                        validRightTokens.splice(procDaIdx, 1);
+                    }
+
+                    // 3. Atribuição de CDA e Resíduos
+                    if (validRightTokens.length > 0) cda = validRightTokens.pop();
+                    
+                    // Se não achou procDA pelo regex específico, pega o próximo disponível
+                    if (!procDa && validRightTokens.length > 0) procDa = validRightTokens.pop();
+                    
+                    // Se não achou procForum e sobrou algo
+                    if (!procForum && validRightTokens.length > 0) procForum = validRightTokens.pop();
+
+                    // --- MONTAGEM DOS VALORES ---
+                    const v = (i) => moneyValues[i] || '0,00';
+                    let vals = {};
+                    if (moneyValues.length >= 11) {
+                        vals = { ref: v(0), princ: v(1), desc: v(2), pago: v(3), saldo: v(4), multa: v(5), juros: v(6), corr: v(7), hon: v(8), dilig: v(9), total: v(10) };
+                    } else {
+                        vals.total = moneyValues[moneyValues.length - 1];
+                        vals.princ = moneyValues[0];
+                        if (moneyValues.length >= 4) vals.juros = moneyValues[moneyValues.length - 2];
+                        if (moneyValues.length >= 5) vals.multa = moneyValues[moneyValues.length - 3];
+                    }
+
+                    debts.push({
+                        id, nat, orig, nego, icRed, ic, comp: competencia, venc: vencimento,
+                        vPrincRef: vals.ref || '0,00', vPrinc: vals.princ || '0,00', vDesc: vals.desc || '0,00',
+                        vPago: vals.pago || '0,00', vSaldoP: vals.saldo || '0,00', vMulta: vals.multa || '0,00',
+                        vJuros: vals.juros || '0,00', vCorr: vals.corr || '0,00', vHon: vals.hon || '0,00',
+                        vDilig: vals.dilig || '0,00', vTotal: vals.total || '0,00',
+                        sitLanc, sitDiv, procForum, procDa, cda
+                    });
+                } else {
+                    if (isHeaderOrFooter) {
+                        pendingBuffer = "";
+                    } else {
+                        pendingBuffer += " " + trimmedLine;
+                    }
+                }
+            });
+            return debts;
+        }
+
+        // 3. Serializador
+        function convertDataToTxt(data) {
+            const header = "# | NATUREZA | ORIGEM | Nº NEGO | I.C. REDUZIDO | I.C. | COMP. | VENC. | PRINCIPAL REF. | PRINCIPAL | DESC./ABATI. | PRINCIPAL (PAGO) | PRINCIPAL (SALDO) | MULTA | JUROS | CORREÇÃO | HONORÁRIOS | DILIGÊNCIAS | SALDO (ATUALIZADO) | SIT. LANC. | SIT. DÍVIDA | Nº PROCESSO FÓRUM | Nº PROCESSO DA | CDA";
+            const rows = data.map(d => {
+                return [
+                    d.id, d.nat, d.orig, d.nego, d.icRed, d.ic, d.comp, d.venc,
+                    d.vPrincRef, d.vPrinc, d.vDesc, d.vPago, d.vSaldoP, d.vMulta, d.vJuros, d.vCorr, d.vHon, d.vDilig, d.vTotal,
+                    d.sitLanc, d.sitDiv, d.procForum, d.procDa, d.cda
+                ].join(' | ');
+            });
+            return header + "\n" + rows.join('\n');
+        }
+
+        // 4. Parser do TXT
+        function parseTxtToData(txtContent) {
+            const lines = txtContent.split('\n');
+            const data = [];
+            for(let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if(!line) continue;
+                const cols = line.split('|').map(c => c.trim());
+                if(cols.length < 5) continue;
+                
+                data.push({
+                    id: cols[0], nat: cols[1], orig: cols[2], nego: cols[3], icRed: cols[4], ic: cols[5],
+                    comp: cols[6], venc: cols[7],
+                    vPrincRef: cols[8], vPrinc: cols[9], vDesc: cols[10], vPago: cols[11], vSaldoP: cols[12],
+                    vMulta: cols[13], vJuros: cols[14], vCorr: cols[15], vHon: cols[16], vDilig: cols[17], vTotal: cols[18],
+                    sitLanc: cols[19], sitDiv: cols[20], procForum: cols[21], procDa: cols[22], cda: cols[23]
+                });
+            }
+            return data;
+        }
+
+        // --- UI HELPERS ---
+        function renderTxtPreview(text) {
+            txtContentDisplay.textContent = text;
+        }
+
+        function downloadTxt() {
+            const blob = new Blob([generatedTxt], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'relatorio.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        function copyTxt() {
+            navigator.clipboard.writeText(generatedTxt).then(() => alert('Texto copiado!'));
+        }
+
+        function renderTable(data) {
+            if (data.length === 0) {
+                tableContainer.innerHTML = '<div class="p-4 text-center text-gray-500">Nenhum dado encontrado no TXT gerado.</div>';
+                return;
+            }
+
+            let total = 0;
+            const rowsHtml = data.map(d => {
+                const val = parseFloat(d.vTotal.replace('.', '').replace(',', '.'));
+                if(!isNaN(val)) total += val;
+
+                return `
+                <tr class="text-[10px] hover:bg-blue-50 transition-colors">
+                    <td class="font-mono border-r bg-gray-50">${d.id}</td>
+                    <td class="border-r">${d.nat}</td>
+                    <td class="border-r max-w-[150px] truncate font-bold text-slate-700" title="${d.orig}">${d.orig}</td>
+                    <td class="col-center border-r font-mono text-xs text-purple-700 font-bold">${d.nego}</td>
+                    <td class="col-center border-r font-mono text-blue-700 font-bold">${d.icRed}</td>
+                    <td class="col-center border-r font-mono">${d.ic}</td>
+                    <td class="col-center border-r font-bold bg-yellow-50">${d.comp}</td>
+                    <td class="col-center border-r">${d.venc}</td>
+                    <td class="col-money border-r text-gray-400">${d.vPrincRef}</td>
+                    <td class="col-money border-r font-bold">${d.vPrinc}</td>
+                    <td class="col-money border-r text-gray-400">${d.vDesc}</td>
+                    <td class="col-money border-r text-gray-400">${d.vPago}</td>
+                    <td class="col-money border-r text-gray-400">${d.vSaldoP}</td>
+                    <td class="col-money border-r">${d.vMulta}</td>
+                    <td class="col-money border-r">${d.vJuros}</td>
+                    <td class="col-money border-r">${d.vCorr}</td>
+                    <td class="col-money border-r">${d.vHon}</td>
+                    <td class="col-money border-r">${d.vDilig}</td>
+                    <td class="col-money border-r bg-green-50 text-green-700 font-bold border-l-2 border-green-200">${d.vTotal}</td>
+                    <td class="col-center border-r text-[9px]">${d.sitLanc}</td>
+                    <td class="col-center border-r font-semibold ${d.sitDiv === 'AJUIZADA' ? 'text-red-600' : 'text-blue-600'}">${d.sitDiv}</td>
+                    <td class="col-center border-r font-mono text-[9px] max-w-[100px] truncate" title="${d.procForum}">${d.procForum}</td>
+                    <td class="col-center border-r font-mono text-[9px] max-w-[80px] truncate" title="${d.procDa}">${d.procDa}</td>
+                    <td class="col-center font-mono text-[9px] font-bold text-slate-700">${d.cda}</td>
+                </tr>
+            `}).join('');
+
+            const headerHtml = `
+                <table class="w-full text-left border-collapse min-w-[2000px]">
+                    <thead>
+                        <tr>
+                            <th class="border-r sticky left-0 z-20">#</th><th class="border-r">Nat.</th><th class="border-r">Origem</th>
+                            <th class="border-r">Nº Nego</th>
+                            <th class="border-r">I.C Red</th><th class="border-r">I.C</th><th class="border-r">Comp.</th>
+                            <th class="border-r">Venc.</th><th class="border-r text-right">Prin. Ref</th><th class="border-r text-right">Principal</th>
+                            <th class="border-r text-right">Desc/Abat</th><th class="border-r text-right">Pago</th><th class="border-r text-right">Saldo</th>
+                            <th class="border-r text-right">Multa</th><th class="border-r text-right">Juros</th><th class="border-r text-right">Corr.</th>
+                            <th class="border-r text-right">Honor.</th><th class="border-r text-right">Dilig.</th><th class="border-r text-right bg-green-50">Total</th>
+                            <th class="border-r text-center">Sit. Lanc</th><th class="border-r text-center">Sit. Div</th>
+                            <th class="border-r text-center">Fórum</th>
+                            <th class="border-r text-center">Pro. DA</th><th class="text-center">CDA</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rowsHtml}</tbody>
+                </table>
+            `;
+
+            tableContainer.innerHTML = headerHtml;
+            totalSumDisplay.textContent = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+    </script>
+</body>
+</html>

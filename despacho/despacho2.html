@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kyro Pro - Redator Jurídico Inteligente</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              700: '#0f172a', // Slate profundo
+              800: '#020617',
+              accent: '#d97706', // Amber para destaque
+            }
+          },
+          fontFamily: {
+            serif: ['Playfair Display', 'serif'],
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    @charset "UTF-8";
+
+    body { font-family: 'Inter', sans-serif; }
+    h1, h2, h3, h4 { font-family: 'Playfair Display', serif; }
+
+    /* Scrollbar Fina */
+    .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
+
+    /* Toast */
+    #toast-container { position: fixed; top: 1rem; right: 1rem; z-index: 100; display: flex; flex-direction: column; gap: 0.5rem; }
+
+    /* DOCUMENTO JURÍDICO OFICIAL */
+    .legal-doc {
+        font-family: 'Times New Roman', Times, serif; /* Padrão judiciário */
+        line-height: 1.5; 
+        text-align: justify;
+        padding: 3cm 2cm 2cm 3cm; /* Margens ABNT/Forense */
+        width: 21cm; 
+        min-height: 29.7cm; /* A4 */
+        height: auto !important;
+        margin: 0 auto;
+        background-color: white !important;
+        color: #000 !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        font-size: 12pt;
+    }
+
+    .dark .legal-doc {
+        /* No modo escuro, mantemos o papel branco para fidelidade, mas reduzimos o brilho ao redor */
+        box-shadow: 0 0 50px rgba(0,0,0,0.5);
+    }
+
+    /* Estrutura do Documento */
+    .legal-doc h3 { 
+        font-family: 'Arial', sans-serif;
+        font-size: 11pt; 
+        font-weight: bold; 
+        text-transform: uppercase;
+        margin-top: 25px; 
+        margin-bottom: 10px; 
+        text-align: center;
+    }
+
+    .legal-doc p { margin-bottom: 0.8em; text-indent: 2.5cm; }
+    .legal-doc blockquote { margin: 10px 2cm 10px 4cm; font-size: 10pt; font-style: italic; text-align: justify; }
+    
+    /* Ementa */
+    .ementa-table {
+        width: 100%;
+        margin-bottom: 1.5cm;
+        border-collapse: collapse;
+    }
+    .ementa-col-dir {
+        width: 55%;
+        padding-left: 20px;
+        font-size: 10pt;
+        font-weight: bold;
+        text-transform: uppercase;
+        text-align: right;
+        border-left: 1px solid #000;
+    }
+
+    /* Impressão */
+    @media print {
+      body * { visibility: hidden; }
+      #printable-area, #printable-area * { visibility: visible; }
+      #printable-area { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; }
+      .legal-doc { box-shadow: none; margin: 0; width: 100%; }
+      .no-print { display: none !important; }
+    }
+
+    /* Utilitários de Interface */
+    .input-label { @apply block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1; }
+    .std-input { @apply w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded px-3 py-2 text-sm focus:outline-none focus:border-brand-accent transition-colors text-slate-700 dark:text-slate-200; }
+  </style>
+</head>
+
+<body class="flex flex-col h-screen overflow-hidden text-slate-800 bg-slate-100 dark:bg-[#0b1120] dark:text-slate-200 transition-colors duration-300">
+
+  <div id="toast-container"></div>
+
+  <!-- MODAL DE CONFIGURAÇÃO (PERFIL) -->
+  <div id="settings-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-2xl w-96 p-6 border border-slate-200 dark:border-slate-700">
+        <h3 class="text-lg font-bold mb-4 text-brand-700 dark:text-white flex items-center gap-2">
+            <i class="fa-solid fa-id-card"></i> Configuração do Redator
+        </h3>
+        <div class="space-y-4">
+            <div>
+                <label class="input-label">Nome do Assinante</label>
+                <input type="text" id="cfg-name" class="std-input" placeholder="Ex: Dr. João da Silva">
+            </div>
+            <div>
+                <label class="input-label">Cargo / Função</label>
+                <input type="text" id="cfg-role" class="std-input" placeholder="Ex: Procurador Municipal">
+            </div>
+            <div>
+                <label class="input-label">Departamento / Órgão</label>
+                <input type="text" id="cfg-dept" class="std-input" placeholder="Ex: Depto. de Assuntos Jurídicos">
+            </div>
+            <div>
+                <label class="input-label">Município / Entidade</label>
+                <input type="text" id="cfg-city" class="std-input" placeholder="Ex: Prefeitura de Limeira">
+            </div>
+        </div>
+        <div class="mt-6 flex justify-end gap-2">
+            <button onclick="toggleSettings()" class="px-4 py-2 text-sm text-slate-500 hover:bg-slate-100 rounded">Cancelar</button>
+            <button onclick="saveSettings()" class="px-4 py-2 text-sm bg-brand-accent text-white font-bold rounded shadow hover:bg-amber-700">Salvar Perfil</button>
+        </div>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 h-14 flex-shrink-0 z-20 shadow-sm no-print flex items-center justify-between px-4">
+    <div class="flex items-center gap-3">
+      <div class="bg-brand-accent text-white w-8 h-8 rounded flex items-center justify-center text-lg font-serif font-bold shadow-md">K</div>
+      <div>
+        <h1 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Kyro Pro <span class="opacity-50 font-normal">| Suite Jurídica</span></h1>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-3">
+      <div class="hidden md:flex items-center gap-2 px-3 py-1 bg-slate-100 dark:bg-slate-700 rounded-full text-xs text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-600">
+        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+        <span id="status-detector">Aguardando Input...</span>
+      </div>
+      <button onclick="toggleSettings()" class="text-slate-500 hover:text-brand-accent transition p-2" title="Configurar Assinatura"><i class="fa-solid fa-gear"></i></button>
+      <button onclick="toggleTheme()" class="text-slate-500 hover:text-brand-accent transition p-2"><i class="fa-solid fa-moon dark:hidden"></i><i class="fa-solid fa-sun hidden dark:inline"></i></button>
+    </div>
+  </header>
+
+  <div class="flex flex-1 overflow-hidden">
+    
+    <!-- ESQUERDA: INPUTS E FATOS -->
+    <aside class="w-full lg:w-[450px] flex flex-col border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 z-10 shadow-xl no-print">
+        
+        <!-- DADOS DO PROCESSO -->
+        <div class="p-4 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
+            <h3 class="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2"><i class="fa-solid fa-folder-open"></i> Metadados do Processo</h3>
+            <div class="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                    <input type="text" id="proc-num" class="std-input" placeholder="Nº Processo/Ano">
+                </div>
+                <div>
+                    <input type="text" id="proc-date" class="std-input" placeholder="Data (Hoje)" readonly>
+                </div>
+            </div>
+            <input type="text" id="proc-interested" class="std-input mb-3" placeholder="Nome do Interessado / Requerente">
+            <input type="text" id="proc-subject" class="std-input" placeholder="Assunto (Ex: Cancelamento de Multa)">
+        </div>
+
+        <!-- ÁREA DE TEXTO (FATOS) -->
+        <div class="flex-1 flex flex-col relative group">
+             <div class="px-4 py-2 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                <span class="text-xs font-bold text-slate-400 uppercase"><i class="fa-solid fa-align-left mr-1"></i> Relatório Fático</span>
+                <span id="word-count" class="text-[10px] text-slate-400">0 palavras</span>
+             </div>
+             <textarea id="input-text" spellcheck="false"
+                class="flex-1 w-full p-4 resize-none focus:outline-none bg-transparent font-mono text-sm leading-relaxed text-slate-700 dark:text-slate-300 placeholder-slate-300 dark:placeholder-slate-700"
+                placeholder="Cole aqui o resumo dos fatos, a defesa do contribuinte ou o relatório da fiscalização.&#10;&#10;O Kyro detectará automaticamente se é um caso tributário, de RH, licitação ou urbanismo e aplicará a legislação pertinente."></textarea>
+            
+            <!-- DETECTOR VISUAL -->
+            <div id="ai-badge" class="absolute bottom-4 right-4 text-xs px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700 transition-all opacity-0">
+                Detectando contexto...
+            </div>
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+            <div class="text-xs font-bold text-slate-500 uppercase mb-2 text-center">Dispositivo (Conclusão)</div>
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="generateDispatch('deferir')" class="p-3 rounded border border-green-200 bg-green-50 hover:bg-green-100 text-green-700 text-xs font-bold uppercase transition flex flex-col items-center gap-1">
+                    <i class="fa-solid fa-check"></i> Deferir
+                </button>
+                <button onclick="generateDispatch('indeferir')" class="p-3 rounded border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold uppercase transition flex flex-col items-center gap-1">
+                    <i class="fa-solid fa-xmark"></i> Indeferir
+                </button>
+                <button onclick="generateDispatch('encaminhar')" class="p-3 rounded border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold uppercase transition flex flex-col items-center gap-1">
+                    <i class="fa-solid fa-share"></i> Encaminhar
+                </button>
+                <button onclick="generateDispatch('diligencia')" class="p-3 rounded border border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-bold uppercase transition flex flex-col items-center gap-1">
+                    <i class="fa-solid fa-magnifying-glass"></i> Diligência
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- DIREITA: VISUALIZAÇÃO -->
+    <main class="flex-1 bg-slate-200 dark:bg-slate-950 relative flex flex-col min-w-0">
+        <!-- Toolbar -->
+        <div class="h-10 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center px-4 no-print shadow-sm z-10">
+            <span class="text-xs text-slate-500 font-medium">Visualização de Impressão (A4)</span>
+            <div class="flex gap-2">
+                <button onclick="copyToClipboard()" class="text-xs text-slate-600 hover:text-brand-accent"><i class="fa-regular fa-copy"></i> Copiar Texto</button>
+                <div class="w-px h-4 bg-slate-300 mx-1"></div>
+                <button onclick="window.print()" class="text-xs text-slate-600 hover:text-brand-accent"><i class="fa-solid fa-print"></i> Imprimir / PDF</button>
+            </div>
+        </div>
+
+        <!-- Canvas -->
+        <div class="flex-1 overflow-y-auto custom-scrollbar p-8 flex justify-center" id="doc-container">
+            
+            <!-- Estado Inicial -->
+            <div id="empty-state" class="flex flex-col items-center justify-center opacity-40 mt-20 select-none pointer-events-none">
+                <i class="fa-solid fa-scale-balanced text-6xl text-slate-400 mb-4"></i>
+                <h2 class="text-2xl text-slate-500 font-serif">Aguardando Redação</h2>
+                <p class="text-sm text-slate-400 mt-2 text-center max-w-xs">Preencha os dados e o relatório fático à esquerda para gerar o documento oficial.</p>
+            </div>
+
+            <!-- Documento -->
+            <div id="doc-content" class="legal-doc hidden" contenteditable="true">
+                <!-- Conteúdo injetado via JS -->
+            </div>
+        </div>
+    </main>
+
+  </div>
+
+  <script>
+    // --- 1. CONFIGURAÇÃO E PERSISTÊNCIA ---
+    const defaultConfig = {
+        name: 'Nome do Servidor',
+        role: 'Cargo / Função',
+        dept: 'Departamento Administrativo',
+        city: 'Prefeitura Municipal'
+    };
+    
+    let userConfig = JSON.parse(localStorage.getItem('kyro_config')) || defaultConfig;
+
+    function init() {
+        // Carregar config
+        document.getElementById('cfg-name').value = userConfig.name;
+        document.getElementById('cfg-role').value = userConfig.role;
+        document.getElementById('cfg-dept').value = userConfig.dept;
+        document.getElementById('cfg-city').value = userConfig.city;
+
+        // Data atual
+        const today = new Date().toLocaleDateString('pt-BR');
+        document.getElementById('proc-date').value = today;
+
+        // Theme check
+        if(localStorage.getItem('kyro_theme') === 'dark') document.documentElement.classList.add('dark');
+        
+        // Listener de digitação para análise semântica
+        document.getElementById('input-text').addEventListener('input', (e) => {
+            updateWordCount();
+            analyzeContext(e.target.value);
+        });
+    }
+
+    function saveSettings() {
+        userConfig = {
+            name: document.getElementById('cfg-name').value || defaultConfig.name,
+            role: document.getElementById('cfg-role').value || defaultConfig.role,
+            dept: document.getElementById('cfg-dept').value || defaultConfig.dept,
+            city: document.getElementById('cfg-city').value || defaultConfig.city
+        };
+        localStorage.setItem('kyro_config', JSON.stringify(userConfig));
+        toggleSettings();
+        showToast('Perfil atualizado com sucesso!', 'success');
+        
+        // Se já houver documento, atualiza a assinatura
+        const currentDoc = document.getElementById('doc-content').innerHTML;
+        if(currentDoc && !document.getElementById('empty-state').classList.contains('hidden')) return; // Só atualiza se tiver doc visível
+        // Poderíamos re-renderizar, mas vamos deixar para a próxima geração para não perder edições manuais
+    }
+
+    function toggleSettings() {
+        const modal = document.getElementById('settings-modal');
+        modal.classList.toggle('hidden');
+    }
+
+    function toggleTheme() {
+        document.documentElement.classList.toggle('dark');
+        localStorage.setItem('kyro_theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    }
+
+    // --- 2. MOTOR DE INFERÊNCIA SEMÂNTICA ---
+    let detectedContext = 'geral';
+
+    const contexts = {
+        'tributario': {
+            label: 'Direito Tributário',
+            color: 'text-blue-500',
+            keywords: ['iptu', 'iss', 'itbi', 'taxa', 'alíquota', 'crédito tributário', 'prescrição', 'decadência', 'lançamento', 'isenção', 'imunidade', 'ctn', 'execução fiscal', 'dívida ativa', 'carne', 'pagamento']
+        },
+        'rh': {
+            label: 'Recursos Humanos / Estatutário',
+            color: 'text-purple-500',
+            keywords: ['servidor', 'cargo', 'férias', 'licença', 'prêmio', 'vencimento', 'estatuto', 'probatório', 'estabilidade', 'aposentadoria', 'readaptação', 'faltas', 'abonada', 'atestado', 'quinquênio']
+        },
+        'licitacao': {
+            label: 'Licitações e Contratos',
+            color: 'text-amber-500',
+            keywords: ['edital', 'contrato', 'aditivo', 'pregão', 'concorrência', 'dispensa', 'inexigibilidade', 'fiscal', 'gestor', 'vigência', 'prorrogação', 'reequilíbrio', 'reajuste', 'ata', 'registro de preços']
+        },
+        'urbanismo': {
+            label: 'Urbanismo e Posturas',
+            color: 'text-green-500',
+            keywords: ['obra', 'alvará', 'habite-se', 'construção', 'embargo', 'multa', 'terreno', 'limpeza', 'muro', 'passeio', 'posturas', 'zoneamento', 'uso do solo', 'ambiental', 'fiscalização']
+        },
+        'transito': {
+            label: 'Trânsito e Transportes',
+            color: 'text-red-500',
+            keywords: ['multa', 'cnh', 'veículo', 'infraçaõ', 'jari', 'recurso', 'estacionamento', 'sinalização', 'agente', 'autuação', 'código de trânsito', 'ctb']
+        }
+    };
+
+    function analyzeContext(text) {
+        const lowerText = text.toLowerCase();
+        let maxScore = 0;
+        let bestMatch = 'geral';
+
+        for (const [key, ctx] of Object.entries(contexts)) {
+            let score = 0;
+            ctx.keywords.forEach(word => {
+                if (lowerText.includes(word)) score++;
+            });
+            if (score > maxScore) {
+                maxScore = score;
+                bestMatch = key;
+            }
+        }
+
+        detectedContext = bestMatch;
+        updateStatusDetector(bestMatch);
+    }
+
+    function updateStatusDetector(ctxKey) {
+        const label = contexts[ctxKey] ? contexts[ctxKey].label : 'Administrativo Geral';
+        const el = document.getElementById('status-detector');
+        const badge = document.getElementById('ai-badge');
+        
+        el.innerText = `Contexto: ${label}`;
+        
+        if (ctxKey !== 'geral') {
+            badge.innerText = `Detectado: ${label}`;
+            badge.classList.remove('opacity-0');
+            badge.className = `absolute bottom-4 right-4 text-xs px-2 py-1 rounded bg-white border shadow-sm transition-all ${contexts[ctxKey].color} border-current font-bold`;
+        } else {
+            badge.classList.add('opacity-0');
+        }
+    }
+
+    // --- 3. GERAÇÃO DO DOCUMENTO (Magnum Opus Engine V2) ---
+    function generateDispatch(decisionType) {
+        const facts = document.getElementById('input-text').value;
+        const procNum = document.getElementById('proc-num').value || 'SEM NÚMERO';
+        const interested = document.getElementById('proc-interested').value || 'NÃO INFORMADO';
+        const subject = document.getElementById('proc-subject').value || 'DIVERSOS';
+
+        if(facts.length < 10) {
+            showToast('Por favor, descreva os fatos antes de gerar.', 'error');
+            return;
+        }
+
+        // 1. Definição do Título e Cabeçalho Baseada na Decisão
+        let docTitle = "DESPACHO ADMINISTRATIVO";
+        let decisionText = "";
+        let legalBasis = getLegalBasis(detectedContext);
+        
+        switch(decisionType) {
+            case 'deferir':
+                docTitle = "DESPACHO DEEFERITÓRIO";
+                decisionText = `Diante do exposto e da análise técnica realizada, <strong>ACOLHO</strong> o pedido formulado, vez que preenchidos os requisitos legais e normativos pertinentes.`;
+                break;
+            case 'indeferir':
+                docTitle = "DESPACHO INDEFERITÓRIO";
+                decisionText = `Diante do exposto, <strong>INDEFIRO</strong> o pleito, tendo em vista a ausência de amparo legal e fático para a concessão do solicitado, conforme fundamentação supra.`;
+                break;
+            case 'encaminhar':
+                docTitle = "DESPACHO DE ENCAMINHAMENTO";
+                decisionText = `Considerando a matéria tratada, <strong>ENCAMINHEM-SE</strong> os autos ao setor competente para análise e prosseguimento do feito.`;
+                break;
+            case 'diligencia':
+                docTitle = "SOLICITAÇÃO DE DILIGÊNCIA";
+                decisionText = `Para melhor análise do mérito, <strong>CONVERTO O JULGAMENTO EM DILIGÊNCIA</strong>, determinando a notificação do interessado para que, no prazo legal, apresente os documentos complementares ou esclarecimentos necessários.`;
+                break;
+        }
+
+        // 2. Construção do HTML
+        const html = `
+            <div style="text-align: center; margin-bottom: 2cm;">
+                <p style="font-weight: bold; font-size: 11pt; margin:0; text-indent: 0;">${userConfig.city.toUpperCase()}</p>
+                <p style="font-size: 10pt; margin:0; text-indent: 0;">${userConfig.dept.toUpperCase()}</p>
+            </div>
+
+            <div style="margin-bottom: 1.5cm;">
+                <p style="margin: 0; text-indent: 0;"><strong>PROCESSO Nº:</strong> ${procNum}</p>
+                <p style="margin: 0; text-indent: 0;"><strong>INTERESSADO:</strong> ${interested.toUpperCase()}</p>
+                <p style="margin: 0; text-indent: 0;"><strong>ASSUNTO:</strong> ${subject.toUpperCase()}</p>
+            </div>
+
+            <h3 style="border-bottom: 1px solid #000; padding-bottom: 5px;">${docTitle}</h3>
+
+            <table class="ementa-table">
+                <tr>
+                    <td></td>
+                    <td class="ementa-col-dir">
+                        ${getEmenta(detectedContext, decisionType, subject)}
+                    </td>
+                </tr>
+            </table>
+
+            <p><strong>1. DO RELATÓRIO</strong></p>
+            <p>Trata-se de processo administrativo versando sobre ${subject}, no qual o interessado requer providências por parte desta Administração Pública.</p>
+            <p>Em síntese, o requerente alega que:</p>
+            <blockquote>"${facts}"</blockquote>
+
+            <p><strong>2. DA FUNDAMENTAÇÃO TÉCNICA E JURÍDICA</strong></p>
+            <p>A análise do pleito deve pautar-se nos princípios da Legalidade, Impessoalidade, Moralidade, Publicidade e Eficiência, norteadores da Administração Pública (Art. 37, CF/88).</p>
+            ${legalBasis}
+            <p>No caso em tela, verifica-se que os fatos narrados ${decisionType === 'deferir' ? 'encontram consonância' : 'não encontram amparo completo'} com a legislação vigente, conforme verificado na instrução processual.</p>
+
+            <p><strong>3. DO DISPOSITIVO</strong></p>
+            <p>${decisionText}</p>
+            <p>À consideração superior (se aplicável), ou providencie-se a notificação do interessado e as anotações de praxe.</p>
+
+            <br><br><br>
+            <p style="text-align: center; text-indent: 0;">
+                ${userConfig.city}, ${new Date().toLocaleDateString('pt-BR', {day:'numeric', month:'long', year:'numeric'})}.
+            </p>
+
+            <br><br>
+            <div style="text-align: center;">
+                ________________________________________________<br>
+                <strong>${userConfig.name.toUpperCase()}</strong><br>
+                ${userConfig.role}
+            </div>
+        `;
+
+        // Renderizar
+        document.getElementById('empty-state').classList.add('hidden');
+        const docDiv = document.getElementById('doc-content');
+        docDiv.classList.remove('hidden');
+        docDiv.innerHTML = html;
+        
+        showToast(`Documento gerado para: ${contexts[detectedContext] ? contexts[detectedContext].label : 'Geral'}`, 'success');
+    }
+
+    // --- 4. BASES LEGAIS DINÂMICAS ---
+    function getLegalBasis(ctx) {
+        switch(ctx) {
+            case 'tributario':
+                return `<p>Ressalte-se que o Código Tributário Nacional (CTN) e a legislação municipal correlata impõem requisitos estritos para a concessão de benefícios fiscais ou revisão de lançamentos, sendo vedada a interpretação extensiva em matéria de isenção (Art. 111, CTN).</p>`;
+            case 'rh':
+                return `<p>A relação jurídico-administrativa entre o servidor e o ente público é regida pelo Estatuto dos Servidores Municipais. Qualquer concessão de direito ou vantagem pecuniária depende de estrita previsão legal e dotação orçamentária prévia.</p>`;
+            case 'licitacao':
+                return `<p>Nos termos da Lei nº 14.133/2021 (Nova Lei de Licitações), a alteração contratual ou a condução dos certames deve observar a vinculação ao instrumento convocatório e o interesse público justificado.</p>`;
+            case 'urbanismo':
+                return `<p>O exercício do poder de polícia administrativa municipal visa garantir o ordenamento urbano, a segurança e a salubridade pública, conforme dispõe o Código de Obras e Posturas do Município.</p>`;
+            default: // Geral
+                return `<p>A atuação administrativa está adstrita à lei, cabendo ao gestor deferir apenas o que o ordenamento jurídico autoriza explicitamente, sob pena de responsabilidade.</p>`;
+        }
+    }
+
+    function getEmenta(ctx, decision, subject) {
+        const result = decision === 'deferir' ? 'DEFERIMENTO' : (decision === 'indeferir' ? 'INDEFERIMENTO' : 'ENCAMINHAMENTO');
+        const area = contexts[ctx] ? contexts[ctx].label.toUpperCase() : 'ADMINISTRATIVO';
+        return `${area}. ${subject.toUpperCase()}. ANÁLISE TÉCNICA. PRINCÍPIO DA LEGALIDADE. ${result} DO PEDIDO.`;
+    }
+
+    // --- UTILS ---
+    function updateWordCount() {
+        const c = document.getElementById('input-text').value.trim().split(/\s+/).filter(w=>w).length; 
+        document.getElementById('word-count').innerText = c + ' palavras'; 
+    }
+
+    function showToast(msg, type) {
+        const div = document.createElement('div');
+        div.className = `px-4 py-3 rounded shadow-lg text-white text-sm animate-slide-in ${type === 'success' ? 'bg-green-600' : 'bg-slate-700'}`;
+        div.innerHTML = `<i class="fa-solid fa-${type === 'success' ? 'check' : 'info-circle'} mr-2"></i> ${msg}`;
+        document.getElementById('toast-container').appendChild(div);
+        setTimeout(() => div.remove(), 3000);
+    }
+
+    function copyToClipboard() {
+        const text = document.getElementById('doc-content').innerText;
+        navigator.clipboard.writeText(text).then(() => showToast('Texto copiado para área de transferência', 'success'));
+    }
+
+    // Inicializar
+    init();
+
+  </script>
+</body>
+</html>

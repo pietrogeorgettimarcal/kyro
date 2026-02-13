@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Kyro - Gestão de Escala Pro (Auto-Fit)</title>
+    <title>Kyro - Gestão de Escala Pro (DnD & Modelos)</title>
     <link rel="shortcut icon" href="https://placehold.co/32x32/003366/FFFFFF?text=K" type="image/x-icon">
     
     <!-- Bibliotecas Externas -->
@@ -32,11 +32,6 @@
     <style>
         /* Estilos Globais */
         :root {
-            /* Cálculo Inteligente de Fonte:
-               Usa 'vh' (altura da tela) como fator principal. 
-               1.5vh significa que cada linha tentará ocupar 1.5% da altura total da tela.
-               Isso garante que ~35 linhas (dias + cabeçalho) caibam em 60-70% da tela.
-            */
             --table-font-size: min(1.6vh, 0.75vw); 
             --table-line-height: 1.1;
             --table-cell-padding: 0.2vh;
@@ -49,7 +44,7 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-        /* Tabela Moderno (Absolute Fit - Sem Scroll) */
+        /* Tabela Moderno */
         .modern-table { 
             width: 100%; 
             height: 100%; 
@@ -63,16 +58,16 @@
             background: #f8fafc; color: #64748b; font-weight: 600; text-transform: uppercase; 
             letter-spacing: 0.05em; padding: 2px; border-bottom: 2px solid #e2e8f0; 
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            height: 3vh; /* Altura fixa proporcional para cabeçalhos */
+            height: 3vh; 
             user-select: none;
         }
         .modern-table td { 
             border-bottom: 1px solid #e2e8f0; 
-            padding: 0 2px; /* Padding lateral mínimo */
+            padding: 0 2px; 
             text-align: center; white-space: nowrap;
             transition: all 0.1s; position: relative;
             overflow: hidden; text-overflow: ellipsis;
-            height: 1px; /* Força distribuição uniforme vertical */
+            height: 1px; 
             cursor: pointer;
         }
         .modern-table tr:hover td { background-color: #f1f5f9; }
@@ -93,10 +88,17 @@
 
         .sync-active { animation: syncPulse 1.5s ease-out; }
 
+        /* Estilos para Drag and Drop */
+        .draggable-item { cursor: grab; }
+        .draggable-item:active { cursor: grabbing; }
+        .drag-over { border: 2px dashed #6366f1 !important; background-color: #e0e7ff !important; }
+        .dragging { opacity: 0.5; border: 2px dashed #94a3b8; }
+        .drop-target-group { border: 2px solid #6366f1 !important; }
+
         /* Layout Dinâmico */
         .dashboard-container {
             display: flex;
-            height: calc(100vh - 50px); /* Header super compacto (50px) */
+            height: calc(100vh - 50px);
             overflow: hidden;
             gap: 10px;
             padding: 10px;
@@ -110,30 +112,22 @@
             flex-shrink: 0;
         }
         
-        .sidebar-left { width: 220px; }
+        .sidebar-left { width: 300px; } /* Aumentado para caber o resumo expandido */
         .sidebar-right { width: 280px; }
         
-        /* Estados Colapsados */
         .sidebar-left.collapsed { width: 0; padding: 0; margin: 0; opacity: 0; pointer-events: none; }
         .sidebar-right.collapsed { width: 0; padding: 0; margin: 0; opacity: 0; pointer-events: none; }
 
         .main-panel {
-            flex: 1;
-            min-width: 0; 
-            display: flex;
-            flex-direction: column;
-            background: white;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1);
-            height: 100%; 
+            flex: 1; min-width: 0; display: flex; flex-direction: column;
+            background: white; border-radius: 8px; border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1); height: 100%; 
         }
 
         .panel { background: white; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; overflow: hidden; height: 100%; }
         .panel-header { padding: 4px 8px; border-bottom: 1px solid #e2e8f0; background: #fff; display: flex; justify-content: space-between; align-items: center; min-height: 36px; }
         .panel-content { padding: 0; overflow-y: auto; flex: 1; }
         
-        /* Botões Compactos */
         .btn { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 4px; font-weight: 500; transition: all 0.2s; font-size: 0.75rem; cursor: pointer; border: 1px solid transparent; }
         .btn-sm { padding: 2px 6px; font-size: 0.7rem; }
         .btn-primary { background: #4f46e5; color: white; border-color: #4338ca; }
@@ -155,13 +149,45 @@
         .modal-backdrop { background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(2px); }
         .input-std { width: 100%; padding: 4px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.75rem; }
         
-        /* Toggle Buttons for Sidebars */
         .toggle-sidebar-btn {
             width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
             border-radius: 4px; color: #64748b; cursor: pointer; transition: all 0.2s;
         }
         .toggle-sidebar-btn:hover { background: #e2e8f0; color: #1e293b; }
         
+        /* Estilos específicos para o Resumo Expandido */
+        .resumo-table-container {
+            overflow-x: auto;
+        }
+        .resumo-table {
+            border-collapse: collapse;
+            font-size: 9px;
+            width: auto;
+            min-width: 100%;
+        }
+        .resumo-table th, .resumo-table td {
+            padding: 4px 6px;
+            border: 1px solid #f1f5f9;
+            white-space: nowrap;
+            text-align: center;
+        }
+        .resumo-col-nome {
+            position: sticky;
+            left: 0;
+            background: white;
+            z-index: 10;
+            border-right: 2px solid #e2e8f0;
+            text-align: left;
+            width: 100px;
+            min-width: 100px;
+            max-width: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .resumo-table thead .resumo-col-nome {
+            background: #f8fafc;
+        }
+
         @media (max-width: 900px) {
             #mes-select, #ano-input { font-size: 0.7rem; }
             .btn { padding: 4px 8px; }
@@ -202,8 +228,13 @@
             <button onclick="abrirModalMestre()" class="btn btn-secondary btn-sm text-[10px]">
                 <i class="fas fa-database text-slate-400"></i> <span class="hidden md:inline">Mestre</span>
             </button>
-            <label class="btn btn-secondary btn-sm cursor-pointer text-[10px]">
-                <i class="fas fa-file-import text-blue-500"></i> <span class="hidden md:inline">Importar</span>
+            
+            <button onclick="exportarBackupMestre()" class="btn btn-secondary btn-sm text-[10px]" title="Salvar Backup dos Funcionários">
+                <i class="fas fa-file-export text-slate-500"></i> <span class="hidden md:inline">Backup</span>
+            </button>
+
+            <label class="btn btn-secondary btn-sm cursor-pointer text-[10px]" title="Restaurar Backup de Funcionários">
+                <i class="fas fa-file-import text-blue-500"></i> <span class="hidden md:inline">Restaurar</span>
                 <input type="file" id="input-importar" class="hidden" accept=".json">
             </label>
         </div>
@@ -212,18 +243,22 @@
     <!-- Layout Flexível -->
     <div class="dashboard-container" id="dashboard-container">
         
-        <!-- Esquerda: Resumo -->
+        <!-- Esquerda: Resumo Detalhado -->
         <aside class="sidebar-left panel" id="sidebar-left">
             <div class="panel-header bg-slate-50">
-                <span class="font-semibold text-slate-600 text-xs"><i class="fas fa-chart-pie text-brand-500 mr-2"></i>Resumo</span>
+                <span class="font-semibold text-slate-600 text-xs"><i class="fas fa-chart-bar text-brand-500 mr-2"></i>Resumo Detalhado</span>
                 <span class="text-[9px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full font-mono" id="total-dias-badge">0d</span>
             </div>
-            <div class="panel-content custom-scrollbar">
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-slate-50 text-[9px] text-slate-500 sticky top-0 z-10 border-b border-slate-200 uppercase tracking-wider">
-                        <tr><th class="p-1.5 font-semibold">Nome</th><th class="p-1.5 text-center font-semibold">F</th><th class="p-1.5 text-center font-semibold">S</th><th class="p-1.5 text-center font-semibold">T</th></tr>
+            <div class="panel-content resumo-table-container custom-scrollbar">
+                <table class="resumo-table">
+                    <thead class="bg-slate-50 text-[9px] text-slate-500 sticky top-0 z-20 shadow-sm">
+                        <tr id="resumo-header">
+                            <!-- Gerado via JS -->
+                        </tr>
                     </thead>
-                    <tbody id="lista-resumo" class="text-[10px] divide-y divide-slate-100"></tbody>
+                    <tbody id="lista-resumo" class="text-[9px] divide-y divide-slate-100 bg-white">
+                        <!-- Gerado via JS -->
+                    </tbody>
                 </table>
             </div>
         </aside>
@@ -274,7 +309,7 @@
                 </table>
             </div>
 
-            <!-- Editor de Observações (Altura Proporcional Reduzida) -->
+            <!-- Editor de Observações -->
             <div class="bg-slate-50 border-t border-slate-200 flex-shrink-0 flex flex-col" style="height: 12vh; min-height: 60px; max-height: 120px;">
                 <div class="px-2 py-0.5 flex items-center justify-between border-b border-slate-200 bg-white" style="min-height: 28px;">
                     <div class="flex items-center gap-0.5">
@@ -305,6 +340,24 @@
 
         <!-- Direita: Configurações -->
         <aside class="sidebar-right panel" id="sidebar-right">
+            
+            <!-- MODELOS SALVOS -->
+            <div class="flex-shrink-0 border-b border-slate-200">
+                <div class="panel-header bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors" onclick="toggleSection('sec-modelos')">
+                    <span class="font-semibold text-slate-600 text-[10px] uppercase"><i class="fas fa-save text-blue-400 mr-1"></i>Modelos</span>
+                    <i class="fas fa-chevron-down text-slate-400 text-[10px]"></i>
+                </div>
+                <div id="sec-modelos" class="p-2 bg-slate-50 space-y-2">
+                    <div class="flex gap-1">
+                        <input type="text" id="novo-modelo-nome" class="input-std bg-white flex-1" placeholder="Nome do modelo...">
+                        <button onclick="salvarModelo()" class="btn btn-primary btn-sm"><i class="fas fa-save"></i></button>
+                    </div>
+                    <div class="pt-1 border-t border-slate-200">
+                        <div id="lista-modelos" class="space-y-1 max-h-24 overflow-y-auto custom-scrollbar"></div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Ferramentas Busca -->
             <div class="p-2 border-b border-slate-100 bg-slate-50">
                 <div class="text-[9px] font-bold text-slate-400 uppercase mb-1">Ferramentas Rápidas</div>
@@ -325,7 +378,7 @@
                     <span class="font-semibold text-slate-600 text-[10px] uppercase"><i class="fas fa-lock text-slate-400 mr-1"></i>Travas</span>
                     <i class="fas fa-chevron-down text-slate-400 text-[10px]"></i>
                 </div>
-                <div id="sec-travas" class="p-2 bg-slate-50 space-y-2">
+                <div id="sec-travas" class="p-2 bg-slate-50 space-y-2 hidden">
                     <div class="space-y-1">
                         <select id="config-func" class="input-std bg-white text-[10px] py-1"></select>
                         <select id="config-slot" class="input-std bg-white text-[10px] py-1"></select>
@@ -343,13 +396,14 @@
                 </div>
             </div>
 
-            <!-- Estrutura -->
+            <!-- Estrutura (DnD Atualizado) -->
             <div class="flex-1 overflow-hidden flex flex-col">
                 <div class="panel-header bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors" onclick="toggleSection('sec-estrutura')">
                     <span class="font-semibold text-slate-600 text-[10px] uppercase"><i class="fas fa-columns text-slate-400 mr-1"></i>Estrutura</span>
                     <i class="fas fa-chevron-down text-slate-400 text-[10px]"></i>
                 </div>
                 <div id="sec-estrutura" class="flex-1 overflow-y-auto p-2 bg-slate-50 space-y-2 custom-scrollbar">
+                    <div class="text-[9px] text-slate-400 text-center italic mb-1"><i class="fas fa-hand-rock mr-1"></i>Arraste para mover grupos ou colunas</div>
                     <div id="editor-estrutura-lista" class="space-y-2"></div>
                     <button onclick="adicionarGrupo()" class="w-full btn btn-secondary border-dashed border-slate-300 text-slate-500 text-[10px] justify-center hover:bg-white hover:border-slate-400 hover:text-slate-600">
                         <i class="fas fa-folder-plus mr-1"></i> Grupo
@@ -360,7 +414,7 @@
 
     </div>
 
-    <!-- Modais (Mantidos igual) -->
+    <!-- Modais (Mantidos) -->
     <div id="modal-edicao" class="fixed inset-0 modal-backdrop hidden flex items-center justify-center z-50">
         <div class="bg-white p-6 rounded-xl shadow-2xl w-80 animate-in fade-in zoom-in duration-200">
             <h4 class="font-bold text-slate-800 mb-2">Editar Célula</h4>
@@ -410,14 +464,14 @@
     <script>
         // --- ESTADO ---
         const MASTER_DB_KEY = 'limeira_dados_integrados_v6';
-        const CONFIG_DB_KEY = 'escala_config_v23'; // Versão 23 - Auto-Fit Absolute
+        const CONFIG_DB_KEY = 'escala_config_v23';
+        const MODELS_DB_KEY = 'escala_modelos_v1';
         const DEFAULT_MOCK = { funcionarios: [], ferias: [], feriados: [] };
         const DEFAULT_OBS_TEXT = '<div style="text-align: center;"><b>Obs.: A escala poderá sofrer alterações.</b></div><div style="text-align: center;"><b>Na abertura dos guichês, 1° e 2° suplentes, permanecerão atendendo até às 09:30 ou a fila zerar.</b></div>';
 
         const DEFAULT_STRUCTURE = [
             {
-                title: "",
-                grayTitle: false,
+                title: "", grayTitle: false,
                 cols: [
                     { key: 'dataLabel', label: 'DIAS', type: 'system', grayHeader: false, grayBody: false },
                     { key: 'semLabel', label: 'DIAS SEM.', type: 'system', grayHeader: false, grayBody: false },
@@ -425,8 +479,7 @@
                 ]
             },
             {
-                title: "",
-                grayTitle: false,
+                title: "", grayTitle: false,
                 cols: [
                     { key: 'fixo1', label: 'FIXO 1', type: 'fixo', grayHeader: true, grayBody: false },
                     { key: 'fixo2', label: 'FIXO 2', type: 'fixo', grayHeader: true, grayBody: false },
@@ -434,24 +487,21 @@
                 ]
             },
             {
-                title: "10 SENHAS OU 15 MIN / ALMOÇO",
-                grayTitle: false,
+                title: "10 SENHAS OU 15 MIN / ALMOÇO", grayTitle: false,
                 cols: [
                     { key: 'sup1', label: '1° SUPLENTE', type: 'suplente', grayHeader: true, grayBody: false },
                     { key: 'sup2', label: '2° SUPLENTE', type: 'suplente', grayHeader: true, grayBody: false }
                 ]
             },
             {
-                title: "15 SENHAS OU 20 MIN E ALMOÇO",
-                grayTitle: false,
+                title: "15 SENHAS OU 20 MIN E ALMOÇO", grayTitle: false,
                 cols: [
                     { key: 'sup3', label: '3° SUPLENTE', type: 'suplente', grayHeader: false, grayBody: false },
                     { key: 'sup4', label: '4° SUPLENTE', type: 'suplente', grayHeader: false, grayBody: false }
                 ]
             },
             {
-                title: "ACIMA 20 MINUTOS, ALMOÇO, QUANDO NECESSÁRIO",
-                grayTitle: false,
+                title: "ACIMA 20 MINUTOS, ALMOÇO, QUANDO NECESSÁRIO", grayTitle: false,
                 cols: [
                     { key: 'sup5', label: '5° SUPLENTE', type: 'suplente', grayHeader: false, grayBody: true },
                     { key: 'sup6', label: '6° SUPLENTE', type: 'suplente', grayHeader: false, grayBody: true }
@@ -461,15 +511,12 @@
 
         let masterData = { funcionarios: [], ferias: [], feriados: [] };
         let appState = {
-            escala: [],
-            regrasFixas: [],
-            destaques: {}, 
+            escala: [], regrasFixas: [], destaques: {}, 
             structure: JSON.parse(JSON.stringify(DEFAULT_STRUCTURE)), 
-            mes: new Date().getMonth(),
-            ano: new Date().getFullYear(),
-            observacoes: {},
-            observacoesConfig: {},
-            ui: { leftPanel: true, rightPanel: true } 
+            mes: new Date().getMonth(), ano: new Date().getFullYear(),
+            observacoes: {}, observacoesConfig: {},
+            ui: { leftPanel: true, rightPanel: true },
+            models: []
         };
         
         let editando = null;
@@ -483,76 +530,45 @@
             atualizarUI();
             carregarObservacaoAtual();
             aplicarEstadoUI();
-            
-            // Detecta zoom/resize inicial e ajusta layout
             checkResponsive();
             window.addEventListener('resize', checkResponsive);
-            
-            // Mostra status se tiver dados
             if(masterData.funcionarios.length > 0) {
                  const el = document.getElementById('sync-indicator');
                  el.classList.remove('hidden'); el.classList.add('flex');
             }
         });
 
-        // --- LISTENER DE SINCRONIZAÇÃO EM TEMPO REAL ---
-        // Isso garante que mudanças na aba 'funcionarios.html' reflitam aqui instantaneamente
         window.addEventListener('storage', function(e) {
             if (e.key === MASTER_DB_KEY) {
-                console.log("Detectada alteração nos dados mestre via outra aba.");
-                
-                // Pisca a tela ou mostra indicador
                 const el = document.getElementById('sync-indicator');
                 el.classList.remove('hidden'); el.classList.add('flex', 'sync-active');
                 setTimeout(() => el.classList.remove('sync-active'), 1500);
-
-                // Recarrega APENAS os dados mestre (funcionários/férias)
-                // Não recarrega 'escala_config' para não perder estado da tela atual
                 carregarDadosMestre();
-                
-                // Atualiza selects e tabelas
                 atualizarUI();
             }
         });
 
-        // --- FUNÇÕES DE UI ---
         function checkResponsive() {
-            // Verifica a largura do PAINEL CENTRAL, não só da janela
-            const container = document.getElementById('dashboard-container');
-            const leftEl = document.getElementById('sidebar-left');
-            const rightEl = document.getElementById('sidebar-right');
             const width = window.innerWidth;
-
-            // Se a tela estiver muito apertada (zoom alto), esconde sidebars
             if (width < 1100) {
-                if (!leftEl.classList.contains('collapsed')) toggleSidebar('left', true);
-                if (!rightEl.classList.contains('collapsed')) toggleSidebar('right', true);
+                if (!document.getElementById('sidebar-left').classList.contains('collapsed')) toggleSidebar('left', true);
+                if (!document.getElementById('sidebar-right').classList.contains('collapsed')) toggleSidebar('right', true);
             }
         }
 
         function toggleSidebar(side, forceClose = false) {
             const el = document.getElementById(`sidebar-${side}`);
             const btn = document.getElementById(`btn-toggle-${side}`);
-            
-            if (forceClose) {
+            if (forceClose || !el.classList.contains('collapsed')) {
                 el.classList.add('collapsed');
                 btn.classList.add('bg-blue-100', 'text-blue-600');
                 if (side === 'left') appState.ui.leftPanel = false;
                 if (side === 'right') appState.ui.rightPanel = false;
-                return;
-            }
-
-            const isCollapsed = el.classList.contains('collapsed');
-            if (isCollapsed) {
+            } else {
                 el.classList.remove('collapsed');
                 btn.classList.remove('bg-blue-100', 'text-blue-600');
                 if (side === 'left') appState.ui.leftPanel = true;
                 if (side === 'right') appState.ui.rightPanel = true;
-            } else {
-                el.classList.add('collapsed');
-                btn.classList.add('bg-blue-100', 'text-blue-600');
-                if (side === 'left') appState.ui.leftPanel = false;
-                if (side === 'right') appState.ui.rightPanel = false;
             }
             salvarEstado();
         }
@@ -567,38 +583,25 @@
             }
         }
 
-        // --- LÓGICA CORE (MANTIDA/OTIMIZADA) ---
-        
-        // Separei esta função para poder chamá-la sozinha na sincronização
         function carregarDadosMestre() {
             const rawMaster = localStorage.getItem(MASTER_DB_KEY);
             masterData = rawMaster ? JSON.parse(rawMaster) : DEFAULT_MOCK;
-            
-            // Repopula selects que dependem do mestre
             const selectFunc = document.getElementById('config-func');
             const selectBusca = document.getElementById('busca-func');
-            
-            // Guarda seleção atual para tentar manter
-            const selFunc = selectFunc.value;
-            const selBusca = selectBusca.value;
-
+            const selFunc = selectFunc.value; const selBusca = selectBusca.value;
             selectFunc.innerHTML = '<option value="">Funcinário...</option>';
             selectBusca.innerHTML = '<option value="">Selecionar...</option>';
-
             getFuncionariosEscala().forEach(f => {
                 const n = f.apelido || f.nome;
                 selectFunc.add(new Option(n, n));
                 selectBusca.add(new Option(n, n));
             });
-            
-            // Restaura seleção se possível
             if(selFunc) selectFunc.value = selFunc;
             if(selBusca) selectBusca.value = selBusca;
         }
 
         function carregarDados() {
-            carregarDadosMestre(); // Chama a parte do mestre
-
+            carregarDadosMestre();
             const rawConfig = localStorage.getItem(CONFIG_DB_KEY);
             if(rawConfig) {
                 const s = JSON.parse(rawConfig);
@@ -628,6 +631,10 @@
                     });
                 }
             }
+
+            // Carregar Modelos Salvos
+            const rawModels = localStorage.getItem(MODELS_DB_KEY);
+            appState.models = rawModels ? JSON.parse(rawModels) : [];
             
             document.getElementById('mes-select').value = appState.mes;
             document.getElementById('ano-input').value = appState.ano;
@@ -646,40 +653,268 @@
             document.getElementById('ano-input').addEventListener('change', (e) => { appState.ano = parseInt(e.target.value); atualizarUI(); });
             document.getElementById('input-importar').addEventListener('change', importarDados);
             document.getElementById('btn-troca-rapida').addEventListener('click', toggleTrocaRapida);
-            
-            document.getElementById('btn-export-toggle').addEventListener('click', (e) => {
-                e.stopPropagation(); 
-                document.getElementById('export-menu').classList.toggle('hidden');
-            });
-            
+            document.getElementById('btn-export-toggle').addEventListener('click', (e) => { e.stopPropagation(); document.getElementById('export-menu').classList.toggle('hidden'); });
             document.addEventListener('click', (e) => {
                 const menu = document.getElementById('export-menu');
                 const btn = document.getElementById('btn-export-toggle');
-                if(menu && !menu.classList.contains('hidden') && !menu.contains(e.target) && e.target !== btn) {
-                    menu.classList.add('hidden');
-                }
+                if(menu && !menu.classList.contains('hidden') && !menu.contains(e.target) && e.target !== btn) { menu.classList.add('hidden'); }
             });
-            
             document.getElementById('tabela-escala').addEventListener('click', (e) => {
                 const cell = e.target.closest('.editable');
                 if(!cell) return;
                 if(modoTrocaRapida) handleTroca(cell);
-                else {
-                    const nome = cell.innerText.trim();
-                    if(nome && nome !== '-') document.getElementById('busca-func').value = nome;
-                }
+                else { const nome = cell.innerText.trim(); if(nome && nome !== '-') document.getElementById('busca-func').value = nome; }
             });
-
             document.getElementById('tabela-escala').addEventListener('dblclick', (e) => {
                 if(modoTrocaRapida) return;
                 const cell = e.target.closest('.editable');
                 if(cell) abrirModal(cell.dataset.idx, cell.dataset.key);
             });
-
             document.getElementById('editor-obs').addEventListener('input', salvarObservacaoAtual);
         }
 
-        // --- MANIPULAÇÃO OBSERVAÇÕES ---
+        // --- MODELOS ---
+        function renderModelos() {
+            const lista = document.getElementById('lista-modelos');
+            lista.innerHTML = '';
+            appState.models.forEach((m, idx) => {
+                lista.innerHTML += `
+                    <div class="flex justify-between items-center bg-white border rounded p-1.5 text-[10px]">
+                        <span class="font-bold text-slate-700 truncate">${m.name}</span>
+                        <div class="flex gap-1">
+                            <button onclick="carregarModelo(${idx})" class="text-blue-500 hover:text-blue-700 font-bold" title="Carregar"><i class="fas fa-upload"></i></button>
+                            <button onclick="excluirModelo(${idx})" class="text-red-400 hover:text-red-600" title="Excluir"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        function salvarModelo() {
+            const nomeInput = document.getElementById('novo-modelo-nome');
+            const nome = nomeInput.value.trim();
+            if(!nome) return alert("Digite um nome para o modelo!");
+            
+            // Salva apenas a estrutura (grupos e colunas)
+            const modelo = {
+                name: nome,
+                structure: JSON.parse(JSON.stringify(appState.structure))
+            };
+            
+            appState.models.push(modelo);
+            localStorage.setItem(MODELS_DB_KEY, JSON.stringify(appState.models));
+            nomeInput.value = '';
+            renderModelos();
+            alert("Modelo salvo!");
+        }
+
+        function carregarModelo(idx) {
+            if(!confirm("Carregar este modelo substituirá a estrutura atual. Continuar?")) return;
+            const modelo = appState.models[idx];
+            // Deep copy para evitar referências
+            appState.structure = JSON.parse(JSON.stringify(modelo.structure));
+            salvarEstado();
+            atualizarUI();
+        }
+
+        function excluirModelo(idx) {
+            if(!confirm("Excluir modelo?")) return;
+            appState.models.splice(idx, 1);
+            localStorage.setItem(MODELS_DB_KEY, JSON.stringify(appState.models));
+            renderModelos();
+        }
+
+        // --- DRAG AND DROP LOGIC ---
+        let dragSrcEl = null;
+
+        function handleDragStart(e, type, gIdx, cIdx = null) {
+            dragSrcEl = e.target; // Elemento sendo arrastado
+            e.target.classList.add('dragging');
+            
+            // Transfere dados
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('type', type);
+            e.dataTransfer.setData('gIdx', gIdx);
+            if(cIdx !== null) e.dataTransfer.setData('cIdx', cIdx);
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            
+            // Visual feedback
+            const target = e.target.closest('.draggable-item') || e.target.closest('.drop-target-group');
+            if(target && target !== dragSrcEl) {
+                target.classList.add('drag-over');
+            }
+            return false;
+        }
+
+        function handleDragLeave(e) {
+            const target = e.target.closest('.draggable-item') || e.target.closest('.drop-target-group');
+            if(target) target.classList.remove('drag-over');
+        }
+
+        function handleDrop(e, targetType, targetGIdx, targetCIdx = null) {
+            if (e.stopPropagation) e.stopPropagation();
+            
+            // Limpa estilos
+            document.querySelectorAll('.dragging').forEach(el => el.classList.remove('dragging'));
+            document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+
+            const srcType = e.dataTransfer.getData('type');
+            const srcGIdx = parseInt(e.dataTransfer.getData('gIdx'));
+            
+            // --- GRUPO -> GRUPO ---
+            if(srcType === 'group' && targetType === 'group') {
+                if(srcGIdx !== targetGIdx) {
+                    // Remove e insere
+                    const item = appState.structure.splice(srcGIdx, 1)[0];
+                    appState.structure.splice(targetGIdx, 0, item);
+                    salvarEstado(); atualizarUI();
+                }
+            }
+
+            // --- COLUNA -> COLUNA (Mesmo grupo ou diferente) ---
+            if(srcType === 'col' && targetType === 'col') {
+                const srcCIdx = parseInt(e.dataTransfer.getData('cIdx'));
+                // Se for a mesma coluna, ignora
+                if(srcGIdx === targetGIdx && srcCIdx === targetCIdx) return;
+
+                const item = appState.structure[srcGIdx].cols.splice(srcCIdx, 1)[0];
+                
+                // Ajuste de índice se removeu do mesmo grupo antes do alvo
+                let finalTargetCIdx = targetCIdx;
+                
+                appState.structure[targetGIdx].cols.splice(finalTargetCIdx, 0, item);
+                salvarEstado(); atualizarUI();
+            }
+
+            // --- COLUNA -> GRUPO (Mover para final do grupo) ---
+            if(srcType === 'col' && targetType === 'group') {
+                const srcCIdx = parseInt(e.dataTransfer.getData('cIdx'));
+                if(srcGIdx === targetGIdx) return; // Já está no grupo
+
+                const item = appState.structure[srcGIdx].cols.splice(srcCIdx, 1)[0];
+                appState.structure[targetGIdx].cols.push(item);
+                salvarEstado(); atualizarUI();
+            }
+
+            return false;
+        }
+
+        function renderEditorEstrutura() {
+            const container = document.getElementById('editor-estrutura-lista');
+            container.innerHTML = '';
+
+            appState.structure.forEach((group, gIdx) => {
+                const groupEl = document.createElement('div');
+                groupEl.className = "bg-white border border-slate-200 rounded shadow-sm overflow-hidden drop-target-group";
+                
+                // Config Grupo DnD
+                groupEl.setAttribute('draggable', 'true');
+                groupEl.addEventListener('dragstart', (e) => handleDragStart(e, 'group', gIdx));
+                groupEl.addEventListener('dragover', handleDragOver);
+                groupEl.addEventListener('dragleave', handleDragLeave);
+                groupEl.addEventListener('drop', (e) => {
+                     // Verifica se o drop foi direto no header do grupo (para mover coluna para grupo) ou se foi bubble de coluna
+                     if(!e.target.closest('.col-item')) {
+                         handleDrop(e, 'group', gIdx);
+                     }
+                });
+
+                // --- HEADER DO GRUPO (Criado Explicitamente) ---
+                const headerEl = document.createElement('div');
+                headerEl.className = "bg-slate-100 p-2 flex gap-2 items-center border-b border-slate-200 cursor-grab active:cursor-grabbing";
+                headerEl.innerHTML = `
+                    <i class="fas fa-grip-vertical text-slate-300 text-xs"></i>
+                    <i class="fas fa-folder text-slate-400 text-xs"></i>
+                    <input type="text" value="${group.title}" 
+                        onchange="updateGroupTitle(${gIdx}, this.value)"
+                        class="bg-transparent text-xs font-bold text-slate-700 w-full focus:outline-none focus:bg-white focus:ring-1 focus:ring-blue-200 rounded px-1" placeholder="Título do Grupo">
+                    
+                    <button onclick="toggleGroupGray(${gIdx})" 
+                        class="text-[10px] px-1.5 py-0.5 rounded border ${group.grayTitle ? 'bg-slate-500 text-white border-slate-600' : 'bg-white text-slate-300 border-slate-200 hover:border-slate-300'}"
+                        title="Pintar Título do Grupo"><i class="fas fa-fill-drip"></i></button>
+
+                    <button onclick="removerGrupo(${gIdx})" class="text-slate-400 hover:text-red-500"><i class="fas fa-trash-alt text-[10px]"></i></button>
+                `;
+                groupEl.appendChild(headerEl);
+
+                // --- CORPO DO GRUPO (Container das Colunas) ---
+                const bodyEl = document.createElement('div');
+                bodyEl.className = "p-2 space-y-2 group-body";
+
+                // Container interno para colunas
+                const colsContainer = document.createElement('div');
+                colsContainer.className = "space-y-2";
+                
+                group.cols.forEach((col, cIdx) => {
+                    const colEl = document.createElement('div');
+                    colEl.className = "flex gap-1 items-center draggable-item col-item";
+                    
+                    // Config Coluna DnD
+                    colEl.setAttribute('draggable', 'true');
+                    colEl.addEventListener('dragstart', (e) => {
+                        e.stopPropagation(); // Impede arrastar o grupo junto
+                        handleDragStart(e, 'col', gIdx, cIdx);
+                    });
+                    colEl.addEventListener('dragover', handleDragOver);
+                    colEl.addEventListener('dragleave', handleDragLeave);
+                    colEl.addEventListener('drop', (e) => {
+                        e.stopPropagation();
+                        handleDrop(e, 'col', gIdx, cIdx);
+                    });
+
+                    const isFixo = col.type === 'fixo';
+                    const isSystem = col.type === 'system';
+                    let btnClass = 'bg-purple-50 text-purple-600 border-purple-200';
+                    let btnText = 'SUP';
+                    if(isFixo) { btnClass = 'bg-blue-50 text-blue-600 border-blue-200'; btnText = 'FIXO'; }
+                    if(isSystem) { btnClass = 'bg-slate-200 text-slate-600 border-slate-300 cursor-not-allowed'; btnText = 'SIS'; }
+
+                    colEl.innerHTML = `
+                        <i class="fas fa-grip-vertical text-slate-300 text-[10px] cursor-grab active:cursor-grabbing"></i>
+                        <input type="text" value="${col.label}" 
+                            onchange="updateColLabel(${gIdx}, ${cIdx}, this.value)"
+                            class="input-sm flex-1 w-16 bg-slate-50 border border-slate-200 rounded text-slate-600 focus:bg-white text-[10px]">
+                        
+                        <button onclick="toggleColHeaderGray(${gIdx}, ${cIdx})" 
+                            class="text-[10px] px-1.5 py-0.5 rounded border ${col.grayHeader ? 'bg-slate-600 text-white border-slate-700' : 'bg-white text-slate-300 border-slate-200 hover:border-slate-300'}"
+                            title="Pintar Título"><i class="fas fa-heading"></i></button>
+
+                        <button onclick="toggleColBodyGray(${gIdx}, ${cIdx})" 
+                            class="text-[10px] px-1.5 py-0.5 rounded border ${col.grayBody ? 'bg-slate-400 text-white border-slate-500' : 'bg-white text-slate-300 border-slate-200 hover:border-slate-300'}"
+                            title="Pintar Coluna"><i class="fas fa-fill-drip"></i></button>
+
+                        <button onclick="${isSystem ? '' : `toggleColType(${gIdx}, ${cIdx})`}" 
+                            class="text-[8px] px-1 py-0.5 rounded border min-w-[28px] ${btnClass}"
+                            title="Alternar Tipo">${btnText}</button>
+                        
+                        <button onclick="removerColuna(${gIdx}, ${cIdx})" class="text-slate-300 hover:text-red-500 px-1"><i class="fas fa-times"></i></button>
+                    `;
+                    colsContainer.appendChild(colEl);
+                });
+
+                bodyEl.appendChild(colsContainer);
+
+                // Botão Add Coluna
+                const addBtn = document.createElement('button');
+                addBtn.className = "w-full mt-1 text-[10px] text-slate-400 hover:text-brand-600 hover:bg-slate-50 py-1 rounded border border-transparent hover:border-slate-200 border-dashed transition-all";
+                addBtn.innerHTML = '<i class="fas fa-plus mr-1"></i> Adicionar Coluna';
+                addBtn.onclick = () => adicionarColuna(gIdx);
+                bodyEl.appendChild(addBtn);
+
+                groupEl.appendChild(bodyEl);
+                container.appendChild(groupEl);
+            });
+
+            const slotSelect = document.getElementById('config-slot');
+            slotSelect.innerHTML = '';
+            getFlatColumns().forEach(c => {
+                if(c.type !== 'system') slotSelect.add(new Option(c.label, c.key));
+            });
+        }
+
         function execCmd(command, value = null) {
             document.execCommand(command, false, value);
             document.getElementById('editor-obs').focus();
@@ -692,16 +927,13 @@
             if(align === 'top') editor.classList.add('valign-top');
             if(align === 'middle') editor.classList.add('valign-middle');
             if(align === 'bottom') editor.classList.add('valign-bottom');
-            
             const key = getObsKey();
             if(!appState.observacoesConfig[key]) appState.observacoesConfig[key] = {};
             appState.observacoesConfig[key].vAlign = align;
             salvarEstado();
             editor.focus();
         }
-
         function getObsKey() { return `${appState.ano}-${appState.mes}`; }
-
         function carregarObservacaoAtual() {
             const key = getObsKey();
             let content = appState.observacoes[key];
@@ -714,521 +946,318 @@
             if(config.vAlign === 'middle') editor.classList.add('valign-middle');
             if(config.vAlign === 'bottom') editor.classList.add('valign-bottom');
         }
-
         function salvarObservacaoAtual() {
             const key = getObsKey();
             appState.observacoes[key] = document.getElementById('editor-obs').innerHTML;
             salvarEstado();
         }
-
-        function toggleSection(id) {
-            const el = document.getElementById(id);
-            el.classList.toggle('hidden');
-        }
-
-        // --- EDITOR ESTRUTURA ---
-        function getFlatColumns() {
-            const cols = [];
-            appState.structure.forEach(g => { g.cols.forEach(c => cols.push(c)); });
-            return cols;
-        }
-
-        function renderEditorEstrutura() {
-            const container = document.getElementById('editor-estrutura-lista');
-            container.innerHTML = '';
-
-            appState.structure.forEach((group, gIdx) => {
-                const groupEl = document.createElement('div');
-                groupEl.className = "bg-white border border-slate-200 rounded shadow-sm overflow-hidden";
-                
-                let groupHtml = `
-                    <div class="bg-slate-100 p-2 flex gap-2 items-center border-b border-slate-200">
-                        <div class="flex flex-col gap-0.5">
-                            <button onclick="moverGrupo(${gIdx}, -1)" class="text-[8px] text-slate-400 hover:text-blue-500 h-3 flex items-center" ${gIdx===0?'disabled style="opacity:0.3"':''}><i class="fas fa-chevron-up"></i></button>
-                            <button onclick="moverGrupo(${gIdx}, 1)" class="text-[8px] text-slate-400 hover:text-blue-500 h-3 flex items-center" ${gIdx===appState.structure.length-1?'disabled style="opacity:0.3"':''}><i class="fas fa-chevron-down"></i></button>
-                        </div>
-                        <i class="fas fa-folder text-slate-400 text-xs"></i>
-                        <input type="text" value="${group.title}" 
-                            onchange="updateGroupTitle(${gIdx}, this.value)"
-                            class="bg-transparent text-xs font-bold text-slate-700 w-full focus:outline-none focus:bg-white focus:ring-1 focus:ring-blue-200 rounded px-1" placeholder="Título do Grupo">
-                        
-                        <button onclick="toggleGroupGray(${gIdx})" 
-                            class="text-[10px] px-1.5 py-0.5 rounded border ${group.grayTitle ? 'bg-slate-500 text-white border-slate-600' : 'bg-white text-slate-300 border-slate-200 hover:border-slate-300'}"
-                            title="Pintar Título do Grupo">
-                            <i class="fas fa-fill-drip"></i>
-                        </button>
-
-                        <button onclick="removerGrupo(${gIdx})" class="text-slate-400 hover:text-red-500"><i class="fas fa-trash-alt text-[10px]"></i></button>
-                    </div>
-                    <div class="p-2 space-y-2">
-                `;
-
-                group.cols.forEach((col, cIdx) => {
-                    const isFixo = col.type === 'fixo';
-                    const isSystem = col.type === 'system';
-                    
-                    let btnClass = 'bg-purple-50 text-purple-600 border-purple-200';
-                    let btnText = 'SUP';
-                    if(isFixo) { btnClass = 'bg-blue-50 text-blue-600 border-blue-200'; btnText = 'FIXO'; }
-                    if(isSystem) { btnClass = 'bg-slate-200 text-slate-600 border-slate-300 cursor-not-allowed'; btnText = 'SIS'; }
-
-                    groupHtml += `
-                        <div class="flex gap-1 items-center">
-                            <div class="flex flex-col gap-0.5 mr-1">
-                                <button onclick="moverColuna(${gIdx}, ${cIdx}, -1)" class="text-[8px] text-slate-300 hover:text-blue-500 h-2.5 flex items-center" ${cIdx===0?'disabled style="opacity:0.2"':''}><i class="fas fa-chevron-up"></i></button>
-                                <button onclick="moverColuna(${gIdx}, ${cIdx}, 1)" class="text-[8px] text-slate-300 hover:text-blue-500 h-2.5 flex items-center" ${cIdx===group.cols.length-1?'disabled style="opacity:0.2"':''}><i class="fas fa-chevron-down"></i></button>
-                            </div>
-                            
-                            <input type="text" value="${col.label}" 
-                                onchange="updateColLabel(${gIdx}, ${cIdx}, this.value)"
-                                class="input-sm flex-1 w-16 bg-slate-50 border border-slate-200 rounded text-slate-600 focus:bg-white">
-                            
-                            <button onclick="toggleColHeaderGray(${gIdx}, ${cIdx})" 
-                                class="text-[10px] px-1.5 py-0.5 rounded border ${col.grayHeader ? 'bg-slate-600 text-white border-slate-700' : 'bg-white text-slate-300 border-slate-200 hover:border-slate-300'}"
-                                title="Pintar Título">
-                                <i class="fas fa-heading"></i>
-                            </button>
-
-                            <button onclick="toggleColBodyGray(${gIdx}, ${cIdx})" 
-                                class="text-[10px] px-1.5 py-0.5 rounded border ${col.grayBody ? 'bg-slate-400 text-white border-slate-500' : 'bg-white text-slate-300 border-slate-200 hover:border-slate-300'}"
-                                title="Pintar Coluna">
-                                <i class="fas fa-fill-drip"></i>
-                            </button>
-
-                            <button onclick="${isSystem ? '' : `toggleColType(${gIdx}, ${cIdx})`}" 
-                                class="text-[8px] px-1 py-0.5 rounded border min-w-[28px] ${btnClass}"
-                                title="Alternar Tipo">
-                                ${btnText}
-                            </button>
-                            
-                            <button onclick="removerColuna(${gIdx}, ${cIdx})" class="text-slate-300 hover:text-red-500 px-1"><i class="fas fa-times"></i></button>
-                        </div>
-                    `;
-                });
-
-                groupHtml += `
-                        <button onclick="adicionarColuna(${gIdx})" class="w-full mt-1 text-[10px] text-slate-400 hover:text-brand-600 hover:bg-slate-50 py-1 rounded border border-transparent hover:border-slate-200 border-dashed transition-all">
-                            <i class="fas fa-plus mr-1"></i> Adicionar Coluna
-                        </button>
-                    </div>
-                `;
-
-                groupEl.innerHTML = groupHtml;
-                container.appendChild(groupEl);
-            });
-
-            const slotSelect = document.getElementById('config-slot');
-            slotSelect.innerHTML = '';
-            getFlatColumns().forEach(c => {
-                if(c.type !== 'system') slotSelect.add(new Option(c.label, c.key));
-            });
-        }
-
-        // Funções de Edição Estrutura
+        function toggleSection(id) { const el = document.getElementById(id); el.classList.toggle('hidden'); }
         function updateGroupTitle(gIdx, val) { appState.structure[gIdx].title = val; salvarEstado(); atualizarUI(); }
         function toggleGroupGray(gIdx) { appState.structure[gIdx].grayTitle = !appState.structure[gIdx].grayTitle; salvarEstado(); atualizarUI(); }
         function updateColLabel(gIdx, cIdx, val) { appState.structure[gIdx].cols[cIdx].label = val; salvarEstado(); atualizarUI(); }
-        function toggleColType(gIdx, cIdx) { 
-            const t = appState.structure[gIdx].cols[cIdx].type;
-            if(t === 'system') return;
-            appState.structure[gIdx].cols[cIdx].type = (t === 'fixo' ? 'suplente' : 'fixo');
-            salvarEstado(); atualizarUI();
-        }
+        function toggleColType(gIdx, cIdx) { const t = appState.structure[gIdx].cols[cIdx].type; if(t === 'system') return; appState.structure[gIdx].cols[cIdx].type = (t === 'fixo' ? 'suplente' : 'fixo'); salvarEstado(); atualizarUI(); }
         function toggleColHeaderGray(gIdx, cIdx) { appState.structure[gIdx].cols[cIdx].grayHeader = !appState.structure[gIdx].cols[cIdx].grayHeader; salvarEstado(); atualizarUI(); }
         function toggleColBodyGray(gIdx, cIdx) { appState.structure[gIdx].cols[cIdx].grayBody = !appState.structure[gIdx].cols[cIdx].grayBody; salvarEstado(); atualizarUI(); }
         function removerGrupo(gIdx) { if(!confirm('Remover grupo?')) return; appState.structure.splice(gIdx, 1); salvarEstado(); atualizarUI(); }
         function removerColuna(gIdx, cIdx) { appState.structure[gIdx].cols.splice(cIdx, 1); salvarEstado(); atualizarUI(); }
         function adicionarGrupo() { appState.structure.push({ title: "NOVO GRUPO", grayTitle: false, cols: [] }); salvarEstado(); atualizarUI(); }
-        function adicionarColuna(gIdx) {
-            const key = 'col_' + Date.now() + Math.floor(Math.random()*1000);
-            appState.structure[gIdx].cols.push({ key: key, label: "Nova", type: 'suplente', grayHeader: false, grayBody: false });
-            salvarEstado(); atualizarUI();
-        }
-        function moverGrupo(idx, dir) {
-            const temp = appState.structure[idx]; appState.structure[idx] = appState.structure[idx + dir]; appState.structure[idx + dir] = temp; salvarEstado(); atualizarUI();
-        }
-        function moverColuna(gIdx, cIdx, dir) {
-            const temp = appState.structure[gIdx].cols[cIdx]; appState.structure[gIdx].cols[cIdx] = appState.structure[gIdx].cols[cIdx + dir]; appState.structure[gIdx].cols[cIdx + dir] = temp; salvarEstado(); atualizarUI();
-        }
-
-        // --- ALGORITMO GERAÇÃO ---
+        function adicionarColuna(gIdx) { const key = 'col_' + Date.now() + Math.floor(Math.random()*1000); appState.structure[gIdx].cols.push({ key: key, label: "Nova", type: 'suplente', grayHeader: false, grayBody: false }); salvarEstado(); atualizarUI(); }
+        
+        // --- GERAÇÃO COM BALANCEAMENTO POR COLUNA ---
         function gerarEscala(embaralhar) {
-            const mes = appState.mes;
-            const ano = appState.ano;
-            const diasNoMes = new Date(ano, mes + 1, 0).getDate();
-            const feriadosStr = masterData.feriados.map(f => f.data);
+            const mes = appState.mes; const ano = appState.ano; const diasNoMes = new Date(ano, mes + 1, 0).getDate(); 
+            const feriadosStr = masterData.feriados.map(f => f.data); 
             const pool = getFuncionariosEscala();
+            
             if(pool.length === 0) return alert("Sem funcionários!");
-
-            const flatCols = getFlatColumns();
+            
+            const flatCols = getFlatColumns(); 
             const slotsKeys = flatCols.filter(c => c.type !== 'system').map(c => c.key); 
-
-            const stats = {};
+            
+            // Inicializar estatísticas (total e POR COLUNA)
+            const stats = {}; 
             const colStats = {};
-            pool.forEach(f => {
-                const n = f.apelido || f.nome;
-                stats[n] = { fixo: 0, suplente: 0, total: 0 };
-                colStats[n] = {};
-                slotsKeys.forEach(k => colStats[n][k] = 0);
+            
+            pool.forEach(f => { 
+                const n = f.apelido || f.nome; 
+                stats[n] = { total: 0 }; 
+                colStats[n] = {}; 
+                slotsKeys.forEach(k => colStats[n][k] = 0); 
             });
 
-            const novaEscala = [];
-            let senhaIdx = 0;
-            const poolSenha = masterData.funcionarios.filter(f => f.tipo === 'escala' && f.categoria === 'Funcionário da Senha');
-            let fatorCaos = 0;
+            const novaEscala = []; 
+            let senhaIdx = 0; 
+            const poolSenha = masterData.funcionarios.filter(f => f.tipo === 'escala' && f.categoria === 'Funcionário da Senha'); 
+            
+            // Seed para aleatoriedade determinística se embaralhar for false
+            let randomSeed = 12345;
+            const pseudoRandom = () => {
+                randomSeed = (randomSeed * 9301 + 49297) % 233280;
+                return randomSeed / 233280;
+            };
+            const getRandom = () => embaralhar ? Math.random() : pseudoRandom();
 
             for(let d=1; d<=diasNoMes; d++) {
-                const dataObj = new Date(ano, mes, d);
-                const diaSemana = dataObj.getDay();
+                const dataObj = new Date(ano, mes, d); 
+                const diaSemana = dataObj.getDay(); 
                 const dataISO = dataObj.toISOString().split('T')[0];
+                
                 if(diaSemana === 0 || diaSemana === 6 || feriadosStr.includes(dataISO)) continue;
-
-                fatorCaos++;
-                const linha = { data: dataObj, diaSemana: dataObj, senha: '' };
+                
+                const linha = { data: dataObj, diaSemana: dataObj, senha: '' }; 
                 slotsKeys.forEach(k => linha[k] = ''); 
-
-                if(poolSenha.length > 0) {
-                    linha.senha = (poolSenha[senhaIdx].apelido || poolSenha[senhaIdx].nome);
-                    senhaIdx = (senhaIdx + 1) % poolSenha.length;
+                
+                if(poolSenha.length > 0) { 
+                    linha.senha = (poolSenha[senhaIdx].apelido || poolSenha[senhaIdx].nome); 
+                    senhaIdx = (senhaIdx + 1) % poolSenha.length; 
                 }
-
+                
+                // 1. Aplicar regras fixas
                 const escaladosNoDia = new Set();
-
-                // 1. Aplica Travas
-                appState.regrasFixas.forEach(r => {
-                    if(slotsKeys.includes(r.slot)) {
-                        linha[r.slot] = r.func;
-                        escaladosNoDia.add(r.func);
-                        const colDef = flatCols.find(c => c.key === r.slot);
-                        if(colDef) atualizarStats(r.func, r.slot, colDef.type, stats, colStats);
-                    }
+                const slotsOcupados = new Set();
+                
+                appState.regrasFixas.forEach(r => { 
+                    if(slotsKeys.includes(r.slot)) { 
+                        linha[r.slot] = r.func; 
+                        escaladosNoDia.add(r.func); 
+                        slotsOcupados.add(r.slot);
+                        atualizarStats(r.func, r.slot, stats, colStats); 
+                    } 
                 });
-
-                // 2. Preenche Vazios
-                const slotsParaPreencher = slotsKeys.filter(s => !linha[s]);
+                
+                // 2. Identificar slots vazios e candidatos disponíveis
+                const slotsLivres = slotsKeys.filter(s => !slotsOcupados.has(s));
                 const diaAnterior = novaEscala.length > 0 ? novaEscala[novaEscala.length - 1] : null;
-
-                const candidatosBase = pool.filter(f => {
-                    const n = f.apelido || f.nome;
-                    if(escaladosNoDia.has(n)) return false;
-                    const emFerias = masterData.ferias.some(fer => {
-                         if(fer.funcionario !== f.nome) return false;
-                         const ini = new Date(fer.inicio+'T00:00:00');
-                         const fim = new Date(fer.fim+'T00:00:00');
-                         return dataObj >= ini && dataObj <= fim;
-                    });
-                    return !emFerias;
+                
+                const candidatosDisponiveis = pool.filter(f => { 
+                    const n = f.apelido || f.nome; 
+                    if(escaladosNoDia.has(n)) return false; 
+                    const emFerias = masterData.ferias.some(fer => { 
+                        if(fer.funcionario !== f.nome) return false; 
+                        const ini = new Date(fer.inicio+'T00:00:00'); 
+                        const fim = new Date(fer.fim+'T00:00:00'); 
+                        return dataObj >= ini && dataObj <= fim; 
+                    }); 
+                    return !emFerias; 
                 });
 
-                let melhorTentativa = null;
-                let menorRepeticao = Infinity;
-                const maxTentativas = 25; // Aumentado para melhor distribuição
-
-                for(let t=0; t<maxTentativas; t++) {
-                    const slotsOrdem = [...slotsParaPreencher].sort(() => Math.random() - 0.5);
-                    const poolTentativa = [...candidatosBase];
-                    const preenchimento = {};
-                    let repeticoes = 0;
-
-                    for(const slot of slotsOrdem) {
-                        if(poolTentativa.length === 0) break;
-                        const colDef = flatCols.find(c => c.key === slot);
-
-                        poolTentativa.sort((a, b) => {
-                            const nA = a.apelido || a.nome;
-                            const nB = b.apelido || b.nome;
-                            const sA = stats[nA];
-                            const sB = stats[nB];
-
-                            // Regra 1: Evitar repetição dia anterior (Peso Absoluto)
-                            let pA = 0, pB = 0;
-                            if(diaAnterior) {
-                                if(diaAnterior[slot] === nA) pA = 1e7;
-                                if(diaAnterior[slot] === nB) pB = 1e7;
-                            }
-                            if(pA !== pB) return pA - pB;
-
-                            // Regra 2: Equilíbrio Total (Quem trabalhou menos tem prioridade)
-                            if(sA.total !== sB.total) return sA.total - sB.total;
-
-                            // Regra 3: Equilíbrio por Tipo (Fixo vs Suplente)
-                            const valA = colDef.type === 'fixo' ? sA.fixo : sA.suplente;
-                            const valB = colDef.type === 'fixo' ? sB.fixo : sB.suplente;
-                            if(valA !== valB) return valA - valB;
-
-                            // Regra 4: Rotação de Posição Específica (Evitar cair sempre no Sup1)
-                            const colA = colStats[nA][slot] || 0;
-                            const colB = colStats[nB][slot] || 0;
-                            if(colA !== colB) return colA - colB;
-
-                            // Fator Aleatório Controlado
-                            if(embaralhar) return Math.random() - 0.5;
-                            const cA = nA.charCodeAt(0); const cB = nB.charCodeAt(0);
-                            return ((cA + fatorCaos + t) % 100) - ((cB + fatorCaos + t) % 100);
+                // 3. Gerar todas as combinações possíveis (Candidato, Slot) com Score
+                // Score = (CountSlot * 10000) + (CountTotal * 100) + Penalty
+                const opcoes = [];
+                
+                candidatosDisponiveis.forEach(cand => {
+                    const nome = cand.apelido || cand.nome;
+                    slotsLivres.forEach(slot => {
+                        const countSlot = colStats[nome][slot] || 0;
+                        const countTotal = stats[nome].total || 0;
+                        
+                        // Penalidade alta se trabalhou no MESMO slot ontem
+                        let penalty = 0;
+                        if (diaAnterior && diaAnterior[slot] === nome) {
+                            penalty = 100000;
+                        }
+                        
+                        // Score base
+                        // Peso maior para nivelar a coluna específica
+                        // Peso secundário para nivelar o total
+                        const score = penalty + (countSlot * 1000) + countTotal;
+                        
+                        opcoes.push({
+                            nome: nome,
+                            slot: slot,
+                            score: score,
+                            rand: getRandom() // Desempate aleatório
                         });
-
-                        const eleito = poolTentativa[0];
-                        const nome = eleito.apelido || eleito.nome;
-                        preenchimento[slot] = nome;
-                        poolTentativa.shift();
-
-                        if(diaAnterior && diaAnterior[slot] === nome) repeticoes++;
-                    }
-
-                    if(repeticoes === 0) { melhorTentativa = preenchimento; break; }
-                    if(repeticoes < menorRepeticao) { menorRepeticao = repeticoes; melhorTentativa = preenchimento; }
-                }
-
-                if(melhorTentativa) {
-                    Object.keys(melhorTentativa).forEach(k => {
-                        const nome = melhorTentativa[k];
-                        linha[k] = nome;
-                        const colDef = flatCols.find(c => c.key === k);
-                        if(colDef) atualizarStats(nome, k, colDef.type, stats, colStats);
                     });
+                });
+
+                // 4. Ordenar opções pelo menor Score
+                opcoes.sort((a, b) => {
+                    if (a.score !== b.score) return a.score - b.score;
+                    return a.rand - b.rand;
+                });
+
+                // 5. Atribuir greedy (Melhor score primeiro)
+                const assignedSlots = new Set();
+                const assignedPeople = new Set();
+
+                for (const op of opcoes) {
+                    if (assignedSlots.has(op.slot)) continue;
+                    if (assignedPeople.has(op.nome)) continue;
+
+                    // Atribui
+                    linha[op.slot] = op.nome;
+                    assignedSlots.add(op.slot);
+                    assignedPeople.add(op.nome);
+                    atualizarStats(op.nome, op.slot, stats, colStats);
+                    
+                    // Se acabou slots ou gente, para
+                    if (assignedSlots.size === slotsLivres.length || assignedPeople.size === candidatosDisponiveis.length) break;
                 }
+
                 novaEscala.push(linha);
             }
-
-            appState.escala = novaEscala;
-            salvarEstado();
-            atualizarUI();
-        }
-
-        function atualizarStats(nome, slot, type, stats, colStats) {
-            if(!stats[nome]) return;
-            if(type === 'system') return; 
-            stats[nome].total++;
-            if(type === 'fixo') stats[nome].fixo++; else stats[nome].suplente++;
-            if(colStats[nome]) colStats[nome][slot]++;
-        }
-
-        function getPosicaoIdx(linha, nome, keys) {
-            for(let i=0; i<keys.length; i++) {
-                if(linha[keys[i]] === nome) return i;
-            }
-            return -1;
-        }
-
-        // --- RENDER ---
-        function atualizarUI() {
-            renderEditorEstrutura();
-            renderTabela();
-            renderResumo();
-            renderRegras();
-            carregarObservacaoAtual();
-            aplicarEstadoUI();
-        }
-
-        function renderTabela() {
-            const thead = document.getElementById('tabela-head');
-            let h1 = `<tr>`;
-            appState.structure.forEach(g => {
-                if(g.cols.length > 0) {
-                    let bgClass = "bg-slate-200 text-slate-600";
-                    if (g.title === "DADOS") bgClass = "bg-slate-100 text-slate-600";
-                    if (g.grayTitle) bgClass = "bg-custom-gray-group"; 
-                    h1 += `<th class="${bgClass} border-l border-slate-300 text-center text-xs font-bold" colspan="${g.cols.length}">${g.title}</th>`;
-                }
-            });
-            h1 += `</tr>`;
-
-            let h2 = `<tr class="text-xs">`;
-            appState.structure.forEach(g => {
-                g.cols.forEach((c, idx) => {
-                    const border = idx === 0 ? 'border-l border-slate-300' : '';
-                    let color = 'text-slate-600';
-                    if(c.type === 'fixo') color = 'text-blue-600';
-                    if(c.type === 'suplente') color = 'text-purple-600';
-                    const headerClass = c.grayHeader ? 'bg-custom-gray-header' : '';
-                    h2 += `<th class="top-[38px] z-[9] ${border} ${color} ${headerClass}">${c.label}</th>`;
-                });
-            });
-            h2 += `</tr>`;
-            thead.innerHTML = h1 + h2;
-
-            const tbody = document.getElementById('tabela-escala');
-            tbody.innerHTML = '';
             
-            const dias = appState.escala.filter(l => l.data.getMonth() === appState.mes && l.data.getFullYear() === appState.ano);
-            const hoje = new Date();
-            document.getElementById('total-dias-badge').innerText = `${dias.length} dias letivos`;
-
-            dias.forEach((linha, idx) => {
-                const tr = document.createElement('tr');
-                if(linha.data.getDate() === hoje.getDate() && linha.data.getMonth() === hoje.getMonth()) tr.classList.add('dia-hoje');
-
-                let html = ``;
-                appState.structure.forEach(g => {
-                    g.cols.forEach((c, cIdx) => {
-                        let val = linha[c.key] || '';
-                        
-                        if(c.key === 'dataLabel' && !val) val = linha.data.toLocaleDateString('pt-BR');
-                        if(c.key === 'semLabel' && !val) val = linha.diaSemana.toLocaleDateString('pt-BR', {weekday: 'short'}).toUpperCase();
-                        if(c.key === 'senha' && !val) val = linha.senha || '-';
-
-                        const isLocked = appState.regrasFixas.some(r => r.func === val && r.slot === c.key);
-                        const bgDest = appState.destaques[val] ? `style="background-color: ${appState.destaques[val]} !important"` : '';
-                        const lockedClass = isLocked ? 'celula-travada' : '';
-                        const borderL = cIdx === 0 ? 'border-l border-slate-300' : '';
-                        
-                        let extraClass = '';
-                        if(c.type === 'system') extraClass += ' font-medium bg-slate-50 text-slate-600';
-                        if(c.grayBody) extraClass += ' coluna-cinza';
-
-                        html += `<td class="editable ${lockedClass} ${borderL} ${extraClass}" ${bgDest} data-idx="${idx}" data-key="${c.key}">
-                                    ${val || '<span class="text-slate-200">-</span>'}
-                                 </td>`;
-                    });
-                });
-                tr.innerHTML = html;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function renderResumo() {
-            const tbody = document.getElementById('lista-resumo');
-            tbody.innerHTML = '';
-            const stats = {};
-            const flatCols = getFlatColumns();
-            getFuncionariosEscala().forEach(f => stats[f.apelido || f.nome] = {f:0, s:0});
-
-            appState.escala.forEach(l => {
-                if(l.data.getMonth() !== appState.mes) return;
-                flatCols.forEach(c => {
-                    if(c.type === 'system') return;
-                    const nome = l[c.key];
-                    if(nome && stats[nome]) {
-                        if(c.type === 'fixo') stats[nome].f++; else stats[nome].s++;
-                    }
-                });
-            });
-
-            let max = 0;
-            Object.values(stats).forEach(v => max = Math.max(max, v.f+v.s));
-            if(max === 0) max = 1;
-
-            Object.keys(stats).sort().forEach(n => {
-                const s = stats[n];
-                const tot = s.f + s.s;
-                const pct = (tot/max)*100;
-                let color = 'bg-emerald-500';
-                if(pct < 70) color = 'bg-amber-400';
-                if(pct < 40) color = 'bg-red-400';
-
-                tbody.innerHTML += `<tr>
-                    <td class="p-2 border-r border-slate-100 font-medium text-slate-700 w-24 truncate" title="${n}">
-                        ${n}
-                        <div class="w-full bg-slate-100 h-1 mt-1 rounded-full"><div class="${color} h-full rounded-full" style="width:${pct}%"></div></div>
-                    </td>
-                    <td class="p-2 text-center text-blue-600 bg-blue-50/30">${s.f}</td>
-                    <td class="p-2 text-center text-purple-600 bg-purple-50/30">${s.s}</td>
-                    <td class="p-2 text-center font-bold">${tot}</td>
-                </tr>`;
-            });
-        }
-
-        // --- UTILS & MODAIS ---
-        function getFuncionariosEscala() { return masterData.funcionarios.filter(f => f.tipo === 'escala' && f.categoria !== 'Funcionário da Senha').sort((a,b) => (a.apelido||a.nome).localeCompare(b.apelido||b.nome)); }
-        function mudarMes(d) {
-            let n = appState.mes + d;
-            if(n > 11) { appState.mes = 0; appState.ano++; } else if(n < 0) { appState.mes = 11; appState.ano--; } else { appState.mes = n; }
-            document.getElementById('mes-select').value = appState.mes; document.getElementById('ano-input').value = appState.ano;
+            appState.escala = novaEscala; 
+            salvarEstado(); 
             atualizarUI();
         }
-        function importarDados(e) {
-            const f = e.target.files[0]; if(!f) return;
-            const r = new FileReader(); r.onload = (ev) => { try {
-                const j = JSON.parse(ev.target.result); if(j.funcionarios) { localStorage.setItem(MASTER_DB_KEY, JSON.stringify(j)); masterData = j; atualizarUI(); alert("Importado!"); }
-            } catch(e) { alert("Erro JSON"); }}; r.readAsText(f);
+
+        function atualizarStats(nome, slot, stats, colStats) { 
+            if(!stats[nome]) return; 
+            stats[nome].total++; 
+            if(colStats[nome]) colStats[nome][slot]++; 
         }
-        function renderRegras() {
-            const div = document.getElementById('lista-regras'); div.innerHTML = '';
-            appState.regrasFixas.forEach((r, idx) => {
-                const col = getFlatColumns().find(c => c.key === r.slot);
-                const colLabel = col ? col.label : r.slot;
-                div.innerHTML += `<div class="flex justify-between items-center bg-white p-1.5 border rounded text-[10px]">
-                    <span class="truncate max-w-[140px]"><b>${r.func}</b> <i class="fas fa-arrow-right mx-1 text-slate-300"></i> ${colLabel}</span>
-                    <button onclick="removerRegra(${idx})" class="text-red-400 hover:text-red-600 px-1"><i class="fas fa-times"></i></button>
-                </div>`;
+
+        function atualizarUI() { renderEditorEstrutura(); renderModelos(); renderTabela(); renderResumo(); renderRegras(); carregarObservacaoAtual(); aplicarEstadoUI(); }
+        
+        function renderTabela() {
+            const thead = document.getElementById('tabela-head'); let h1 = `<tr>`; appState.structure.forEach(g => { if(g.cols.length > 0) { let bgClass = "bg-slate-200 text-slate-600"; if (g.title === "DADOS") bgClass = "bg-slate-100 text-slate-600"; if (g.grayTitle) bgClass = "bg-custom-gray-group"; h1 += `<th class="${bgClass} border-l border-slate-300 text-center text-xs font-bold" colspan="${g.cols.length}">${g.title}</th>`; } }); h1 += `</tr>`;
+            let h2 = `<tr class="text-xs">`; appState.structure.forEach(g => { g.cols.forEach((c, idx) => { const border = idx === 0 ? 'border-l border-slate-300' : ''; let color = 'text-slate-600'; if(c.type === 'fixo') color = 'text-blue-600'; if(c.type === 'suplente') color = 'text-purple-600'; const headerClass = c.grayHeader ? 'bg-custom-gray-header' : ''; h2 += `<th class="top-[38px] z-[9] ${border} ${color} ${headerClass}">${c.label}</th>`; }); }); h2 += `</tr>`; thead.innerHTML = h1 + h2;
+            const tbody = document.getElementById('tabela-escala'); tbody.innerHTML = ''; const dias = appState.escala.filter(l => l.data.getMonth() === appState.mes && l.data.getFullYear() === appState.ano); const hoje = new Date(); document.getElementById('total-dias-badge').innerText = `${dias.length} dias letivos`;
+            dias.forEach((linha, idx) => {
+                const tr = document.createElement('tr'); if(linha.data.getDate() === hoje.getDate() && linha.data.getMonth() === hoje.getMonth()) tr.classList.add('dia-hoje'); let html = ``;
+                appState.structure.forEach(g => { g.cols.forEach((c, cIdx) => { let val = linha[c.key] || ''; if(c.key === 'dataLabel' && !val) val = linha.data.toLocaleDateString('pt-BR'); if(c.key === 'semLabel' && !val) val = linha.diaSemana.toLocaleDateString('pt-BR', {weekday: 'short'}).toUpperCase(); if(c.key === 'senha' && !val) val = linha.senha || '-'; const isLocked = appState.regrasFixas.some(r => r.func === val && r.slot === c.key); const bgDest = appState.destaques[val] ? `style="background-color: ${appState.destaques[val]} !important"` : ''; const lockedClass = isLocked ? 'celula-travada' : ''; const borderL = cIdx === 0 ? 'border-l border-slate-300' : ''; let extraClass = ''; if(c.type === 'system') extraClass += ' font-medium bg-slate-50 text-slate-600'; if(c.grayBody) extraClass += ' coluna-cinza'; html += `<td class="editable ${lockedClass} ${borderL} ${extraClass}" ${bgDest} data-idx="${idx}" data-key="${c.key}">${val || '<span class="text-slate-200">-</span>'}</td>`; }); });
+                tr.innerHTML = html; tbody.appendChild(tr);
             });
         }
-        function removerRegra(idx) { appState.regrasFixas.splice(idx, 1); salvarEstado(); atualizarUI(); }
-        function adicionarRegraFixa() {
-            const func = document.getElementById('config-func').value; const slot = document.getElementById('config-slot').value;
-            if(!func || !slot) return;
-            appState.regrasFixas = appState.regrasFixas.filter(r => !(r.func === func || r.slot === slot));
-            appState.regrasFixas.push({ func, slot }); salvarEstado(); atualizarUI();
+
+        function getFlatColumns() { 
+            const cols = []; 
+            if(appState.structure) {
+                appState.structure.forEach(g => { 
+                    if(g.cols) g.cols.forEach(c => cols.push(c)); 
+                }); 
+            }
+            return cols; 
         }
+
+        // --- RESUMO ATUALIZADO (ORDEM SOLICITADA) ---
+        function renderResumo() {
+            const headerRow = document.getElementById('resumo-header');
+            const tbody = document.getElementById('lista-resumo');
+            if(!headerRow || !tbody) return;
+            
+            headerRow.innerHTML = '';
+            tbody.innerHTML = '';
+
+            const flatCols = getFlatColumns().filter(c => c.type !== 'system');
+            
+            // ORDENAÇÃO: Fixos -> Suplentes -> Outros
+            const colsFixos = flatCols.filter(c => c.type === 'fixo');
+            const colsSuplentes = flatCols.filter(c => c.type === 'suplente');
+            const colsOutros = flatCols.filter(c => c.type !== 'fixo' && c.type !== 'suplente');
+            
+            const sortedCols = [...colsFixos, ...colsSuplentes, ...colsOutros];
+            
+            // Gerar Cabeçalho
+            let headerHTML = `<th class="resumo-col-nome font-semibold text-slate-600 p-1.5">Nome</th>`;
+            
+            sortedCols.forEach(c => {
+                let label = c.label || '';
+                let shortLabel = label.substring(0, 3).toUpperCase();
+                let colorClass = 'text-gray-500';
+                if(c.type === 'fixo') colorClass = 'text-blue-600 bg-blue-50/50';
+                else if(c.type === 'suplente') colorClass = 'text-purple-600 bg-purple-50/50';
+                
+                headerHTML += `<th class="p-1.5 font-semibold ${colorClass} border-r border-slate-100" title="${label}">${shortLabel}</th>`;
+            });
+
+            // Coluna Total NO FINAL
+            headerHTML += `<th class="p-1.5 font-bold text-slate-700 bg-slate-100 border-x border-slate-200">T</th>`;
+
+            headerRow.innerHTML = headerHTML;
+
+            // Calcular Stats
+            const stats = {}; 
+            getFuncionariosEscala().forEach(f => {
+                const nome = f.apelido || f.nome;
+                stats[nome] = { total: 0 };
+                sortedCols.forEach(c => stats[nome][c.key] = 0);
+            });
+
+            appState.escala.forEach(l => { 
+                if(l.data.getMonth() !== appState.mes) return; 
+                sortedCols.forEach(c => { 
+                    const nome = l[c.key]; 
+                    if(nome && stats[nome]) { 
+                        stats[nome][c.key]++;
+                        stats[nome].total++;
+                    } 
+                }); 
+            });
+
+            // Ordenar por nome
+            const nomesOrdenados = Object.keys(stats).sort();
+
+            // Renderizar Linhas
+            nomesOrdenados.forEach(n => {
+                const s = stats[n];
+                
+                let rowHTML = `<tr class="hover:bg-slate-50 transition-colors">`;
+                rowHTML += `<td class="resumo-col-nome font-medium text-slate-700 p-1 truncate" title="${n}">${n}</td>`;
+
+                sortedCols.forEach(c => {
+                    const count = s[c.key];
+                    const valClass = count > 0 ? 'text-slate-700 font-semibold' : 'text-slate-300';
+                    rowHTML += `<td class="p-1 text-center ${valClass} border-r border-slate-100">${count}</td>`;
+                });
+
+                rowHTML += `<td class="p-1 text-center font-bold text-slate-800 bg-slate-100 border-x border-slate-200">${s.total}</td>`;
+
+                rowHTML += `</tr>`;
+                tbody.innerHTML += rowHTML;
+            });
+        }
+
+        function getFuncionariosEscala() { return masterData.funcionarios.filter(f => f.tipo === 'escala' && f.categoria !== 'Funcionário da Senha').sort((a,b) => (a.apelido||a.nome).localeCompare(b.apelido||b.nome)); }
+        function mudarMes(d) { let n = appState.mes + d; if(n > 11) { appState.mes = 0; appState.ano++; } else if(n < 0) { appState.mes = 11; appState.ano--; } else { appState.mes = n; } document.getElementById('mes-select').value = appState.mes; document.getElementById('ano-input').value = appState.ano; atualizarUI(); }
+        
+        // --- FUNÇÕES DE IMPORTAÇÃO E EXPORTAÇÃO ---
+        
+        function importarDados(e) { 
+            const f = e.target.files[0]; 
+            if(!f) return; 
+            const r = new FileReader(); 
+            r.onload = (ev) => { 
+                try { 
+                    const j = JSON.parse(ev.target.result); 
+                    if(j.funcionarios) { 
+                        localStorage.setItem(MASTER_DB_KEY, JSON.stringify(j)); 
+                        masterData = j; 
+                        atualizarUI(); 
+                        alert("Dados Mestre (Funcionários) Importados com Sucesso!"); 
+                    } else {
+                        alert("Arquivo inválido: Não contem lista de funcionários.");
+                    }
+                } catch(e) { 
+                    alert("Erro ao ler arquivo JSON."); 
+                }
+            }; 
+            r.readAsText(f); 
+        }
+
+        // Nova função para criar backup do Mestre
+        function exportarBackupMestre() {
+            const rawMaster = localStorage.getItem(MASTER_DB_KEY);
+            if (!rawMaster) return alert("Não há dados de funcionários para exportar.");
+            
+            const blob = new Blob([rawMaster], {type: "application/json;charset=utf-8"});
+            saveAs(blob, "backup_funcionarios_limeira.json");
+        }
+
+        function renderRegras() { const div = document.getElementById('lista-regras'); div.innerHTML = ''; appState.regrasFixas.forEach((r, idx) => { const col = getFlatColumns().find(c => c.key === r.slot); const colLabel = col ? col.label : r.slot; div.innerHTML += `<div class="flex justify-between items-center bg-white p-1.5 border rounded text-[10px]"><span class="truncate max-w-[140px]"><b>${r.func}</b> <i class="fas fa-arrow-right mx-1 text-slate-300"></i> ${colLabel}</span><button onclick="removerRegra(${idx})" class="text-red-400 hover:text-red-600 px-1"><i class="fas fa-times"></i></button></div>`; }); }
+        function removerRegra(idx) { appState.regrasFixas.splice(idx, 1); salvarEstado(); atualizarUI(); }
+        function adicionarRegraFixa() { const func = document.getElementById('config-func').value; const slot = document.getElementById('config-slot').value; if(!func || !slot) return; appState.regrasFixas = appState.regrasFixas.filter(r => !(r.func === func || r.slot === slot)); appState.regrasFixas.push({ func, slot }); salvarEstado(); atualizarUI(); }
         function limparTodasRegras() { if(confirm('Limpar todas as regras?')) { appState.regrasFixas = []; salvarEstado(); atualizarUI(); } }
         function destacarCor(cor) { const n = document.getElementById('busca-func').value; if(n) { appState.destaques[n] = cor; salvarEstado(); atualizarUI(); } }
         function limparDestaques() { appState.destaques = {}; salvarEstado(); atualizarUI(); }
-        function toggleTrocaRapida() {
-            modoTrocaRapida = !modoTrocaRapida;
-            const btn = document.getElementById('btn-troca-rapida'); const p = document.getElementById('painel-central');
-            trocaOrigem = null; document.querySelectorAll('.celula-troca-origem').forEach(el => el.classList.remove('celula-troca-origem'));
-            if(modoTrocaRapida) { btn.classList.add('btn-active'); p.classList.add('cursor-troca'); } else { btn.classList.remove('btn-active'); p.classList.remove('cursor-troca'); }
-        }
-        function handleTroca(cell) {
-            if(!trocaOrigem) { trocaOrigem = { idx: cell.dataset.idx, key: cell.dataset.key, el: cell }; cell.classList.add('celula-troca-origem'); }
-            else {
-                const dest = { idx: cell.dataset.idx, key: cell.dataset.key };
-                const v1 = appState.escala[trocaOrigem.idx][trocaOrigem.key]; const v2 = appState.escala[dest.idx][dest.key];
-                appState.escala[trocaOrigem.idx][trocaOrigem.key] = v2; appState.escala[dest.idx][dest.key] = v1;
-                trocaOrigem.el.classList.remove('celula-troca-origem'); trocaOrigem = null; toggleTrocaRapida(); salvarEstado(); atualizarUI();
-            }
-        }
-        function abrirModalMestre() {
-            const funcBody = document.getElementById('mestre-funcs');
-            funcBody.innerHTML = '';
-            masterData.funcionarios.forEach(f => {
-                const almoco = (f.saida1 && f.entrada2) ? `${f.saida1} - ${f.entrada2}` : '-';
-                funcBody.innerHTML += `<tr><td class="p-1 border">${f.apelido||f.nome}</td><td class="p-1 border">${f.cargo}</td><td class="p-1 border">${almoco}</td></tr>`;
-            });
-            const feriasBody = document.getElementById('mestre-ferias');
-            feriasBody.innerHTML = '';
-            masterData.ferias.forEach(f => {
-                feriasBody.innerHTML += `<tr><td class="p-1 border">${f.funcionario}</td><td class="p-1 border">${f.inicio}</td><td class="p-1 border">${f.fim}</td></tr>`;
-            });
-            const feriadosBody = document.getElementById('mestre-feriados');
-            feriadosBody.innerHTML = '';
-            masterData.feriados.forEach(f => {
-                feriadosBody.innerHTML += `<tr><td class="p-1 border">${f.data}</td><td class="p-1 border">${f.nome}</td></tr>`;
-            });
-            document.getElementById('modal-mestre').classList.remove('hidden');
-        }
-        function abrirModal(idx, key) {
-            editando = { idx, key };
-            const linha = appState.escala[idx];
-            const modalSelect = document.getElementById('modal-select');
-            const modalInput = document.getElementById('modal-input');
-            modalSelect.classList.add('hidden'); modalInput.classList.add('hidden');
-            let valorAtual = linha[key];
-            if(key === 'dataLabel' && !valorAtual) valorAtual = linha.data.toLocaleDateString('pt-BR');
-            if(key === 'semLabel' && !valorAtual) valorAtual = linha.diaSemana.toLocaleDateString('pt-BR', {weekday: 'short'}).toUpperCase();
-            if(key === 'senha' && !valorAtual) valorAtual = linha.senha;
-            const isSystemCol = key === 'dataLabel' || key === 'semLabel';
-            if (isSystemCol) { modalInput.value = valorAtual || ''; modalInput.classList.remove('hidden'); } else {
-                modalSelect.innerHTML = '<option value="">(Vazio)</option>';
-                let list = [];
-                if(key === 'senha') { list = masterData.funcionarios.map(f => (f.apelido || f.nome)); } else { list = getFuncionariosEscala().map(f => (f.apelido || f.nome)); }
-                list.sort();
-                list.forEach(nome => { const opt = new Option(nome, nome); if(nome === valorAtual) opt.selected = true; modalSelect.add(opt); });
-                modalSelect.classList.remove('hidden');
-            }
-            document.getElementById('modal-edicao').classList.remove('hidden');
-        }
-        function salvarEdicaoManual() {
-            if(!editando) return;
-            const modalSelect = document.getElementById('modal-select');
-            const modalInput = document.getElementById('modal-input');
-            let novoValor = !modalSelect.classList.contains('hidden') ? modalSelect.value : modalInput.value;
-            appState.escala[editando.idx][editando.key] = novoValor;
-            salvarEstado(); atualizarUI(); fecharModal();
-        }
+        function toggleTrocaRapida() { modoTrocaRapida = !modoTrocaRapida; const btn = document.getElementById('btn-troca-rapida'); const p = document.getElementById('painel-central'); trocaOrigem = null; document.querySelectorAll('.celula-troca-origem').forEach(el => el.classList.remove('celula-troca-origem')); if(modoTrocaRapida) { btn.classList.add('btn-active'); p.classList.add('cursor-troca'); } else { btn.classList.remove('btn-active'); p.classList.remove('cursor-troca'); } }
+        function handleTroca(cell) { if(!trocaOrigem) { trocaOrigem = { idx: cell.dataset.idx, key: cell.dataset.key, el: cell }; cell.classList.add('celula-troca-origem'); } else { const dest = { idx: cell.dataset.idx, key: cell.dataset.key }; const v1 = appState.escala[trocaOrigem.idx][trocaOrigem.key]; const v2 = appState.escala[dest.idx][dest.key]; appState.escala[trocaOrigem.idx][trocaOrigem.key] = v2; appState.escala[dest.idx][dest.key] = v1; trocaOrigem.el.classList.remove('celula-troca-origem'); trocaOrigem = null; toggleTrocaRapida(); salvarEstado(); atualizarUI(); } }
+        function abrirModalMestre() { const funcBody = document.getElementById('mestre-funcs'); funcBody.innerHTML = ''; masterData.funcionarios.forEach(f => { const almoco = (f.saida1 && f.entrada2) ? `${f.saida1} - ${f.entrada2}` : '-'; funcBody.innerHTML += `<tr><td class="p-1 border">${f.apelido||f.nome}</td><td class="p-1 border">${f.cargo}</td><td class="p-1 border">${almoco}</td></tr>`; }); const feriasBody = document.getElementById('mestre-ferias'); feriasBody.innerHTML = ''; masterData.ferias.forEach(f => { feriasBody.innerHTML += `<tr><td class="p-1 border">${f.funcionario}</td><td class="p-1 border">${f.inicio}</td><td class="p-1 border">${f.fim}</td></tr>`; }); const feriadosBody = document.getElementById('mestre-feriados'); feriadosBody.innerHTML = ''; masterData.feriados.forEach(f => { feriadosBody.innerHTML += `<tr><td class="p-1 border">${f.data}</td><td class="p-1 border">${f.nome}</td></tr>`; }); document.getElementById('modal-mestre').classList.remove('hidden'); }
+        function abrirModal(idx, key) { editando = { idx, key }; const linha = appState.escala[idx]; const modalSelect = document.getElementById('modal-select'); const modalInput = document.getElementById('modal-input'); modalSelect.classList.add('hidden'); modalInput.classList.add('hidden'); let valorAtual = linha[key]; if(key === 'dataLabel' && !valorAtual) valorAtual = linha.data.toLocaleDateString('pt-BR'); if(key === 'semLabel' && !valorAtual) valorAtual = linha.diaSemana.toLocaleDateString('pt-BR', {weekday: 'short'}).toUpperCase(); if(key === 'senha' && !valorAtual) valorAtual = linha.senha; const isSystemCol = key === 'dataLabel' || key === 'semLabel'; if (isSystemCol) { modalInput.value = valorAtual || ''; modalInput.classList.remove('hidden'); } else { modalSelect.innerHTML = '<option value="">(Vazio)</option>'; let list = []; if(key === 'senha') { list = masterData.funcionarios.map(f => (f.apelido || f.nome)); } else { list = getFuncionariosEscala().map(f => (f.apelido || f.nome)); } list.sort(); list.forEach(nome => { const opt = new Option(nome, nome); if(nome === valorAtual) opt.selected = true; modalSelect.add(opt); }); modalSelect.classList.remove('hidden'); } document.getElementById('modal-edicao').classList.remove('hidden'); }
+        function salvarEdicaoManual() { if(!editando) return; const modalSelect = document.getElementById('modal-select'); const modalInput = document.getElementById('modal-input'); let novoValor = !modalSelect.classList.contains('hidden') ? modalSelect.value : modalInput.value; appState.escala[editando.idx][editando.key] = novoValor; salvarEstado(); atualizarUI(); fecharModal(); }
         function fecharModal() { document.getElementById('modal-edicao').classList.add('hidden'); editando = null; }
-
-        // --- EXPORTAR ---
         function parseHtmlToExcelRichText(rootNode) {
             const results = [];
             function traverse(node, style) {
@@ -1260,178 +1289,21 @@
             traverse(rootNode, {});
             return results;
         }
-        function rgbToHex(rgb) {
-            if (!rgb) return null; if (rgb.startsWith('#')) return rgb;
-            const sep = rgb.indexOf(",") > -1 ? "," : " ";
-            const parts = rgb.substr(4).split(")")[0].split(sep);
-            if(parts.length < 3) return null;
-            let r = (+parts[0]).toString(16), g = (+parts[1]).toString(16), b = (+parts[2]).toString(16);
-            if (r.length == 1) r = "0" + r; if (g.length == 1) g = "0" + g; if (b.length == 1) b = "0" + b;
-            return "#" + r + g + b;
-        }
+        function rgbToHex(rgb) { if (!rgb) return null; if (rgb.startsWith('#')) return rgb; const sep = rgb.indexOf(",") > -1 ? "," : " "; const parts = rgb.substr(4).split(")")[0].split(sep); if(parts.length < 3) return null; let r = (+parts[0]).toString(16), g = (+parts[1]).toString(16), b = (+parts[2]).toString(16); if (r.length == 1) r = "0" + r; if (g.length == 1) g = "0" + g; if (b.length == 1) b = "0" + b; return "#" + r + g + b; }
         async function exportarExcelOriginal() {
             if (appState.escala.length === 0) return alert("Gere a escala primeiro.");
-            const mesNome = document.getElementById('mes-select').options[appState.mes].text.toUpperCase();
-            const ano = appState.ano;
-            const wb = new ExcelJS.Workbook();
-            const ws = wb.addWorksheet('Escala');
-            ws.pageSetup = { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 1 };
-            const center = { alignment: { horizontal: 'center', vertical: 'middle', wrapText: true }, border: { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} } };
-            const gray = { ...center, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } } };
-            const bold = { ...center, font: { bold: true } };
-            const flatCols = getFlatColumns();
-            const totalCols = flatCols.length;
-            const processText = (text) => text ? text.toString().replace(/\|/g, '\n') : '';
-            ws.getRow(1).height = 36;
-            ws.mergeCells(1, 1, 1, totalCols);
-            const title = ws.getCell(1, 1);
-            title.value = `ESCALA DO GUICHÊ PARA ${mesNome}/${ano}`;
-            title.style = { ...bold, font: { bold: true, size: 16 } };
-            let colIdx = 1;
-            appState.structure.forEach(g => {
-                if(g.cols.length > 0) {
-                    ws.mergeCells(2, colIdx, 4, colIdx + g.cols.length - 1);
-                    const cell = ws.getCell(2, colIdx);
-                    cell.value = processText(g.title);
-                    const groupStyle = g.grayTitle ? gray : center;
-                    cell.style = { ...groupStyle, font: { ...groupStyle.font, size: 7, bold: true } };
-                    for(let r=2; r<=4; r++) for(let c=colIdx; c<colIdx+g.cols.length; c++) ws.getCell(r,c).style = cell.style;
-                    colIdx += g.cols.length;
-                }
-            });
-            const headers = [];
-            const colWidths = [];
-            flatCols.forEach(c => {
-                const labelRaw = c.label.toUpperCase();
-                const labelProcessed = processText(labelRaw);
-                headers.push(labelProcessed);
-                const lines = labelProcessed.split('\n');
-                let maxLength = 0;
-                lines.forEach(line => { if(line.length > maxLength) maxLength = line.length; });
-                let width = Math.max(11, maxLength + 3); 
-                if(c.key === 'dataLabel') width = 12;
-                if(c.key === 'semLabel') width = 9;
-                colWidths.push({ width: width });
-            });
-            ws.columns = colWidths;
-            const r5 = ws.getRow(5);
-            r5.values = headers;
-            r5.eachCell((c, colNumber) => {
-                const col = flatCols[colNumber-1];
-                const isGray = col.grayHeader; 
-                c.style = isGray ? { ...bold, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } } } : bold;
-            });
-            let rowIdx = 6;
-            appState.escala.filter(l => l.data.getMonth() === appState.mes).forEach(l => {
-                const rowVals = [];
-                flatCols.forEach(c => {
-                    let val = l[c.key] || '';
-                    if(c.key === 'dataLabel' && !val) val = l.data.toLocaleDateString('pt-BR');
-                    if(c.key === 'semLabel' && !val) val = l.diaSemana.toLocaleDateString('pt-BR', {weekday: 'short'}).replace('.', '');
-                    if(c.key === 'senha' && !val) val = l.senha || '';
-                    rowVals.push(val);
-                });
-                const r = ws.getRow(rowIdx);
-                r.values = rowVals;
-                r.eachCell((cell, colNum) => {
-                    const col = flatCols[colNum-1];
-                    const isGray = col.grayBody;
-                    cell.style = isGray ? gray : center;
-                });
-                rowIdx++;
-            });
-            const editorEl = document.getElementById('editor-obs');
-            const config = appState.observacoesConfig[getObsKey()] || { vAlign: 'middle' };
-            let hAlign = 'left';
-            if(editorEl.childNodes.length > 0) {
-                 const firstNode = editorEl.childNodes[0];
-                 if(firstNode.style && firstNode.style.textAlign) hAlign = firstNode.style.textAlign;
-            }
-            if(hAlign === 'justify' || hAlign === 'justifyFull') hAlign = 'justify';
-            const richTextValue = parseHtmlToExcelRichText(editorEl);
-            if (richTextValue.length > 0) {
-                rowIdx += 1; 
-                ws.mergeCells(rowIdx, 1, rowIdx + 4, totalCols);
-                const obsCell = ws.getCell(rowIdx, 1);
-                const isPlain = richTextValue.length === 1 && !richTextValue[0].font;
-                if (isPlain) { obsCell.value = richTextValue[0].text; } else { obsCell.value = { richText: richTextValue }; }
-                obsCell.style = {
-                    alignment: { horizontal: hAlign, vertical: config.vAlign, wrapText: true },
-                    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
-                };
-            }
-            const buffer = await wb.xlsx.writeBuffer();
-            saveAs(new Blob([buffer]), `Escala_${mesNome}_${ano}.xlsx`);
-        }
-        async function exportarPDFOriginal() {
-            if (appState.escala.length === 0) return alert("Gere a escala primeiro.");
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('l', 'mm', 'a4');
-            const mesNome = document.getElementById('mes-select').options[appState.mes].text.toUpperCase();
-            const ano = appState.ano;
-            doc.setFontSize(14); doc.setFont("helvetica", "bold");
-            doc.text(`ESCALA DO GUICHÊ PARA ${mesNome}/${ano}`, 14, 15);
-            const head1 = [];
-            appState.structure.forEach(g => {
-                if(g.cols.length > 0) {
-                    let groupStyle = { halign: 'center', valign: 'middle', fontSize: 6 };
-                    if (g.grayTitle) groupStyle.fillColor = [220, 220, 220]; 
-                    const title = g.title.replace(/\|/g, '\n');
-                    head1.push({ content: title, colSpan: g.cols.length, styles: groupStyle });
-                }
-            });
-            const head2 = [];
-            const flatCols = getFlatColumns();
-            flatCols.forEach(c => {
-                let cellStyle = {};
-                if (c.grayHeader) { cellStyle = { fillColor: [230, 230, 230] }; }
-                const label = c.label.replace(/\|/g, '\n');
-                head2.push({ content: label, styles: cellStyle });
-            });
-            const body = appState.escala.filter(l => l.data.getMonth() === appState.mes).map(l => {
-                const row = [];
-                flatCols.forEach(c => {
-                    let val = l[c.key] || '';
-                    if(c.key === 'dataLabel' && !val) val = l.data.toLocaleDateString('pt-BR');
-                    if(c.key === 'semLabel' && !val) val = l.diaSemana.toLocaleDateString('pt-BR', {weekday: 'short'}).replace('.', '');
-                    if(c.key === 'senha' && !val) val = l.senha || '';
-                    row.push(val);
-                });
-                return row;
-            });
-            const colStyles = {};
-            flatCols.forEach((c, idx) => {
-                if(c.key === 'dataLabel') colStyles[idx] = { cellWidth: 15 };
-                if(c.key === 'semLabel') colStyles[idx] = { cellWidth: 10 };
-                if(c.grayBody) { colStyles[idx] = { ...colStyles[idx], fillColor: [230, 230, 230] }; }
-            });
-            doc.autoTable({
-                startY: 20, head: [head1, head2], body: body, theme: 'grid',
-                styles: { fontSize: 7, cellPadding: 1, lineColor: [44, 62, 80], lineWidth: 0.1, halign: 'center' },
-                headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold', lineWidth: 0.1, lineColor: [44, 62, 80] },
-                columnStyles: colStyles
-            });
-            const editorEl = document.getElementById('editor-obs');
-            const obsText = editorEl.innerText.trim();
-            const config = appState.observacoesConfig[getObsKey()] || { vAlign: 'middle' };
-            let hAlign = 'left';
-            if(editorEl.childNodes.length > 0) {
-                 const firstNode = editorEl.childNodes[0];
-                 if(firstNode.style && firstNode.style.textAlign) hAlign = firstNode.style.textAlign;
-            }
-            if(hAlign === 'justifyFull') hAlign = 'justify';
-            if (obsText) {
-                const finalY = doc.lastAutoTable.finalY + 10;
-                doc.setFontSize(10);
-                doc.setFont("helvetica", "normal"); 
-                const maxWidth = 270;
-                const splitText = doc.splitTextToSize(obsText, maxWidth); 
-                let x = 14;
-                if (hAlign === 'center') x = 14 + (maxWidth / 2);
-                else if (hAlign === 'right') x = 14 + maxWidth;
-                doc.text(splitText, x, finalY + 5, { align: hAlign === 'justify' ? 'left' : hAlign, maxWidth: maxWidth });
-            }
-            doc.save(`Escala_${mesNome}_${ano}.pdf`);
+            const mesNome = document.getElementById('mes-select').options[appState.mes].text.toUpperCase(); const ano = appState.ano;
+            const wb = new ExcelJS.Workbook(); const ws = wb.addWorksheet('Escala');
+            ws.pageSetup = { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 1, horizontalCentered: true, verticalCentered: true, margins: { left: 0.2, right: 0.2, top: 0.2, bottom: 0.2, header: 0.1, footer: 0.1 } };
+            const borderStyle = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} }; const center = { alignment: { horizontal: 'center', vertical: 'middle', wrapText: true }, border: borderStyle }; const gray = { ...center, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } } }; const fontData = { name: 'Calibri', size: 8 }; const fontHeader = { bold: true, name: 'Calibri', size: 9 }; const fontTitle = { bold: true, name: 'Calibri', size: 12 };
+            const flatCols = getFlatColumns(); const totalCols = flatCols.length; const processText = (text) => text ? text.toString().replace(/\|/g, '\n') : '';
+            ws.getRow(1).height = 30; ws.mergeCells(1, 1, 1, totalCols); const title = ws.getCell(1, 1); title.value = `ESCALA DO GUICHÊ PARA ${mesNome}/${ano}`; title.style = { font: fontTitle, alignment: { horizontal: 'center', vertical: 'middle' }, border: borderStyle }; for(let c = 1; c <= totalCols; c++) { ws.getCell(1, c).border = borderStyle; }
+            let colIdx = 1; appState.structure.forEach(g => { if(g.cols.length > 0) { ws.mergeCells(2, colIdx, 4, colIdx + g.cols.length - 1); const cell = ws.getCell(2, colIdx); cell.value = processText(g.title); const groupStyle = g.grayTitle ? gray : center; cell.style = { ...groupStyle, font: fontHeader }; for(let r=2; r<=4; r++) { for(let c=colIdx; c<colIdx+g.cols.length; c++) { ws.getCell(r,c).border = borderStyle; } } colIdx += g.cols.length; } });
+            const headers = []; const colWidths = []; const pxToExcel = (px) => px / 7;
+            flatCols.forEach((c, idx) => { const labelRaw = c.label.toUpperCase(); const labelProcessed = processText(labelRaw); headers.push(labelProcessed); let widthVal = pxToExcel(83); if (idx === 0 || idx === 1) { widthVal = pxToExcel(63); } else if (idx === 8 || idx === 9) { widthVal = pxToExcel(90); } colWidths.push({ width: widthVal }); }); ws.columns = colWidths;
+            const r5 = ws.getRow(5); r5.height = 18.75; r5.values = headers; r5.eachCell((c, colNumber) => { const col = flatCols[colNumber-1]; const isGray = col.grayHeader; c.style = isGray ? { ...center, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } } } : center; c.font = fontHeader; c.border = borderStyle; });
+            let rowIdx = 6; appState.escala.filter(l => l.data.getMonth() === appState.mes).forEach(l => { const rowVals = []; flatCols.forEach(c => { let val = l[c.key] || ''; if(c.key === 'dataLabel') val = l.data.toLocaleDateString('pt-BR'); if(c.key === 'semLabel') val = l.diaSemana.toLocaleDateString('pt-BR', {weekday: 'short'}).replace('.', '').toUpperCase(); if(c.key === 'senha') val = l.senha || ''; rowVals.push(val); }); const r = ws.getRow(rowIdx); r.values = rowVals; r.height = 15; r.eachCell((cell, colNum) => { const col = flatCols[colNum-1]; const isGray = col.grayBody; cell.style = isGray ? gray : center; cell.font = fontData; cell.border = borderStyle; }); rowIdx++; });
+            const editorEl = document.getElementById('editor-obs'); const config = appState.observacoesConfig[getObsKey()] || { vAlign: 'middle' }; let hAlign = 'left'; if(editorEl.childNodes.length > 0) { const firstNode = editorEl.childNodes[0]; if(firstNode.style && firstNode.style.textAlign) hAlign = firstNode.style.textAlign; } if(hAlign === 'justifyFull') hAlign = 'justify'; if (obsText) { const finalY = doc.lastAutoTable.finalY + 10; doc.setFontSize(14); doc.setFont("helvetica", "normal"); const maxWidth = 270; const splitText = doc.splitTextToSize(obsText, maxWidth); let x = 14; if (hAlign === 'center') x = 14 + (maxWidth / 2); else if (hAlign === 'right') x = 14 + maxWidth; doc.text(splitText, x, finalY + 5, { align: hAlign === 'justify' ? 'left' : hAlign, maxWidth: maxWidth }); } doc.save(`Escala_${mesNome}_${ano}.pdf`);
         }
     </script>
 </body>
