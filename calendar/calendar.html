@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartPlanner AI</title>
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome para ícones -->
+    <link rel="shortcut icon" href="https://placehold.co/32x32/003366/FFFFFF?text=K" type="image/x-icon">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#8b5cf6',
+                        accent: '#f59e0b',
+                        dark: {
+                            bg: '#0f172a',
+                            card: '#1e293b',
+                            text: '#f1f5f9'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .calendar-day { transition: all 0.2s ease; }
+        /* Efeito hover também para dias de outros meses agora */
+        .calendar-day:hover { transform: translateY(-2px); z-index: 10; }
+        
+        .drag-over { background-color: rgba(59, 130, 246, 0.1) !important; border: 2px dashed #3b82f6 !important; }
+        
+        .custom-checkbox:checked + div {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+
+        /* Toast de Notificação */
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 100;
+        }
+        
+        /* Chat bubbles */
+        .chat-user { align-self: flex-end; background-color: #3b82f6; color: white; border-bottom-right-radius: 0; }
+        .chat-bot { align-self: flex-start; background-color: #f3f4f6; color: #1f2937; border-bottom-left-radius: 0; }
+        .dark .chat-bot { background-color: #374151; color: #f3f4f6; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 transition-colors duration-300 dark:bg-dark-bg dark:text-dark-text font-sans h-screen overflow-hidden flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-white dark:bg-dark-card shadow-sm py-3 px-6 flex justify-between items-center z-20 shrink-0 gap-4">
+        <div class="flex items-center gap-3">
+            <!-- BOTÃO DE VOLTAR ADICIONADO AQUI -->
+            <a href="../kyro/kyro.html" class="p-2 -ml-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-300 flex items-center justify-center group" title="Voltar para Kyro">
+                <i class="fa-solid fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>
+            </a>
+            <div class="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
+            <!-- FIM BOTÃO DE VOLTAR -->
+
+            <i class="fa-solid fa-calendar-check text-2xl text-primary"></i>
+            <h1 class="text-lg font-bold tracking-tight hidden md:block">Smart<span class="text-primary">Planner</span></h1>
+        </div>
+
+        <div class="flex-1"></div> 
+        
+        <div class="flex items-center gap-3">
+            <button onclick="toggleSettingsModal()" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-300" title="Configurações e Backup">
+                <i class="fa-solid fa-gear"></i>
+            </button>
+            <div id="current-date-display" class="text-sm font-medium text-gray-500 dark:text-gray-400 hidden md:block border-l pl-3 dark:border-gray-600"></div>
+            <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors focus:outline-none">
+                <i class="fa-solid fa-moon text-gray-600 dark:text-yellow-400 text-lg"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Layout -->
+    <main class="flex-1 flex overflow-hidden">
+        
+        <!-- Esquerda: Chat IA -->
+        <aside class="w-64 bg-white dark:bg-dark-card border-r border-gray-200 dark:border-gray-700 flex flex-col shadow-lg z-10 transition-colors duration-300 hidden md:flex">
+            <div class="p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 shrink-0">
+                <h2 class="font-semibold text-base flex items-center gap-2">
+                    <i class="fa-solid fa-robot text-secondary"></i> Assistente IA
+                </h2>
+                <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
+                    Dica: Use <b>Shift+Enter</b> para agendar múltiplos eventos de uma vez.
+                </p>
+            </div>
+            <div id="chat-history" class="flex-1 overflow-y-auto p-3 space-y-3 flex flex-col">
+                <div class="flex items-start gap-2 max-w-[90%]">
+                    <div class="w-6 h-6 rounded-full bg-secondary flex items-center justify-center text-white flex-shrink-0 mt-1">
+                        <i class="fa-solid fa-robot text-[10px]"></i>
+                    </div>
+                    <div class="bg-gray-100 dark:bg-gray-700 p-2 rounded-lg rounded-tl-none text-xs dark:text-gray-200">
+                        Olá! Pode colar uma lista de eventos aqui ou pedir "Marcar médico dia 20".
+                    </div>
+                </div>
+            </div>
+            <div class="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 shrink-0">
+                <form id="chat-form" class="flex gap-2 items-end">
+                    <!-- Textarea para suportar múltiplas linhas -->
+                    <textarea id="chat-input" rows="1" placeholder="Digite... (Shift+Enter pula linha)" class="flex-1 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-secondary dark:text-white transition-colors resize-none overflow-hidden" style="min-height: 34px; max-height: 120px;"></textarea>
+                    <button type="submit" class="bg-secondary hover:bg-purple-700 text-white rounded-lg px-3 py-2 transition-colors h-8 flex items-center justify-center mb-0.5"><i class="fa-solid fa-paper-plane text-xs"></i></button>
+                </form>
+            </div>
+        </aside>
+
+        <!-- Centro: Calendário -->
+        <section class="flex-1 flex flex-col p-4 overflow-hidden bg-gray-100 dark:bg-dark-bg relative">
+            <div class="flex justify-between items-center mb-2 shrink-0 flex-wrap gap-2">
+                <div class="flex items-center gap-3">
+                    <h2 id="month-year-display" class="text-2xl font-bold text-gray-800 dark:text-white capitalize"></h2>
+                    <span class="text-[10px] bg-indigo-50 dark:bg-indigo-900/30 dark:text-indigo-200 text-indigo-700 px-2 py-1 rounded border border-indigo-200 dark:border-indigo-800 flex items-center gap-1.5 shadow-sm" title="Integração Ativa">
+                        <span class="relative flex h-2 w-2">
+                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                          <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                        </span>
+                        Sync: Gestão de Pessoal (v6)
+                    </span>
+                </div>
+                <div class="flex gap-2">
+                    <button id="prev-month" class="p-1.5 bg-white dark:bg-dark-card rounded-lg shadow hover:shadow-md transition text-gray-600 dark:text-gray-300"><i class="fa-solid fa-chevron-left"></i></button>
+                    <button id="today-btn" class="px-3 py-1.5 bg-primary text-white rounded-lg shadow hover:bg-blue-600 transition font-medium text-xs">Hoje</button>
+                    <button id="next-month" class="p-1.5 bg-white dark:bg-dark-card rounded-lg shadow hover:shadow-md transition text-gray-600 dark:text-gray-300"><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+            </div>
+            <div class="grid grid-cols-7 gap-2 mb-2 text-center shrink-0">
+                <div class="text-gray-400 font-bold text-xs">DOM</div>
+                <div class="text-gray-400 font-bold text-xs">SEG</div>
+                <div class="text-gray-400 font-bold text-xs">TER</div>
+                <div class="text-gray-400 font-bold text-xs">QUA</div>
+                <div class="text-gray-400 font-bold text-xs">QUI</div>
+                <div class="text-gray-400 font-bold text-xs">SEX</div>
+                <div class="text-gray-400 font-bold text-xs">SÁB</div>
+            </div>
+            <div id="calendar-grid" class="grid grid-cols-7 grid-rows-6 gap-2 flex-1 h-full min-h-0 select-none">
+                <!-- Dias gerados via JS -->
+            </div>
+        </section>
+
+        <!-- Direita -->
+        <aside class="w-64 bg-white dark:bg-dark-card border-l border-gray-200 dark:border-gray-700 flex flex-col p-4 shadow-lg z-10 overflow-y-auto transition-colors duration-300">
+            <div class="mb-4 shrink-0 bg-blue-50 dark:bg-slate-800 p-3 rounded-lg border border-blue-100 dark:border-slate-700 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-2 opacity-50 group-hover:opacity-100 transition"><i class="fa-solid fa-cloud-sun text-blue-400 text-3xl"></i></div>
+                <h3 class="text-[10px] font-bold text-blue-500 uppercase mb-1">Tempo em Limeira</h3>
+                <div class="flex items-end gap-1">
+                    <span id="weather-temp" class="text-2xl font-bold text-gray-800 dark:text-white">--°</span>
+                    <span class="text-xs text-gray-500 mb-1.5" id="weather-desc">Carregando...</span>
+                </div>
+            </div>
+            
+            <!-- SEÇÃO MENSAGEM DO DIA / BÍBLIA -->
+            <div class="mb-4 shrink-0">
+                <div class="flex items-center gap-2 mb-2 justify-between">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-book-bible text-secondary text-base"></i>
+                        <h3 class="font-bold text-sm">Palavra Diária</h3>
+                    </div>
+                    <!-- Botão pequeno para forçar novo versículo se o usuário quiser -->
+                    <button onclick="forceNewVerse()" class="text-[10px] text-gray-400 hover:text-primary transition" title="Novo Versículo"><i class="fa-solid fa-rotate"></i></button>
+                </div>
+                <div class="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-slate-800 dark:to-slate-700 p-3 rounded-lg border border-indigo-100 dark:border-slate-600 shadow-sm relative overflow-hidden">
+                    <div id="daily-message" class="text-gray-700 dark:text-gray-200 italic font-medium relative z-10 text-xs leading-relaxed">
+                        <div class="animate-pulse">Carregando inspiração...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-4 shrink-0 relative">
+                <input type="text" id="search-input" placeholder="Buscar eventos..." class="w-full pl-8 pr-3 py-1.5 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs focus:ring-2 focus:ring-primary focus:outline-none dark:text-white">
+                <i class="fa-solid fa-search absolute left-2.5 top-2 text-gray-400 text-xs"></i>
+            </div>
+            <div class="flex-1 overflow-y-auto">
+                <h3 class="font-bold text-sm mb-3 flex items-center gap-2 sticky top-0 bg-white dark:bg-dark-card py-2 z-10">
+                    <i class="fa-solid fa-list-check text-primary"></i> Eventos
+                </h3>
+                <div id="events-list" class="space-y-2 pb-2">
+                    <!-- Lista gerada via JS -->
+                </div>
+            </div>
+            <div class="mt-auto pt-3 border-t border-gray-200 dark:border-gray-700 shrink-0">
+                <button id="enable-notifications" class="w-full py-1.5 px-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-xs hover:bg-gray-300 dark:hover:bg-gray-600 transition flex items-center justify-center gap-2 font-medium">
+                    <i class="fa-solid fa-bell"></i> Requisitar Permissão
+                </button>
+                <div id="notification-status" class="text-[9px] text-green-500 text-center mt-1 hidden"><i class="fa-solid fa-check"></i> Monitoramento Ativo</div>
+            </div>
+        </aside>
+    </main>
+
+    <!-- Modal Adicionar/Editar Evento -->
+    <div id="event-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 backdrop-blur-sm">
+        <div class="bg-white dark:bg-dark-card p-6 rounded-2xl shadow-2xl w-full max-w-md transform scale-95 opacity-0 transition-all duration-300 max-h-[90vh] overflow-y-auto" id="modal-content">
+            <h3 class="text-xl font-bold mb-1 dark:text-white" id="modal-title">Evento</h3>
+            <p id="modal-date-display" class="text-sm text-gray-500 dark:text-gray-400 mb-4"></p>
+            
+            <form id="add-event-form">
+                <input type="hidden" id="event-index">
+                <div class="mb-3">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Título</label>
+                    <input type="text" id="event-title" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary focus:outline-none text-sm">
+                </div>
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Hora</label>
+                        <input type="time" id="event-time" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary focus:outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Recorrência</label>
+                        <select id="event-recurrence" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary focus:outline-none text-sm">
+                            <option value="none">Nunca</option>
+                            <option value="weekly">Semanalmente (4x)</option>
+                            <option value="monthly">Mensalmente (12x)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300">Categoria</label>
+                        <button type="button" onclick="openCategoryModal()" class="text-xs text-primary hover:underline">+ Nova</button>
+                    </div>
+                    <select id="event-category" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary focus:outline-none text-sm"></select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Checklist / Subtarefas</label>
+                    <div id="checklist-container" class="space-y-2 mb-2"></div>
+                    <div class="flex gap-2">
+                        <input type="text" id="new-checklist-item" placeholder="Nova tarefa..." class="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-700 dark:text-white">
+                        <button type="button" onclick="addChecklistItemUI()" class="bg-gray-200 dark:bg-gray-600 px-3 py-1 rounded text-xs hover:bg-gray-300 dark:hover:bg-gray-500">+</button>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-2 border-t border-gray-100 dark:border-gray-700">
+                    <button type="button" id="delete-event-btn" class="hidden px-4 py-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition text-xs font-bold mr-auto">Excluir</button>
+                    <button type="button" id="close-modal" class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition text-sm">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-600 transition shadow-lg shadow-blue-500/30 text-sm font-medium">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast de Notificações -->
+    <div id="toast-container"></div>
+
+    <!-- Modal Configurações / Backup -->
+    <div id="settings-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 backdrop-blur-sm">
+        <div class="bg-white dark:bg-dark-card p-6 rounded-2xl shadow-2xl w-full max-w-sm">
+            <h3 class="text-lg font-bold mb-4 dark:text-white flex items-center gap-2">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Backup & Dados
+            </h3>
+            <p class="text-xs text-gray-600 dark:text-gray-300 mb-4">
+                Gerencie seus dados. O backup ICS permite importar o ano inteiro para Outlook/Windows.
+            </p>
+            <div class="space-y-3">
+                <button onclick="exportYearlyICS()" class="w-full py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition flex items-center justify-center gap-2 shadow-md">
+                    <i class="fa-brands fa-windows"></i> Baixar Calendário do Ano (ICS)
+                </button>
+
+                <div class="border-t border-gray-200 dark:border-gray-700 my-2"></div>
+
+                <button onclick="exportData()" class="w-full py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg text-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-download"></i> Backup Completo (.json)
+                </button>
+                <div class="relative">
+                    <input type="file" id="import-file" accept=".json" class="hidden" onchange="importData(this)">
+                    <button onclick="document.getElementById('import-file').click()" class="w-full py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg text-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-upload"></i> Restaurar Backup (.json)
+                    </button>
+                </div>
+            </div>
+            <button onclick="toggleSettingsModal()" class="mt-4 text-xs text-gray-400 hover:text-gray-600 w-full text-center">Fechar</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. ESTADO & CONFIGURAÇÃO ---
+        const defaultCategories = {
+            general: { label: 'Geral', color: 'bg-blue-500', text: 'text-blue-500', bgSoft: 'bg-blue-100 dark:bg-blue-900/30' },
+            work: { label: 'Trabalho', color: 'bg-purple-500', text: 'text-purple-500', bgSoft: 'bg-purple-100 dark:bg-purple-900/30' },
+            health: { label: 'Saúde', color: 'bg-red-500', text: 'text-red-500', bgSoft: 'bg-red-100 dark:bg-red-900/30' },
+            personal: { label: 'Pessoal', color: 'bg-green-500', text: 'text-green-500', bgSoft: 'bg-green-100 dark:bg-green-900/30' },
+            holiday: { label: 'Feriado', color: 'bg-gray-500', text: 'text-red-600', bgSoft: 'bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-900' },
+            vacation: { label: 'Férias', color: 'bg-orange-500', text: 'text-orange-600', bgSoft: 'bg-orange-100 dark:bg-orange-900/30 border-orange-100 dark:border-orange-900' }
+        };
+
+        let state = {
+            currentDate: new Date(),
+            selectedDate: null,
+            events: [],
+            categories: JSON.parse(localStorage.getItem('smartCalendarCategories')) || defaultCategories,
+            theme: localStorage.getItem('theme') || 'light'
+        };
+
+        function loadEvents() {
+            state.events = JSON.parse(localStorage.getItem('smartCalendarEvents_default')) || [];
+        }
+
+        // --- MÓDULO DE CÁLCULO DE FERIADOS (Portado de funcionarios.html) ---
+        function calcularPascoa(ano) {
+            const a = ano % 19;
+            const b = Math.floor(ano / 100);
+            const c = ano % 100;
+            const d = Math.floor(b / 4);
+            const e = b % 4;
+            const f = Math.floor((b + 8) / 25);
+            const g = Math.floor((b - f + 1) / 3);
+            const h = (19 * a + b - d - g + 15) % 30;
+            const i = Math.floor(c / 4);
+            const k = c % 4;
+            const l = (32 + 2 * e + 2 * i - h - k) % 7;
+            const m = Math.floor((a + 11 * h + 22 * l) / 451);
+            
+            const mes = Math.floor((h + l - 7 * m + 114) / 31);
+            const dia = ((h + l - 7 * m + 114) % 31) + 1;
+            
+            return new Date(ano, mes - 1, dia);
+        }
+
+        function adicionarDias(data, dias) {
+            const result = new Date(data);
+            result.setDate(result.getDate() + dias);
+            return result.toISOString().split('T')[0];
+        }
+
+        function gerarFeriadosParaAno(ano) {
+            const pascoaDate = calcularPascoa(ano);
+            const pascoa = pascoaDate.toISOString().split('T')[0];
+            const sextaSanta = adicionarDias(pascoaDate, -2);
+            const carnavalSeg = adicionarDias(pascoaDate, -48);
+            const carnavalTer = adicionarDias(pascoaDate, -47);
+            const cinzas = adicionarDias(pascoaDate, -46);
+            const corpusChristi = adicionarDias(pascoaDate, 60);
+
+            // Lista base de feriados (Nacionais, Estaduais e Municipais de Limeira)
+            return [
+                { data: `${ano}-01-01`, nome: 'Confraternização Universal', tipo: 'Nacional' },
+                { data: carnavalSeg, nome: 'Carnaval (Segunda)', tipo: 'Facultativo' },
+                { data: carnavalTer, nome: 'Carnaval (Terça)', tipo: 'Facultativo' },
+                { data: cinzas, nome: 'Quarta-feira de Cinzas (até 13h)', tipo: 'Facultativo' },
+                { data: sextaSanta, nome: 'Paixão de Cristo', tipo: 'Nacional' },
+                { data: `${ano}-04-21`, nome: 'Tiradentes', tipo: 'Nacional' },
+                { data: `${ano}-05-01`, nome: 'Dia do Trabalho', tipo: 'Nacional' },
+                { data: corpusChristi, nome: 'Corpus Christi', tipo: 'Municipal' },
+                { data: `${ano}-07-09`, nome: 'Revolução Constitucionalista', tipo: 'Estadual' },
+                { data: `${ano}-09-07`, nome: 'Independência do Brasil', tipo: 'Nacional' },
+                { data: `${ano}-09-15`, nome: 'Aniversário de Limeira', tipo: 'Municipal' },
+                { data: `${ano}-10-12`, nome: 'Nossa Senhora Aparecida', tipo: 'Nacional' },
+                { data: `${ano}-10-28`, nome: 'Dia do Servidor Público', tipo: 'Facultativo' },
+                { data: `${ano}-11-02`, nome: 'Finados', tipo: 'Nacional' },
+                { data: `${ano}-11-15`, nome: 'Proclamação da República', tipo: 'Nacional' },
+                { data: `${ano}-11-20`, nome: 'Dia da Consciência Negra', tipo: 'Nacional' },
+                { data: `${ano}-12-24`, nome: 'Véspera de Natal', tipo: 'Facultativo' },
+                { data: `${ano}-12-25`, nome: 'Natal', tipo: 'Nacional' },
+                { data: `${ano}-12-31`, nome: 'Véspera de Ano Novo', tipo: 'Facultativo' }
+            ];
+        }
+
+        // --- INTEGRAÇÃO DE DADOS & GERAÇÃO DINÂMICA ---
+        function getAllEventsForRender() {
+            let combinedEvents = [...state.events];
+            
+            // 1. Obter feriados personalizados do Storage (chave atualizada para v6)
+            const integratedData = localStorage.getItem('limeira_dados_integrados_v6');
+            let storedHolidays = [];
+            
+            if (integratedData) {
+                try {
+                    const parsed = JSON.parse(integratedData);
+                    if (parsed.feriados && Array.isArray(parsed.feriados)) {
+                        storedHolidays = parsed.feriados;
+                    }
+                } catch (e) {
+                    console.error("Erro ao ler dados externos:", e);
+                }
+            }
+
+            // Mapear quais anos JÁ existem no armazenamento externo
+            // Se existem no storage, usamos o storage como fonte da verdade (respeitando remoções)
+            const storedYears = new Set(storedHolidays.map(h => h.data.split('-')[0]));
+
+            const currentYear = state.currentDate.getFullYear();
+            // Gerar feriados para ano anterior, atual e próximo
+            const yearsToGenerate = [currentYear - 1, currentYear, currentYear + 1];
+            
+            let finalHolidays = [...storedHolidays];
+
+            yearsToGenerate.forEach(year => {
+                const yearStr = year.toString();
+                
+                // CRUCIAL: Se NÃO temos dados para este ano no storage (ex: usuário nunca abriu o painel nesse ano),
+                // geramos os padrões para não deixar o calendário vazio.
+                // Mas se temos dados (mesmo que poucos ou nenhum se o usuário deletou todos), respeitamos o banco.
+                if (!storedYears.has(yearStr)) {
+                    const defaults = gerarFeriadosParaAno(year);
+                    finalHolidays = [...finalHolidays, ...defaults];
+                }
+            });
+
+            // Converter para formato de evento do calendário
+            const formattedHolidays = finalHolidays.map(feriado => ({
+                date: feriado.data,
+                title: feriado.nome,
+                time: '',
+                category: 'holiday',
+                isExternal: true,
+                meta: { tipo: feriado.tipo },
+                checklist: []
+            }));
+
+            // Remover duplicatas por segurança (mesma data e nome)
+            const uniqueHolidays = [];
+            const seen = new Set();
+            formattedHolidays.forEach(h => {
+                const key = `${h.date}|${h.title}`;
+                if(!seen.has(key)) {
+                    seen.add(key);
+                    uniqueHolidays.push(h);
+                }
+            });
+
+            combinedEvents = [...combinedEvents, ...uniqueHolidays];
+
+            return combinedEvents;
+        }
+
+        // --- LISTENER DE SINCRONIZAÇÃO EM TEMPO REAL ---
+        window.addEventListener('storage', (e) => {
+            // Escutando a chave correta v6
+            if (e.key === 'limeira_dados_integrados_v6') {
+                console.log("Detectada alteração nos dados de funcionários. Atualizando calendário...");
+                renderCalendar();
+                if (state.selectedDate) showEventsForDate(state.selectedDate);
+                showToast('Dados sincronizados com Gestão de Pessoal!');
+            }
+        });
+
+        window.addEventListener('focus', () => {
+            renderCalendar();
+            if (state.selectedDate) showEventsForDate(state.selectedDate);
+        });
+
+        function saveEvents() {
+            const eventsToSave = state.events.filter(e => !e.isExternal);
+            localStorage.setItem('smartCalendarEvents_default', JSON.stringify(eventsToSave));
+        }
+
+        // --- 2. DARK MODE ---
+        function initTheme() {
+            const html = document.documentElement;
+            const toggleBtn = document.getElementById('theme-toggle');
+            const icon = toggleBtn.querySelector('i');
+            function applyTheme(isDark) {
+                if (isDark) {
+                    html.classList.add('dark');
+                    icon.classList.replace('fa-moon', 'fa-sun');
+                    icon.classList.replace('text-gray-600', 'text-yellow-400');
+                } else {
+                    html.classList.remove('dark');
+                    icon.classList.replace('fa-sun', 'fa-moon');
+                    icon.classList.replace('text-yellow-400', 'text-gray-600');
+                }
+            }
+            applyTheme(state.theme === 'dark');
+            toggleBtn.addEventListener('click', () => {
+                state.theme = state.theme === 'dark' ? 'light' : 'dark';
+                localStorage.setItem('theme', state.theme);
+                applyTheme(state.theme === 'dark');
+            });
+        }
+
+        // --- 3. BÍBLIA & VERSÍCULOS DO DIA ---
+        // Lista de Fallback (caso a internet falhe ou API esteja offline)
+        const bibleVersesFallback = [
+            { ref: "Salmos 23:1", text: "O Senhor é o meu pastor, nada me faltará." },
+            { ref: "Filipenses 4:13", text: "Tudo posso naquele que me fortalece." },
+            { ref: "Jeremias 29:11", text: "Porque sou eu que conheço os planos que tenho para vocês, diz o Senhor, planos de fazê-los prosperar." },
+            { ref: "Isaías 41:10", text: "Por isso não tema, pois estou com você; não tenha medo, pois sou o seu Deus." },
+            { ref: "Salmos 91:1", text: "Aquele que habita no abrigo do Altíssimo descansará à sombra do Todo-poderoso." },
+            { ref: "João 3:16", text: "Porque Deus tanto amou o mundo que deu o seu Filho Unigênito, para que todo o que nele crer não pereça." },
+            { ref: "Romanos 8:28", text: "Sabemos que Deus age em todas as coisas para o bem daqueles que o amam, dos que foram chamados." },
+            { ref: "Provérbios 3:5", text: "Confie no Senhor de todo o seu coração e não se apoie em seu próprio entendimento." },
+            { ref: "Josué 1:9", text: "Não fui eu que ordenei a você? Seja forte e corajoso! Não se apavore nem desanime." },
+            { ref: "Mateus 11:28", text: "Venham a mim, todos os que estão cansados e sobrecarregados, e eu lhes darei descanso." },
+            { ref: "Salmos 46:1", text: "Deus é o nosso refúgio e fortaleza, socorro bem presente na angústia." },
+            { ref: "Efésios 2:8", text: "Pois vocês são salvos pela graça, por meio da fé, e isto não vem de vocês, é dom de Deus." },
+            { ref: "Salmos 121:1-2", text: "Levanto os meus olhos para os montes e pergunto: De onde me vem o socorro? O meu socorro vem do Senhor." },
+            { ref: "Lamentações 3:22-23", text: "As misericórdias do Senhor são a causa de não sermos consumidos, porque as suas misericórdias não têm fim." }
+        ];
+
+        async function loadDailyMessage(forceRefresh = false) {
+            const container = document.getElementById('daily-message');
+            const storageKey = 'smartPlanner_dailyVerse';
+            const todayStr = new Date().toDateString(); // Ex: "Mon Dec 02 2024"
+            
+            // 1. Tentar carregar do cache local primeiro (se não for forçado)
+            if (!forceRefresh) {
+                const cached = localStorage.getItem(storageKey);
+                if (cached) {
+                    try {
+                        const parsed = JSON.parse(cached);
+                        // Se o versículo salvo é de hoje, usa ele
+                        if (parsed.date === todayStr) {
+                            renderVerse(parsed.text, parsed.ref);
+                            return;
+                        }
+                    } catch (e) {
+                        console.error("Erro ao ler cache do versículo", e);
+                    }
+                }
+            }
+
+            // 2. Se não tem no cache ou é outro dia, busca na API
+            try {
+                container.innerHTML = `<div class="animate-pulse text-gray-400 text-xs">Buscando inspiração divina...</div>`;
+                
+                // API pública (bible-api.com) que permite acesso direto sem bloqueio (CORS)
+                // Usando tradução Almeida em Português
+                const response = await fetch('https://bible-api.com/?random=verse&translation=almeida');
+                
+                if (!response.ok) throw new Error('Falha na API');
+                
+                const data = await response.json();
+                
+                const verseText = data.text.trim();
+                const verseRef = data.reference;
+                
+                // Salva no cache para o dia de hoje
+                const toSave = {
+                    date: todayStr,
+                    text: verseText,
+                    ref: verseRef
+                };
+                localStorage.setItem(storageKey, JSON.stringify(toSave));
+                
+                renderVerse(verseText, verseRef);
+
+            } catch (error) {
+                console.warn("Erro ao buscar versículo online, usando fallback:", error);
+                // 3. Fallback: Usa a lista local se a API falhar
+                // Seleciona aleatório da lista de fallback para garantir variedade
+                const fallbackVerse = bibleVersesFallback[Math.floor(Math.random() * bibleVersesFallback.length)];
+                renderVerse(fallbackVerse.text, fallbackVerse.ref);
+            }
+        }
+
+        function renderVerse(text, ref) {
+            const container = document.getElementById('daily-message');
+            // Animação suave de entrada
+            container.style.opacity = '0';
+            setTimeout(() => {
+                container.innerHTML = `
+                    <span class="block mb-2">"${text}"</span>
+                    <span class="block text-right font-bold text-[10px] opacity-75">— ${ref}</span>
+                `;
+                container.style.opacity = '1';
+                container.classList.add('fade-in');
+            }, 200);
+        }
+        
+        // Função para o botão de atualizar manual
+        function forceNewVerse() {
+            loadDailyMessage(true);
+        }
+
+        // --- 4. WEATHER WIDGET (API Open-Meteo) ---
+        async function fetchWeather() {
+            const tempEl = document.getElementById('weather-temp');
+            const descEl = document.getElementById('weather-desc');
+            try {
+                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=-22.56&longitude=-47.40&current_weather=true');
+                const data = await res.json();
+                if(data.current_weather) {
+                    const temp = Math.round(data.current_weather.temperature);
+                    tempEl.textContent = `${temp}°`;
+                    const code = data.current_weather.weathercode;
+                    let desc = "Limpo";
+                    if(code > 3) desc = "Nublado";
+                    if(code > 50) desc = "Chuvoso";
+                    if(code > 90) desc = "Tempestade";
+                    descEl.textContent = desc;
+                }
+            } catch (e) { descEl.textContent = "Off"; }
+        }
+        fetchWeather();
+
+        // --- 5. BACKUP & EXPORT ---
+        function toggleSettingsModal() { document.getElementById('settings-modal').classList.toggle('hidden'); }
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "smart_calendar_backup.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+        function importData(input) {
+            const file = input.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if(imported.events) {
+                        state = imported;
+                        localStorage.setItem('smartCalendarEvents_default', JSON.stringify(state.events));
+                        localStorage.setItem('smartCalendarCategories', JSON.stringify(state.categories));
+                        window.location.reload();
+                    } else { alert("Arquivo inválido."); }
+                } catch(err) { alert("Erro ao ler arquivo."); }
+            };
+            reader.readAsText(file);
+        }
+
+        // --- 6. ICS EXPORT (WINDOWS CALENDAR LINK - MANUAL BATCH) ---
+        function generateVEVENT(ev) {
+            let startDateTime = ev.date.replace(/-/g, '');
+            let endDateTime = ev.date.replace(/-/g, '');
+            let dtStamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+            let uid = 'sc-' + Math.random().toString(36).substr(2, 9) + '@smartplanner';
+
+            if(ev.time) {
+                const timeStr = ev.time.replace(':', '') + '00';
+                startDateTime += 'T' + timeStr;
+                let h = parseInt(ev.time.split(':')[0]) + 1;
+                let m = ev.time.split(':')[1];
+                let endH = h < 10 ? '0' + h : h;
+                if (h >= 24) endH = "23"; 
+                endDateTime += 'T' + endH + m + '00';
+            } else {
+                startDateTime += 'T090000';
+                endDateTime += 'T100000';
+            }
+
+            return [
+                'BEGIN:VEVENT',
+                `UID:${uid}`,
+                `DTSTAMP:${dtStamp}`,
+                `DTSTART:${startDateTime}`,
+                `DTEND:${endDateTime}`,
+                `SUMMARY:${ev.title}`,
+                'DESCRIPTION:Evento criado via SmartPlanner Web.',
+                'STATUS:CONFIRMED',
+                'END:VEVENT'
+            ].join('\n');
+        }
+
+        function exportYearlyICS() {
+            const year = state.currentDate.getFullYear();
+            const allEvents = getAllEventsForRender();
+            const eventsOfYear = allEvents.filter(e => e.date.startsWith(year.toString()));
+
+            if (eventsOfYear.length === 0) {
+                alert(`Nenhum evento encontrado para o ano de ${year}.`);
+                return;
+            }
+
+            let icsContent = [
+                'BEGIN:VCALENDAR',
+                'VERSION:2.0',
+                'PRODID:-//SmartPlanner//PT-BR',
+                'CALSCALE:GREGORIAN',
+                'METHOD:PUBLISH'
+            ].join('\n');
+
+            eventsOfYear.forEach(ev => {
+                 icsContent += '\n' + generateVEVENT(ev);
+            });
+
+            icsContent += '\nEND:VCALENDAR';
+
+            const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `calendario_completo_${year}.ics`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            showToast(`Download iniciado! ${eventsOfYear.length} eventos exportados.`);
+            toggleSettingsModal();
+        }
+
+        function showToast(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'bg-gray-800 text-white text-xs px-4 py-3 rounded shadow-lg mb-2 fade-in flex items-center gap-2';
+            toast.innerHTML = `<i class="fa-solid fa-info-circle text-blue-400"></i> ${message}`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 500);
+            }, 5000);
+        }
+
+        // --- 7. CALENDÁRIO COM DRAG & DROP E DATAS ATIVAS ---
+        const calendarGrid = document.getElementById('calendar-grid');
+        const monthYearDisplay = document.getElementById('month-year-display');
+
+        function formatDateToISO(date) { 
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; 
+        }
+
+        function renderCalendar() {
+            calendarGrid.innerHTML = '';
+            const year = state.currentDate.getFullYear();
+            const month = state.currentDate.getMonth();
+            const formatter = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' });
+            monthYearDisplay.textContent = formatter.format(state.currentDate);
+
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const prevMonthDays = new Date(year, month, 0).getDate(); // Último dia do mês anterior
+            const totalSlots = 42;
+            const allEvents = getAllEventsForRender(); // Agora busca feriados dinamicamente para o ano exibido
+
+            // Loop Dias Mês Anterior (Padding Inicial)
+            for (let i = firstDayIndex; i > 0; i--) {
+                const dayNum = prevMonthDays - i + 1;
+                const date = new Date(year, month - 1, dayNum); 
+                const dateStr = formatDateToISO(date);
+                createDayCell(dayNum, true, false, dateStr, allEvents);
+            }
+
+            // Loop Dias Mês Atual
+            const today = new Date();
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                const isToday = i === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+                createDayCell(i, false, isToday, dateStr, allEvents);
+            }
+
+            // Loop Dias Próximo Mês (Padding Final)
+            const filledSlots = firstDayIndex + daysInMonth;
+            for (let i = 1; i <= totalSlots - filledSlots; i++) {
+                const date = new Date(year, month + 1, i);
+                const dateStr = formatDateToISO(date);
+                createDayCell(i, true, false, dateStr, allEvents);
+            }
+        }
+
+        function createDayCell(dayNumber, isPadding, isToday = false, dateStr = null, allEvents = []) {
+            const dayEl = document.createElement('div');
+            
+            let classes = "calendar-day relative rounded-lg p-1.5 border border-gray-200 dark:border-gray-700 flex flex-col h-full overflow-hidden transition-colors cursor-pointer";
+            
+            if (isPadding) {
+                classes += " bg-gray-50 dark:bg-gray-800/30 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800";
+            } else {
+                classes += " bg-white dark:bg-dark-card hover:shadow-md";
+                if (isToday) classes += " ring-2 ring-primary ring-inset";
+            }
+            dayEl.className = classes;
+            
+            if (dateStr) {
+                dayEl.setAttribute('data-date', dateStr);
+                dayEl.addEventListener('dragover', (e) => { e.preventDefault(); dayEl.classList.add('drag-over'); });
+                dayEl.addEventListener('dragleave', () => dayEl.classList.remove('drag-over'));
+                dayEl.addEventListener('drop', (e) => handleDrop(e, dateStr));
+                dayEl.addEventListener('click', () => showEventsForDate(dateStr));
+                dayEl.addEventListener('dblclick', () => openModal(dateStr));
+            }
+
+            const dayNum = document.createElement('span');
+            dayNum.className = `text-xs font-bold mb-1 pointer-events-none ${isToday ? 'text-primary' : (isPadding ? '' : 'text-gray-700 dark:text-gray-300')}`;
+            dayNum.textContent = dayNumber;
+            dayEl.appendChild(dayNum);
+
+            if (dateStr) {
+                const dayEvents = allEvents.filter(e => e.date === dateStr);
+                const container = document.createElement('div');
+                container.className = 'flex flex-col gap-1 overflow-y-auto no-scrollbar flex-1';
+                dayEvents.forEach((ev) => {
+                    const el = createEventElement(ev, dateStr);
+                    if(isPadding) el.classList.add('opacity-60', 'hover:opacity-100'); 
+                    container.appendChild(el);
+                });
+                dayEl.appendChild(container);
+            }
+            calendarGrid.appendChild(dayEl);
+        }
+
+        function createEventElement(ev, dateStr) {
+            const evEl = document.createElement('div');
+            const cat = state.categories[ev.category] || state.categories.general;
+            const isExternal = ev.isExternal;
+            const cursorClass = isExternal ? 'cursor-default' : 'cursor-grab active:cursor-grabbing';
+            const extraClass = isExternal ? 'opacity-90' : 'hover:border-l-4';
+
+            evEl.className = `text-[10px] truncate px-1.5 py-0.5 rounded ${cat.bgSoft} ${cat.text} font-bold ${cursorClass} ${extraClass} border-l-2 border-transparent transition-all`;
+            evEl.textContent = ev.time ? `${ev.time} ${ev.title}` : ev.title;
+            
+            if (isExternal) {
+                if (ev.category === 'holiday') evEl.title = `Feriado ${ev.meta?.tipo || 'Oficial'}`;
+                evEl.draggable = false;
+            } else {
+                evEl.draggable = true;
+                evEl.addEventListener('dragstart', (e) => {
+                    const realIndex = state.events.findIndex(e => e === ev);
+                    e.dataTransfer.setData('text/plain', JSON.stringify({ index: realIndex, oldDate: dateStr }));
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+            }
+            return evEl;
+        }
+
+        function handleDrop(e, newDate) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+            try {
+                const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                const eventToMove = state.events[data.index];
+                if (eventToMove && !eventToMove.isExternal && eventToMove.date !== newDate) {
+                    eventToMove.date = newDate;
+                    saveEvents();
+                    renderCalendar();
+                    showEventsForDate(newDate);
+                }
+            } catch (err) { console.error("Erro drop", err); }
+        }
+
+        // --- 8. MODAL & FORM ---
+        const modal = document.getElementById('event-modal');
+        const checklistContainer = document.getElementById('checklist-container');
+        let currentChecklist = [];
+
+        function formatDisplayDate(dateStr) { const [y, m, d] = dateStr.split('-'); return `${d}/${m}/${y}`; }
+
+        function openModal(dateStr, eventObj = null) {
+            if (eventObj && eventObj.isExternal) {
+                addBotMessage(`O evento <b>"${eventObj.title}"</b> é um feriado oficial e não pode ser editado aqui.`, 'bot');
+                return;
+            }
+            state.selectedDate = dateStr;
+            document.getElementById('modal-date-display').textContent = `Data: ${formatDisplayDate(dateStr)}`;
+            const categorySelect = document.getElementById('event-category');
+            categorySelect.innerHTML = '';
+            Object.keys(state.categories).forEach(key => {
+                if(key === 'holiday' || key === 'vacation') return; // Hide read-only categories
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.textContent = state.categories[key].label;
+                categorySelect.appendChild(opt);
+            });
+            currentChecklist = [];
+            if (eventObj) {
+                const globalIndex = state.events.indexOf(eventObj);
+                document.getElementById('event-index').value = globalIndex;
+                document.getElementById('modal-title').textContent = "Editar Evento";
+                document.getElementById('event-title').value = eventObj.title;
+                document.getElementById('event-time').value = eventObj.time;
+                document.getElementById('event-category').value = eventObj.category;
+                document.getElementById('delete-event-btn').classList.remove('hidden');
+                document.getElementById('delete-event-btn').onclick = () => { deleteEventGlobal(globalIndex); closeModal(); };
+                currentChecklist = eventObj.checklist ? [...eventObj.checklist] : [];
+            } else {
+                document.getElementById('event-index').value = '';
+                document.getElementById('modal-title').textContent = "Novo Evento";
+                document.getElementById('event-title').value = '';
+                document.getElementById('event-time').value = '';
+                document.getElementById('delete-event-btn').classList.add('hidden');
+            }
+            renderChecklistUI();
+            modal.classList.remove('hidden');
+            setTimeout(() => document.getElementById('modal-content').classList.remove('scale-95', 'opacity-0'), 10);
+        }
+
+        function closeModal() {
+            document.getElementById('modal-content').classList.add('scale-95', 'opacity-0');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        function renderChecklistUI() {
+            checklistContainer.innerHTML = '';
+            currentChecklist.forEach((item, idx) => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center gap-2 text-xs';
+                div.innerHTML = `
+                    <input type="checkbox" ${item.done ? 'checked' : ''} class="custom-checkbox cursor-pointer" onchange="toggleChecklistItem(${idx})">
+                    <div class="flex-1 ${item.done ? 'line-through opacity-50' : ''}">${item.text}</div>
+                    <button type="button" onclick="removeChecklistItem(${idx})" class="text-red-400 hover:text-red-600">×</button>
+                `;
+                checklistContainer.appendChild(div);
+            });
+        }
+
+        window.addChecklistItemUI = () => {
+            const input = document.getElementById('new-checklist-item');
+            if (input.value.trim()) {
+                currentChecklist.push({ text: input.value.trim(), done: false });
+                input.value = '';
+                renderChecklistUI();
+            }
+        };
+        window.toggleChecklistItem = (idx) => { currentChecklist[idx].done = !currentChecklist[idx].done; renderChecklistUI(); };
+        window.removeChecklistItem = (idx) => { currentChecklist.splice(idx, 1); renderChecklistUI(); };
+
+        document.getElementById('add-event-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const idxVal = document.getElementById('event-index').value;
+            const newEvent = {
+                date: state.selectedDate,
+                title: document.getElementById('event-title').value,
+                time: document.getElementById('event-time').value,
+                category: document.getElementById('event-category').value,
+                checklist: currentChecklist,
+                isExternal: false
+            };
+            const recurrence = document.getElementById('event-recurrence').value;
+
+            if (idxVal !== '') {
+                state.events[idxVal] = newEvent;
+            } else {
+                state.events.push(newEvent);
+                if (recurrence !== 'none') {
+                    let nextDate = new Date(state.selectedDate + 'T00:00:00');
+                    const count = recurrence === 'weekly' ? 4 : 12;
+                    for(let i = 1; i < count; i++) {
+                        if (recurrence === 'weekly') nextDate.setDate(nextDate.getDate() + 7);
+                        if (recurrence === 'monthly') nextDate.setMonth(nextDate.getMonth() + 1);
+                        const copy = { ...newEvent, date: formatDateToISO(nextDate), checklist: [] }; 
+                        state.events.push(copy);
+                    }
+                    addBotMessage(`Criei ${count} recorrências.`, 'bot');
+                }
+            }
+            saveEvents();
+            renderCalendar();
+            showEventsForDate(state.selectedDate);
+            
+            // REMOVIDO: trigger automático de ICS
+            // createICSFile(newEvent.title, newEvent.date, newEvent.time);
+            
+            closeModal();
+        });
+
+        document.getElementById('close-modal').addEventListener('click', closeModal);
+        window.openCategoryModal = () => {
+            const name = prompt("Nome da Categoria:");
+            if (!name) return;
+            const colors = ['red', 'green', 'blue', 'yellow', 'purple', 'pink', 'indigo'];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const id = name.toLowerCase().replace(/\s/g, '');
+            state.categories[id] = { label: name, color: `bg-${color}-500`, text: `text-${color}-500`, bgSoft: `bg-${color}-100 dark:bg-${color}-900/30` };
+            localStorage.setItem('smartCalendarCategories', JSON.stringify(state.categories));
+            const select = document.getElementById('event-category');
+            const opt = document.createElement('option');
+            opt.value = id; opt.textContent = name; opt.selected = true; select.appendChild(opt);
+        };
+
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const listEl = document.getElementById('events-list');
+            listEl.innerHTML = '';
+            const allEvents = getAllEventsForRender();
+            if (term.length === 0) {
+                if (state.selectedDate) showEventsForDate(state.selectedDate);
+                else listEl.innerHTML = '<p class="text-xs text-gray-400 text-center mt-6">Busque algo ou selecione um dia.</p>';
+                return;
+            }
+            const filtered = allEvents.filter(ev => ev.title.toLowerCase().includes(term));
+            const header = document.createElement('div');
+            header.className = 'text-xs font-bold text-gray-500 mb-2 uppercase';
+            header.textContent = `Resultados: ${filtered.length}`;
+            listEl.appendChild(header);
+            filtered.forEach(ev => {
+                const el = createEventListElement(ev);
+                const dateSpan = document.createElement('div');
+                dateSpan.className = 'text-[10px] text-gray-400 text-right mt-1';
+                dateSpan.textContent = formatDisplayDate(ev.date);
+                el.appendChild(dateSpan);
+                listEl.appendChild(el);
+            });
+        });
+
+        function showEventsForDate(dateStr) {
+            state.selectedDate = dateStr;
+            const listEl = document.getElementById('events-list');
+            listEl.innerHTML = '';
+            const allEvents = getAllEventsForRender();
+            const dayEvents = allEvents.filter(e => e.date === dateStr);
+            const header = document.createElement('div');
+            header.className = 'text-xs font-bold text-gray-500 mb-2 border-b pb-1 uppercase';
+            header.textContent = `Eventos em ${formatDisplayDate(dateStr)}`;
+            listEl.appendChild(header);
+            if (dayEvents.length === 0) {
+                const btn = document.createElement('button');
+                btn.className = 'w-full py-2 text-xs text-primary bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 mt-2';
+                btn.innerHTML = '+ Adicionar Evento';
+                btn.onclick = () => openModal(dateStr);
+                listEl.appendChild(btn);
+                return;
+            }
+            dayEvents.forEach((ev) => { listEl.appendChild(createEventListElement(ev)); });
+            const addBtn = document.createElement('button');
+            addBtn.className = 'w-full py-1.5 text-xs text-gray-500 hover:text-primary hover:bg-gray-50 rounded mt-2 border border-dashed border-gray-300';
+            addBtn.innerHTML = '+ Novo';
+            addBtn.onclick = () => openModal(dateStr);
+            listEl.appendChild(addBtn);
+        }
+
+        function createEventListElement(ev) {
+            const item = document.createElement('div');
+            const cat = state.categories[ev.category] || state.categories.general;
+            const isExternal = ev.isExternal;
+            const opacityClass = isExternal ? 'opacity-90' : '';
+            const borderClass = isExternal ? (ev.category === 'holiday' ? 'border-l-4 border-red-400 pl-2' : 'border-l-4 border-orange-400 pl-2') : '';
+            
+            item.className = `bg-white dark:bg-gray-800 p-2.5 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm group hover:border-primary/50 transition cursor-pointer ${opacityClass} ${borderClass}`;
+            item.onclick = (e) => { if(!e.target.closest('button')) openModal(ev.date, ev); };
+
+            let checklistHTML = '';
+            if (ev.checklist && ev.checklist.length > 0) {
+                const done = ev.checklist.filter(i => i.done).length;
+                checklistHTML = `<div class="text-[10px] text-gray-400 mt-1"><i class="fa-solid fa-list-check"></i> ${done}/${ev.checklist.length}</div>`;
+            }
+            let iconHTML = '';
+            if (isExternal) {
+                if(ev.category === 'holiday') iconHTML = '<i class="fa-solid fa-calendar-day text-red-500 text-xs ml-auto" title="Feriado Importado"></i>';
+            }
+
+            item.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div class="flex items-center gap-2 overflow-hidden w-full">
+                        <div class="w-1 h-6 rounded-full ${cat.color} shrink-0"></div>
+                        <div class="flex flex-col min-w-0 flex-1">
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-xs text-gray-800 dark:text-gray-200 truncate pr-2">${ev.title}</span>
+                                ${iconHTML}
+                            </div>
+                            <span class="text-[10px] text-gray-500">${ev.time || (isExternal ? 'Dia Inteiro' : 'Sem horário')}</span>
+                        </div>
+                    </div>
+                </div>
+                ${checklistHTML}
+            `;
+            return item;
+        }
+
+        function deleteEventGlobal(index) {
+            state.events.splice(index, 1);
+            saveEvents();
+            renderCalendar();
+            if (state.selectedDate) showEventsForDate(state.selectedDate);
+        }
+        document.getElementById('prev-month').addEventListener('click', () => { state.currentDate.setMonth(state.currentDate.getMonth() - 1); renderCalendar(); });
+        document.getElementById('next-month').addEventListener('click', () => { state.currentDate.setMonth(state.currentDate.getMonth() + 1); renderCalendar(); });
+        document.getElementById('today-btn').addEventListener('click', () => { state.currentDate = new Date(); renderCalendar(); showEventsForDate(formatDateToISO(new Date())); });
+
+        // --- CHATBOT IA LÓGICA ---
+        function addBotMessage(text, sender = 'bot') {
+            const chat = document.getElementById('chat-history');
+            const div = document.createElement('div');
+            div.className = `flex items-start gap-2 max-w-[90%] fade-in ${sender === 'user' ? 'self-end flex-row-reverse' : ''}`;
+            
+            const icon = sender === 'bot' 
+                ? '<div class="w-6 h-6 rounded-full bg-secondary flex items-center justify-center text-white flex-shrink-0 mt-1"><i class="fa-solid fa-robot text-[10px]"></i></div>'
+                : '';
+            
+            const bubbleClass = sender === 'bot' 
+                ? 'bg-gray-100 dark:bg-gray-700 dark:text-gray-200' 
+                : 'bg-primary text-white';
+
+            div.innerHTML = `
+                ${icon}
+                <div class="${bubbleClass} p-2 rounded-lg text-xs ${sender === 'bot' ? 'rounded-tl-none' : 'rounded-tr-none'}">
+                    ${text}
+                </div>
+            `;
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        // AUTO-RESIZE TEXTAREA
+        const textarea = document.getElementById('chat-input');
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+
+        // HANDLE SUBMIT (Enter = Send, Shift+Enter = New Line)
+        textarea.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.getElementById('chat-form').requestSubmit();
+            }
+        });
+
+        document.getElementById('chat-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+            
+            addBotMessage(text.replace(/\n/g, '<br>'), 'user');
+            input.value = '';
+            input.style.height = 'auto'; // Reset height
+            
+            // Separa por linhas para processar em lote
+            const lines = text.split('\n').filter(line => line.trim() !== '');
+            
+            if (lines.length > 1) {
+                 addBotMessage(`Processando ${lines.length} comandos...`, 'bot');
+            }
+
+            // Processa cada linha com um pequeno delay para efeito visual
+            lines.forEach((line, index) => {
+                setTimeout(() => {
+                    processUserCommand(line);
+                }, index * 600);
+            });
+        });
+
+        function processUserCommand(text) {
+            const lower = text.toLowerCase();
+            let date = null;
+            let time = '';
+            let cleanText = text;
+
+            const monthMap = {
+                'janeiro': 0, 'jan': 0,
+                'fevereiro': 1, 'fev': 1,
+                'março': 2, 'marco': 2, 'mar': 2,
+                'abril': 3, 'abr': 3,
+                'maio': 4, 'mai': 4,
+                'junho': 5, 'jun': 5,
+                'julho': 6, 'jul': 6,
+                'agosto': 7, 'ago': 7,
+                'setembro': 8, 'set': 8,
+                'outubro': 9, 'out': 9,
+                'novembro': 10, 'nov': 10,
+                'dezembro': 11, 'dez': 11
+            };
+
+            const timeMatch = text.match(/(\d{1,2})(?::|h)(\d{2})?/) || text.match(/(\d{1,2})\s*horas/);
+            if (timeMatch) {
+                if (text.match(/(\d{1,2})\s*horas/) && !text.match(/(\d{1,2})(?::|h)(\d{2})?/)) {
+                     let h = parseInt(timeMatch[1]);
+                     time = `${String(h).padStart(2, '0')}:00`;
+                } else {
+                     let h = parseInt(timeMatch[1]);
+                     let m = timeMatch[2] ? parseInt(timeMatch[2]) : 0;
+                     time = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                }
+                cleanText = cleanText.replace(timeMatch[0], '');
+            }
+
+            const today = new Date();
+            if (lower.match(/\bhoje\b/)) {
+                date = new Date();
+                cleanText = cleanText.replace(/\bhoje\b/gi, '');
+            } else if (lower.match(/\bamanhã\b/) || lower.match(/\bamanha\b/)) {
+                date = new Date();
+                date.setDate(date.getDate() + 1);
+                cleanText = cleanText.replace(/\bamanhã\b/gi, '').replace(/\bamanha\b/gi, '');
+            } else if (lower.match(/\bdepois de amanhã\b/)) {
+                 date = new Date();
+                 date.setDate(date.getDate() + 2);
+                 cleanText = cleanText.replace(/\bdepois de amanhã\b/gi, '');
+            } 
+            
+            if (!date) {
+                const textDateRegex = /(?:dia\s+)?(\d{1,2})\s+(?:de\s+)?([a-zá-ç]+)/i;
+                const match = cleanText.match(textDateRegex);
+                
+                if (match) {
+                    const day = parseInt(match[1]);
+                    const monthStr = match[2].toLowerCase();
+                    
+                    if (monthMap.hasOwnProperty(monthStr)) {
+                        date = new Date();
+                        date.setDate(day);
+                        date.setMonth(monthMap[monthStr]);
+                        
+                        if (date < new Date() && monthMap[monthStr] < today.getMonth()) {
+                             date.setFullYear(today.getFullYear() + 1);
+                        }
+                        cleanText = cleanText.replace(match[0], '');
+                    }
+                }
+            }
+
+            if (!date) {
+                const slashDateRegex = /(\d{1,2})\/(\d{1,2})/;
+                const match = cleanText.match(slashDateRegex);
+                if (match) {
+                    date = new Date();
+                    date.setDate(parseInt(match[1]));
+                    date.setMonth(parseInt(match[2]) - 1);
+                     if (date < new Date() && parseInt(match[2]) - 1 < today.getMonth()) {
+                             date.setFullYear(today.getFullYear() + 1);
+                    }
+                    cleanText = cleanText.replace(match[0], '');
+                }
+            }
+
+            // --- LÓGICA DE LIMPEZA DE TÍTULO APRIMORADA ---
+            // Remove verbos de comando comuns no início da frase
+            cleanText = cleanText.replace(/^(gostaria de |quero |vou |preciso )?(marcar|agendar|anotar|inserir|botar|colocar|criar|novo evento|nova consulta|lembrar de|lembrete)\s+/i, '');
+
+            let title = cleanText
+                .replace(/\b(o|a|os|as|um|uma|uns|umas|de|do|da|dos|das|em|no|na|nos|nas|para|pro|pra|com|por|às|as|dia)\b/gi, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+
+            if (!title) title = "Novo Evento";
+            
+            // --- FIM DA LÓGICA ---
+
+            if (date) {
+                const dateStr = formatDateToISO(date);
+                title = title.charAt(0).toUpperCase() + title.slice(1);
+                
+                const newEvent = {
+                    date: dateStr,
+                    title: title,
+                    time: time,
+                    category: 'general',
+                    checklist: [],
+                    isExternal: false
+                };
+
+                state.events.push(newEvent);
+                saveEvents();
+                renderCalendar();
+                showEventsForDate(dateStr);
+                
+                // REMOVIDO: trigger automático de ICS
+                // createICSFile(newEvent.title, newEvent.date, newEvent.time);
+
+                setTimeout(() => {
+                    addBotMessage(`Agendei <b>"${newEvent.title}"</b> para ${formatDisplayDate(dateStr)} ${time ? 'às ' + time : ''}.`, 'bot');
+                }, 500);
+
+            } else {
+                setTimeout(() => {
+                    addBotMessage(`Não entendi a data em: "<i>${text}</i>". Tente "dia 16/12".`, 'bot');
+                }, 500);
+            }
+        }
+
+        // --- 10. NOTIFICAÇÕES INTELIGENTES ---
+        function checkNotifications() {
+            if (Notification.permission !== "granted") return;
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            const todayStr = formatDateToISO(today);
+            const tomorrowStr = formatDateToISO(tomorrow);
+            
+            const allEvents = getAllEventsForRender();
+            
+            const todayEvents = allEvents.filter(e => e.date === todayStr);
+            const notifiedToday = sessionStorage.getItem('notified_today_'+todayStr);
+            if (todayEvents.length > 0 && notifiedToday !== 'done') {
+                new Notification("Sua Agenda Hoje", { body: `Lembrete: Você tem ${todayEvents.length} compromissos hoje!` });
+                sessionStorage.setItem('notified_today_'+todayStr, 'done');
+                addBotMessage(`Enviei um alerta sobre seus ${todayEvents.length} eventos de hoje.`, 'bot');
+            }
+
+            const tomEvents = allEvents.filter(e => e.date === tomorrowStr);
+            const notifiedTom = sessionStorage.getItem('notified_tom_'+tomorrowStr);
+            if (tomEvents.length > 0 && notifiedTom !== 'done') {
+                setTimeout(() => {
+                    new Notification("Lembrete Antecipado", { body: `Amanhã você tem ${tomEvents.length} eventos.` });
+                    sessionStorage.setItem('notified_tom_'+tomorrowStr, 'done');
+                    addBotMessage(`Também avisei sobre os eventos de amanhã.`, 'bot');
+                }, 5000); 
+            }
+        }
+
+        document.getElementById('enable-notifications').onclick = () => {
+            Notification.requestPermission().then(perm => {
+                if(perm === 'granted') {
+                    document.getElementById('notification-status').classList.remove('hidden');
+                    document.getElementById('enable-notifications').classList.add('hidden');
+                    checkNotifications();
+                    addBotMessage("Notificações ativadas! Vou monitorar o dia anterior e o dia atual.", 'bot');
+                }
+            });
+        };
+
+        // Init
+        loadEvents();
+        initTheme();
+        renderCalendar();
+        loadDailyMessage();
+        document.getElementById('current-date-display').textContent = new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        
+        showEventsForDate(formatDateToISO(new Date()));
+
+        if (Notification.permission === "granted") {
+            document.getElementById('notification-status').classList.remove('hidden');
+            document.getElementById('enable-notifications').classList.add('hidden');
+            checkNotifications();
+            setInterval(checkNotifications, 1800000);
+        }
+
+    </script>
+</body>
+</html>

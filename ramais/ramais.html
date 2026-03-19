@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista Telefônica Oficial - Limeira/SP</title>
+    <link rel="shortcut icon" href="https://placehold.co/32x32/003366/FFFFFF?text=K" type="image/x-icon">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800">
+
+    <!-- Header / Navbar -->
+    <header class="bg-blue-800 text-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-white text-blue-800 p-2 rounded-lg">
+                    <i class="fa-solid fa-city text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">Lista Telefônica Integrada</h1>
+                    <p class="text-blue-200 text-xs uppercase tracking-wider">Limeira - SP</p>
+                </div>
+            </div>
+            
+            <button onclick="openModal()" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-full font-semibold transition-all shadow-md hover:shadow-lg flex items-center gap-2 w-full md:w-auto justify-center">
+                <i class="fa-solid fa-plus"></i> Novo Ramal
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        
+        <!-- Search and Filter Bar -->
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 flex flex-col md:flex-row gap-4 items-center">
+            <div class="relative w-full md:flex-1">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                <input type="text" id="searchInput" oninput="renderTable()" placeholder="Buscar por setor, nome ou telefone..." 
+                    class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all">
+            </div>
+            
+            <div class="w-full md:w-48">
+                <select id="categoryFilter" onchange="renderTable()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    <option value="Todos">Todas Categorias</option>
+                    <option value="Prefeitura">Prefeitura</option>
+                    <option value="Saúde">Saúde</option>
+                    <option value="Educação">Educação</option>
+                    <option value="Segurança">Segurança</option>
+                    <option value="Judiciário">Fórum/Judiciário</option>
+                    <option value="Cartórios">Cartórios</option>
+                    <option value="Outros">Outros</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-blue-600">
+                <p class="text-slate-500 text-xs font-bold uppercase">Total de Contatos</p>
+                <p class="text-2xl font-bold text-blue-800" id="totalCount">0</p>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-green-500">
+                <p class="text-slate-500 text-xs font-bold uppercase">Prefeitura</p>
+                <p class="text-2xl font-bold text-green-600" id="prefCount">0</p>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-indigo-500">
+                <p class="text-slate-500 text-xs font-bold uppercase">Judiciário</p>
+                <p class="text-2xl font-bold text-indigo-600" id="judCount">0</p>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-orange-400">
+                <button onclick="resetData()" class="w-full h-full flex items-center justify-between text-orange-500 hover:text-orange-700">
+                    <span class="text-xs font-bold uppercase">Restaurar Padrões</span>
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Directory Grid/Table -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-bold tracking-wider">
+                        <tr>
+                            <th class="p-4 border-b border-slate-200">Categoria</th>
+                            <th class="p-4 border-b border-slate-200">Setor / Local</th>
+                            <th class="p-4 border-b border-slate-200">Descrição</th>
+                            <th class="p-4 border-b border-slate-200">Telefone / Ramal</th>
+                            <th class="p-4 border-b border-slate-200 text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="contactsTableBody" class="text-sm divide-y divide-slate-100">
+                        <!-- Content injected by JS -->
+                    </tbody>
+                </table>
+            </div>
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden flex flex-col items-center justify-center py-12 text-slate-400">
+                <i class="fa-regular fa-folder-open text-4xl mb-3"></i>
+                <p>Nenhum contato encontrado.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-800 text-slate-400 text-center py-6 mt-8">
+        <p class="text-sm">&copy; 2025 Lista de Ramais Corporativos - Limeira/SP</p>
+        <p class="text-xs mt-1">Este é um sistema local. Os dados são salvos no seu navegador.</p>
+    </footer>
+
+    <!-- Add Contact Modal -->
+    <div id="modalOverlay" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md transform transition-all scale-100 p-6 relative">
+            
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-slate-800">Adicionar Novo Ramal</h2>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-red-500 transition-colors">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <form id="addForm" onsubmit="addContact(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Categoria</label>
+                    <select id="newCategory" required class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="Prefeitura">Prefeitura</option>
+                        <option value="Saúde">Saúde</option>
+                        <option value="Educação">Educação</option>
+                        <option value="Segurança">Segurança</option>
+                        <option value="Judiciário">Fórum/Judiciário</option>
+                        <option value="Cartórios">Cartórios</option>
+                        <option value="Outros">Outros</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Setor / Local</label>
+                    <input type="text" id="newSector" required placeholder="Ex: RH, Gabinete, 1ª Vara Cível" 
+                        class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Descrição (Opcional)</label>
+                    <input type="text" id="newDesc" placeholder="Ex: Recepção, Atendimento ao Público" 
+                        class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Telefone / Ramal</label>
+                    <input type="text" id="newPhone" required placeholder="(19) 3404-XXXX" 
+                        class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    <p class="text-xs text-red-500 mt-1 hidden" id="phoneError">Este telefone já está cadastrado.</p>
+                </div>
+
+                <div class="pt-4 flex gap-3">
+                    <button type="button" onclick="closeModal()" class="flex-1 py-2 px-4 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 font-medium">Cancelar</button>
+                    <button type="submit" class="flex-1 py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow-md">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-4 right-4 bg-slate-800 text-white px-6 py-3 rounded-lg shadow-lg transform translate-y-20 transition-transform duration-300 z-50 flex items-center gap-3">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-green-400"></i>
+        <span id="toastMsg">Ação realizada com sucesso!</span>
+    </div>
+
+    <script>
+        // --- Data Management ---
+        
+        // Initial Data mimicking Limeira City Hall Structure
+        const initialData = [
+            { id: 1, category: 'Prefeitura', sector: 'Paço Municipal (Edifício Prada)', desc: 'PABX Geral', phone: '(19) 3404-9600' },
+            { id: 2, category: 'Prefeitura', sector: 'Gabinete do Prefeito', desc: 'Secretaria', phone: '(19) 3404-9608' },
+            { id: 3, category: 'Prefeitura', sector: 'Ouvidoria (156)', desc: 'Atendimento ao Cidadão', phone: '156' },
+            { id: 4, category: 'Saúde', sector: 'SAMU', desc: 'Emergência', phone: '192' },
+            { id: 5, category: 'Saúde', sector: 'Secretaria da Saúde', desc: 'Geral', phone: '(19) 3404-9672' },
+            { id: 6, category: 'Segurança', sector: 'Guarda Civil Municipal', desc: 'Emergência', phone: '153' },
+            { id: 7, category: 'Educação', sector: 'Secretaria de Educação', desc: 'Parque Cidade', phone: '(19) 3404-2438' },
+            { id: 8, category: 'Prefeitura', sector: 'CEPROSOM', desc: 'Autarquia', phone: '(19) 3404-6200' },
+            { id: 9, category: 'Judiciário', sector: 'Fórum de Limeira (Centro)', desc: 'PABX Geral', phone: '(19) 3404-4400' },
+            { id: 10, category: 'Judiciário', sector: 'Fórum Trabalhista', desc: 'Atendimento', phone: '(19) 3451-2244' },
+            
+            // Mantido ID 11, removido duplicata ID 200
+            { id: 11, category: 'Cartórios', sector: '1º Tabelião de Notas', desc: 'Av. 9 de Julho, 67', phone: '(19) 3441-7496 / 3441-8207' },
+            
+            // Mantido ID 12, removido duplicata ID 202
+            { id: 12, category: 'Cartórios', sector: 'Registro Civil (3º Cartório)', desc: 'Pessoas Naturais', phone: '(19) 3453-2623 / 3441-6655' },
+            
+            { id: 13, category: 'Prefeitura', sector: 'Secretaria de Mobilidade Urbana', desc: 'Trânsito', phone: '(19) 3404-9720' },
+            { id: 14, category: 'Prefeitura', sector: 'Departamento de Tributação', desc: 'IPTU/ISS', phone: '(19) 3404-9650' },
+            // Ramais Adicionados Anteriormente
+            { id: 100, category: 'Prefeitura', sector: 'Almoxarifado', desc: 'Logística', phone: '(19) 3404-9642 / 9814' },
+            { id: 101, category: 'Prefeitura', sector: 'Arquivo Geral', desc: 'Documentação', phone: '(19) 3404-9625 / 9733' },
+            { id: 102, category: 'Prefeitura', sector: 'Auditoria', desc: 'Controle Interno', phone: '(19) 3404-9837 / 9841' },
+            { id: 103, category: 'Prefeitura', sector: 'Gabinete', desc: 'Adm. Najara', phone: '(19) 3404-9634' },
+            { id: 104, category: 'Outros', sector: 'Banco Santander', desc: 'PA Posto Bancário', phone: '(19) 3444-4207 / 3451-3961' },
+            { id: 105, category: 'Prefeitura', sector: 'Conselho Municipal', desc: '', phone: '(19) 3404-9859' },
+            { id: 106, category: 'Prefeitura', sector: 'Contabilidade', desc: 'Fazenda', phone: '(19) 3404-9731 / 9648 / 9647' },
+            { id: 107, category: 'Prefeitura', sector: 'Call Center', desc: 'Atendimento', phone: '(19) 3445-1322 / 3445-3623' },
+            { id: 108, category: 'Prefeitura', sector: 'Direito Tributário', desc: 'Jurídico', phone: '(19) 3404-9696 / 9831' },
+            { id: 109, category: 'Prefeitura', sector: 'Expediente', desc: 'Administrativo', phone: '(19) 3404-9664' },
+            { id: 110, category: 'Prefeitura', sector: 'Empresa Fácil', desc: 'Sala do Empreendedor', phone: '(19) 3404-9616 / 9617' },
+            { id: 111, category: 'Prefeitura', sector: 'Extensão Rural', desc: 'Agricultura', phone: '(19) 3404-2438' },
+            { id: 112, category: 'Prefeitura', sector: 'DEPLAN', desc: 'Planejamento', phone: '(19) 3404-9741' },
+            { id: 113, category: 'Prefeitura', sector: 'Fazenda', desc: 'Secretaria', phone: '(19) 3404-9632 / 9633 / 9720' },
+            { id: 114, category: 'Prefeitura', sector: 'Financeiro', desc: 'Tesouraria', phone: '(19) 3404-9653' },
+            { id: 115, category: 'Prefeitura', sector: 'Fiscalização', desc: 'Tributária/Posturas', phone: '(19) 3404-9665' },
+            { id: 116, category: 'Prefeitura', sector: 'Fiscal Unificado', desc: '', phone: '(19) 3404-9639' },
+            { id: 117, category: 'Prefeitura', sector: 'Gabinete', desc: 'Recepção', phone: '(19) 3404-9601 / 9620' },
+            { id: 118, category: 'Segurança', sector: 'Segurança Pública', desc: 'Secretaria', phone: '(19) 3453-1005' },
+            { id: 119, category: 'Prefeitura', sector: 'Iluminação Pública', desc: 'Solicitações', phone: '156' },
+            { id: 120, category: 'Prefeitura', sector: 'Recepção DDA', desc: '', phone: '(19) 3404-9872' },
+            { id: 121, category: 'Prefeitura', sector: 'Gabinete', desc: 'Paulinho', phone: '(19) 3404-9657' },
+            { id: 122, category: 'Outros', sector: 'SEMA - Pq Cidade', desc: 'Meio Ambiente', phone: '(19) 3451-2550 / 3451-7309' },
+            { id: 123, category: 'Outros', sector: 'SEMA - Nova Suíça', desc: 'Meio Ambiente', phone: '(19) 3453-1005' },
+            { id: 124, category: 'Prefeitura', sector: 'Banco do Povo', desc: 'Empréstimos', phone: '(19) 3404-9775' },
+            { id: 125, category: 'Prefeitura', sector: 'Habitação', desc: 'Secretaria', phone: '(19) 3404-9702 / 9703' },
+            { id: 126, category: 'Prefeitura', sector: 'Inspetoria', desc: '', phone: '(19) 3404-9666 / 9667' },
+            { id: 127, category: 'Prefeitura', sector: 'Jurídico', desc: 'Secretaria', phone: '(19) 3404-9692 / 9697' },
+            { id: 128, category: 'Prefeitura', sector: 'Medicina do Trabalho', desc: 'RH', phone: '(19) 3404-9727 / 9736' },
+            { id: 129, category: 'Prefeitura', sector: 'Mobilidade Urbana', desc: 'Secretaria', phone: '(19) 3404-9771 / 9775 / 9777' },
+            { id: 130, category: 'Prefeitura', sector: 'Obras', desc: 'Secretaria', phone: '(19) 3404-9759 / 9760' },
+            { id: 131, category: 'Prefeitura', sector: 'Orçamento', desc: 'Planejamento', phone: '(19) 3404-9723' },
+            { id: 132, category: 'Prefeitura', sector: 'Ouvidoria', desc: 'Administrativa', phone: '(19) 3404-9766' },
+            { id: 133, category: 'Prefeitura', sector: 'Posturas', desc: 'Fiscalização', phone: '(19) 3404-9639' },
+            { id: 134, category: 'Prefeitura', sector: 'Protocolo', desc: 'Geral', phone: '(19) 3404-9624' },
+            { id: 135, category: 'Prefeitura', sector: 'Paiva', desc: '', phone: '(19) 3404-9815' },
+            { id: 136, category: 'Segurança', sector: 'Portaria Guarda', desc: 'Edifício Prada', phone: '(19) 3404-9700' },
+            { id: 137, category: 'Prefeitura', sector: 'Recursos Humanos (RH)', desc: 'Departamento Pessoal', phone: '(19) 3404-9654 / 9655 / 9656' },
+            { id: 138, category: 'Saúde', sector: 'VISA', desc: 'Vigilância Sanitária', phone: '(19) 3404-9671 / 9864 / 9677 / 9606' },
+            { id: 139, category: 'Prefeitura', sector: 'SRI', desc: 'Sec. Relações Institucionais', phone: '(19) 3404-9660 / 9840' },
+            { id: 140, category: 'Prefeitura', sector: 'SRM', desc: 'Receita Municipal', phone: '(19) 3404-9860 / 9663 / 9824 / 9825' },
+            { id: 141, category: 'Prefeitura', sector: 'TI', desc: 'Tecnologia da Informação', phone: '(19) 3404-9822 / 9856 / 9746' },
+            { id: 142, category: 'Prefeitura', sector: 'Tesouraria', desc: 'Financeiro', phone: '(19) 3404-9651 / 9858' },
+            { id: 143, category: 'Prefeitura', sector: 'SDTI', desc: '', phone: '(19) 3404-9616' },
+            
+            // Mantido ID 144, removido duplicata ID 204
+            { id: 144, category: 'Judiciário', sector: 'Vara da Fazenda', desc: 'Fórum (Hípica)', phone: '(19) 2113-3087' },
+            
+            { id: 145, category: 'Saúde', sector: 'VISA (Sede)', desc: 'Vigilância Sanitária', phone: '(19) 3720-2520' },
+            { id: 146, category: 'Saúde', sector: 'VISA (WhatsApp)', desc: 'Mensagens', phone: '(19) 3404-9867' },
+            { id: 147, category: 'Prefeitura', sector: 'Urbanismo', desc: 'Secretaria', phone: '(19) 3404-9745 / 9739 / 9744' },
+            { id: 149, category: 'Educação', sector: 'Cadastro Escolar', desc: 'Vagas', phone: '(19) 3404-9743 / 9806' },
+            // Novos Adicionados
+            { id: 201, category: 'Cartórios', sector: '2º Tabelião de Notas', desc: 'Rua Sete de Setembro, 692', phone: '(19) 3451-7444 / 3451-5478' },
+            { id: 203, category: 'Judiciário', sector: 'Fórum Cível (Hípica)', desc: 'Via Antônio Cruãnes Filho', phone: '(19) 2113-3087 / 3442-9077' },
+            { id: 205, category: 'Judiciário', sector: 'OAB Limeira', desc: 'Casa do Advogado (Hípica)', phone: '(19) 3441-4322' }
+        ];
+
+        let contacts = [];
+
+        // Load data on start
+        function init() {
+            // Updated key to v6 to apply new logic/cleanup
+            const stored = localStorage.getItem('limeiraRamais_v6');
+            if (stored) {
+                contacts = JSON.parse(stored);
+            } else {
+                contacts = [...initialData];
+                save();
+            }
+            renderTable();
+        }
+
+        function save() {
+            localStorage.setItem('limeiraRamais_v6', JSON.stringify(contacts));
+            updateStats();
+        }
+
+        function resetData() {
+            if(confirm("Deseja restaurar a lista para os telefones padrão? Isso apagará os contatos adicionados manualmente.")) {
+                contacts = [...initialData];
+                save();
+                renderTable();
+                showToast("Dados restaurados com sucesso!", "success");
+            }
+        }
+
+        // --- Render Logic ---
+
+        function renderTable() {
+            const tbody = document.getElementById('contactsTableBody');
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const filterCat = document.getElementById('categoryFilter').value;
+            const emptyState = document.getElementById('emptyState');
+
+            tbody.innerHTML = '';
+
+            const filtered = contacts.filter(c => {
+                const matchSearch = c.sector.toLowerCase().includes(search) || 
+                                    c.phone.includes(search) || 
+                                    c.desc.toLowerCase().includes(search) ||
+                                    c.category.toLowerCase().includes(search);
+                const matchCat = filterCat === 'Todos' || c.category === filterCat;
+                return matchSearch && matchCat;
+            });
+
+            if (filtered.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                
+                // Sort Alphabetically by Category then Sector
+                filtered.sort((a, b) => a.category.localeCompare(b.category) || a.sector.localeCompare(b.sector));
+
+                filtered.forEach(contact => {
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-slate-50 transition-colors group';
+                    
+                    // Category Badge Color
+                    let badgeClass = "bg-gray-100 text-gray-800";
+                    if(contact.category === 'Prefeitura') badgeClass = "bg-blue-100 text-blue-800";
+                    if(contact.category === 'Saúde') badgeClass = "bg-red-100 text-red-800";
+                    if(contact.category === 'Judiciário') badgeClass = "bg-indigo-100 text-indigo-800";
+                    if(contact.category === 'Segurança') badgeClass = "bg-slate-800 text-white";
+
+                    row.innerHTML = `
+                        <td class="p-4">
+                            <span class="px-2 py-1 rounded text-xs font-bold uppercase ${badgeClass}">${contact.category}</span>
+                        </td>
+                        <td class="p-4 font-semibold text-slate-700">${contact.sector}</td>
+                        <td class="p-4 text-slate-500 text-sm">${contact.desc || '-'}</td>
+                        <td class="p-4">
+                            <div class="flex items-center gap-2">
+                                <span class="font-mono text-slate-700 bg-slate-100 px-2 py-1 rounded select-all">${contact.phone}</span>
+                                <button onclick="copyToClipboard('${contact.phone}')" class="text-slate-400 hover:text-blue-500" title="Copiar">
+                                    <i class="fa-regular fa-copy"></i>
+                                </button>
+                            </div>
+                        </td>
+                        <td class="p-4 text-right">
+                            <button onclick="deleteContact(${contact.id})" class="text-red-300 hover:text-red-500 transition-colors p-2" title="Remover">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+            updateStats();
+        }
+
+        function updateStats() {
+            document.getElementById('totalCount').innerText = contacts.length;
+            document.getElementById('prefCount').innerText = contacts.filter(c => c.category === 'Prefeitura').length;
+            document.getElementById('judCount').innerText = contacts.filter(c => c.category === 'Judiciário').length;
+        }
+
+        // --- Interaction Logic ---
+        
+        // Helper to remove non-digits for comparison
+        function cleanPhone(phoneStr) {
+            return phoneStr.replace(/\D/g, '');
+        }
+
+        function addContact(e) {
+            e.preventDefault();
+            const category = document.getElementById('newCategory').value;
+            const sector = document.getElementById('newSector').value.trim(); // Removed spaces
+            const desc = document.getElementById('newDesc').value;
+            const phone = document.getElementById('newPhone').value.trim();
+            const phoneError = document.getElementById('phoneError');
+
+            // --- NOVO: Regra Avançada de Duplicatas ---
+            // Regra: Não permite MESMO SETOR com MESMO TELEFONE.
+            // Permite: Setores diferentes com mesmo telefone (PABX) ou mesmo setor com telefone diferente.
+            
+            const newPhoneClean = cleanPhone(phone);
+
+            const alreadyExists = contacts.some(c => {
+                const existingPhoneClean = cleanPhone(c.phone);
+                const sameSector = c.sector.toLowerCase() === sector.toLowerCase();
+                const samePhone = existingPhoneClean === newPhoneClean;
+                
+                // Bloqueia se AMBOS forem iguais
+                return sameSector && samePhone;
+            });
+
+            if (alreadyExists) {
+                phoneError.innerText = "Este setor já possui este telefone cadastrado.";
+                phoneError.classList.remove('hidden');
+                showToast('Erro: Registro duplicado!', 'error');
+                return; // Para a execução aqui
+            } else {
+                phoneError.classList.add('hidden');
+            }
+
+            const newId = contacts.length > 0 ? Math.max(...contacts.map(c => c.id)) + 1 : 1;
+
+            contacts.push({ id: newId, category, sector, desc, phone });
+            save();
+            renderTable();
+            closeModal();
+            document.getElementById('addForm').reset();
+            showToast('Ramal adicionado com sucesso!', 'success');
+        }
+
+        function deleteContact(id) {
+            if(confirm('Tem certeza que deseja remover este ramal?')) {
+                contacts = contacts.filter(c => c.id !== id);
+                save();
+                renderTable();
+                showToast('Ramal removido.', 'success');
+            }
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Telefone copiado!', 'success');
+            });
+        }
+
+        // --- Modal & UI Logic ---
+
+        const modalOverlay = document.getElementById('modalOverlay');
+
+        function openModal() {
+            modalOverlay.classList.remove('hidden');
+            document.getElementById('phoneError').classList.add('hidden'); // Limpa erro ao abrir
+        }
+
+        function closeModal() {
+            modalOverlay.classList.add('hidden');
+        }
+
+        // Close modal on outside click
+        modalOverlay.addEventListener('click', (e) => {
+            if(e.target === modalOverlay) closeModal();
+        });
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastIcon = document.getElementById('toastIcon');
+            
+            document.getElementById('toastMsg').innerText = msg;
+            
+            // Muda cor baseada no tipo
+            if(type === 'error') {
+                toastIcon.className = "fa-solid fa-circle-xmark text-red-400";
+            } else {
+                toastIcon.className = "fa-solid fa-circle-check text-green-400";
+            }
+
+            toast.classList.remove('translate-y-20');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20');
+            }, 3000);
+        }
+
+        // Start App
+        init();
+
+    </script>
+</body>
+</html>
