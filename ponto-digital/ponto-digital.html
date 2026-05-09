@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kyro - Controle Ponto</title>
+    
+    <link rel="shortcut icon" href="https://placehold.co/32x32/003366/FFFFFF?text=K" type="image/x-icon">
+    
+    <!-- Bibliotecas JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <!-- ExcelJS para exportação robusta -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Configuração Tailwind -->
+    <script>
+        (function() {
+            function configurarTailwind() {
+                if (typeof tailwind !== 'undefined') {
+                    tailwind.config = {
+                        theme: {
+                            extend: {
+                                fontFamily: {
+                                    sans: ['Inter', 'sans-serif'],
+                                },
+                                colors: {
+                                    'prefeitura-azul': '#003366',
+                                    'prefeitura-dourado': '#DAA520',
+                                    'prefeitura-cinza': '#F3F4F6',
+                                },
+                                boxShadow: {
+                                    'card': '0 4px 12px rgba(0, 51, 102, 0.1)',
+                                }
+                            }
+                        }
+                    };
+                    return true;
+                }
+                return false;
+            }
+            if (!configurarTailwind()) {
+                window.addEventListener('DOMContentLoaded', configurarTailwind);
+                window.addEventListener('load', configurarTailwind);
+            }
+        })();
+    </script>
+    
+    <!-- Estilos CSS -->
+    <style>
+        body {
+            font-family: 'Calibri', 'Inter', sans-serif;
+            background-color: #F3F4F6;
+            color: #333;
+        }
+
+        .cabecalho-app {
+            background-color: #003366;
+            color: white;
+            padding: 0 2rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            height: 80px;
+        }
+        
+        .logo-titulo {
+            font-size: 1.5rem;
+            font-weight: 600;
+            padding: 1rem 0;
+            display: flex; 
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-voltar-gestao {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #DAA520;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+            border: 1px solid rgba(218, 165, 32, 0.3);
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-voltar-gestao:hover {
+            background-color: #DAA520;
+            color: #003366;
+        }
+
+        .acoes-globais {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem 0;
+        }
+
+        .botao-acao {
+            background-color: #DAA520;
+            color: #003366;
+            padding: 0.625rem 1.25rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border: none;
+            cursor: pointer;
+        }
+        .botao-acao:hover {
+            background-color: #B8860B;
+            transform: translateY(-2px);
+        }
+        .botao-pdf { background-color: #c00; color: white; }
+        .botao-pdf:hover { background-color: #a00; }
+        
+        .botao-primario {
+            background-color: #003366;
+            color: white;
+            padding: 0.625rem 1.25rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .botao-primario:hover {
+            background-color: #004488;
+        }
+        
+        #controles-container {
+            background-color: white;
+            padding: 1.5rem;
+            margin: 1.5rem 2rem;
+            border-radius: 12px;
+            box-shadow: var(--tw-shadow-card);
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .controles-item label {
+            font-weight: 600;
+            color: #003366;
+            margin-right: 0.5rem;
+        }
+
+        .controles-item select,
+        .controles-item input {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #D1D5DB;
+            border-radius: 8px;
+            background-color: #F9FAFB;
+        }
+
+        #main-container {
+            margin: 0 2rem;
+        }
+        
+        /* ESTILOS DA FICHA DE PONTO */
+        .container-pessoa {
+            background-color: white;
+            margin-bottom: 1.5rem;
+            border-radius: 12px;
+            box-shadow: var(--tw-shadow-card);
+            overflow-x: auto; 
+            page-break-inside: avoid;
+        }
+        
+        .cabecalho-pessoa {
+            background-color: #003366; color: white; padding: 1.25rem 1.5rem;
+            font-size: 1.5rem; font-weight: 600;
+        }
+        .info-container {
+            padding: 1.5rem; border-bottom: 1px solid #E5E7EB; display: flex;
+            justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+        }
+        .info-container p { color: #4B5563; font-size: 0.95rem; line-height: 1.6; }
+        .info-container strong { color: #003366; font-weight: 600; }
+        
+        /* GRID DE PONTO */
+        .grid-container { 
+            padding: 0 1.5rem 1.5rem; 
+            display: flex;
+            justify-content: center;
+        }
+        
+        .grid-ponto { 
+            min-width: 560px;
+            border-collapse: collapse; 
+            margin-top: 1.5rem; 
+            table-layout: fixed; 
+        }
+        
+        /* .grid-ponto col { width: 80px; } REMOVIDO PARA USAR INLINE STYLE DINÂMICO */
+        
+        .grid-ponto th, .grid-ponto td {
+            border: 1px solid #000;
+            padding: 4px;
+            text-align: center; 
+            font-size: 11pt; 
+            width: 80px;
+            height: 22px; 
+            white-space: nowrap;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+        
+        .grid-ponto thead th {
+            background-color: #F0F0F0; 
+            color: #000; 
+            font-weight: bold;
+            border: 1px solid #000; /* Garante borda no cabeçalho */
+        }
+        
+        .destaque-feriado { background-color: #FEF9C3; }
+        .destaque-ferias { background-color: #DBEAFE; }
+        .destaque-folga { background-color: #F3F4F6; }
+        
+        /* RODAPÉ TABELA */
+        .footer-totals {
+            font-weight: bold;
+            text-align: left;
+            border: 1px solid #000 !important;
+            background-color: white;
+            padding-left: 5px !important;
+        }
+        
+        .footer-signature {
+            border: none !important;
+            text-align: center;
+            font-size: 12pt; /* AUMENTADO PARA 12 */
+            font-weight: bold; /* ADICIONADO NEGRITO */
+            padding-top: 5px;
+        }
+        
+        .footer-signature-line {
+            border-bottom: 1px solid #000 !important; /* Linha de assinatura */
+            border-top: none !important; 
+            border-left: none !important; 
+            border-right: none !important;
+        }
+        
+        .b-none { border: none !important; }
+        .text-center { text-align: center !important; }
+
+        .rodape-app {
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            color: #6B7280;
+            font-size: 0.9rem;
+            border-top: 1px solid #E5E7EB;
+        }
+        
+        .aviso-sincronizacao {
+            background-color: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            color: #1e40af;
+            padding: 1rem 2rem;
+            margin: 1rem 2rem 0;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        @media print {
+            @page { size: A4 portrait; margin: 0.5cm; }
+            body { background-color: white; margin: 0; padding: 0; width: 100%; }
+            .cabecalho-app, #controles-container, .aviso-sincronizacao, .rodape-app { display: none; }
+            #main-container { margin: 0; }
+            .container-pessoa {
+                margin: 0; padding: 0; box-shadow: none; border: none;
+                width: 100%; page-break-after: always;
+            }
+            .grid-ponto { width: 100%; } 
+        }
+    </style>
+</head>
+<body class="bg-prefeitura-cinza">
+    <header class="cabecalho-app">
+        <div class="logo-titulo">
+            <span>Controle de Ponto - Fazenda</span>
+        </div>
+        
+        <div class="flex gap-3 items-center">
+            <a href="../kyro/kyro.html" class="btn-voltar-gestao">
+                &#8617; Voltar
+            </a>
+            <a href="../funcionarios/funcionarios.html" class="btn-voltar-gestao">
+                &#9881; Gerenciar Cadastros
+            </a>
+        </div>
+
+        <div id="acoes-globais-container" class="acoes-globais">
+            <button onclick="window.print()" class="botao-acao botao-pdf">Imprimir / PDF</button>
+            <button onclick="exportarHTMLparaExcel()" class="botao-acao" style="background-color: #107c10;">Exportar Formatado (.xlsx)</button>
+        </div>
+    </header>
+
+    <div class="aviso-sincronizacao">
+        <div>
+            <strong>Modo de Visualização:</strong> Os dados (Funcionários, Feriados e Férias) são sincronizados em tempo real com o Painel de Gestão.
+        </div>
+        <div id="status-banco" class="text-sm font-bold bg-white px-2 py-1 rounded text-blue-800 border border-blue-200">
+            Conectando...
+        </div>
+    </div>
+
+    <section id="controles-container">
+        <!-- Injetado via JS -->
+    </section>
+
+    <main id="main-container">
+        <!-- Injetado via JS -->
+    </main>
+    
+    <footer class="rodape-app">
+        Prefeitura Municipal de Limeira - Secretaria de Fazenda
+    </footer>
+
+    <script>
+    // --- Configuração e Banco de Dados ---
+    const DB_INTEGRADO_KEY = 'limeira_dados_integrados_v6';
+    const LS_KEYS = {
+        pontoInicio: 'controlePonto_pontoInicio',
+        pontoFim: 'controlePonto_pontoFim'
+    };
+
+    let PESSOAS = [];
+    let DB_PESSOAS = {};
+    let FERIADOS_DB = {};     // Feriados vindos do banco (PRINCIPAL)
+    let CACHE_FERIADOS_AUTO = {}; // Cache para fallback
+    let FERIAS = {};
+    let PONTO_INICIO = '';
+    let PONTO_FIM = '';
+    let PERIODOS = []; 
+    
+    // --- LÓGICA DE CÁLCULO DE FERIADOS (FALLBACK) ---
+    function getPascoa(ano) {
+        const f = Math.floor,
+            G = ano % 19,
+            C = f(ano / 100),
+            H = (C - f(C / 4) - f((8 * C + 13) / 25) + 19 * G + 15) % 30,
+            I = H - f(H / 28) * (1 - f(29 / (H + 1)) * f((21 - G) / 11)),
+            J = (ano + f(ano / 4) + I + 2 - C + f(C / 4)) % 7,
+            L = I - J,
+            mes = 3 + f((L + 40) / 44),
+            dia = L + 28 - 31 * f(mes / 4);
+        return new Date(ano, mes - 1, dia);
+    }
+
+    function addDays(date, days) {
+        const result = new Date(date);
+        result.setDate(result.getDate() + days);
+        return result;
+    }
+
+    function formatYMD(date) {
+        return date.toISOString().split('T')[0];
+    }
+
+    function gerarFeriadosLimeiraFallback(ano) {
+        const pascoa = getPascoa(ano);
+        const carnavalSeg = addDays(pascoa, -48);
+        const carnavalTer = addDays(pascoa, -47);
+        const cinzas = addDays(pascoa, -46);
+        const sextaSanta = addDays(pascoa, -2);
+        const corpusChristi = addDays(pascoa, 60);
+
+        return [
+            { data: `${ano}-01-01`, nome: 'Confraternização Universal' },
+            { data: formatYMD(carnavalSeg), nome: 'Carnaval' },
+            { data: formatYMD(carnavalTer), nome: 'Carnaval' },
+            { data: formatYMD(cinzas), nome: 'Quarta-feira de Cinzas' },
+            { data: formatYMD(sextaSanta), nome: 'Sexta-feira Santa' },
+            { data: `${ano}-04-21`, nome: 'Tiradentes' },
+            { data: `${ano}-05-01`, nome: 'Dia do Trabalho' },
+            { data: formatYMD(corpusChristi), nome: 'Corpus Christi' },
+            { data: `${ano}-07-09`, nome: 'Revolução Constitucionalista' },
+            { data: `${ano}-09-07`, nome: 'Independência do Brasil' },
+            { data: `${ano}-09-15`, nome: 'Aniversário de Limeira' },
+            { data: `${ano}-10-12`, nome: 'Nossa Senhora Aparecida' },
+            { data: `${ano}-10-28`, nome: 'Dia do Servidor Público' },
+            { data: `${ano}-11-02`, nome: 'Finados' },
+            { data: `${ano}-11-15`, nome: 'Proclamação da República' },
+            { data: `${ano}-11-20`, nome: 'Dia da Consciência Negra' },
+            { data: `${ano}-12-24`, nome: 'Véspera de Natal' },
+            { data: `${ano}-12-25`, nome: 'Natal' },
+            { data: `${ano}-12-26`, nome: 'Pós Natal' },
+            { data: `${ano}-12-31`, nome: 'Véspera de Ano Novo' }
+        ];
+    }
+    // ------------------------------------------------------------------
+
+    // --- INTEGRAÇÃO ---
+    function carregarDados() {
+        PONTO_INICIO = localStorage.getItem(LS_KEYS.pontoInicio) || '';
+        PONTO_FIM = localStorage.getItem(LS_KEYS.pontoFim) || '';
+
+        const raw = localStorage.getItem(DB_INTEGRADO_KEY);
+        const statusDiv = document.getElementById('status-banco');
+
+        if (!raw) {
+            statusDiv.textContent = "Nenhum dado encontrado";
+            statusDiv.classList.replace('text-blue-800', 'text-red-800');
+            document.getElementById('main-container').innerHTML = `
+                <div class="text-center p-8 text-gray-500">
+                    <p>Ainda não há dados cadastrados no sistema central (v6).</p>
+                    <p>Acesse "Gerenciar Cadastros" para adicionar a equipe.</p>
+                </div>`;
+            return;
+        }
+
+        const db = JSON.parse(raw);
+        statusDiv.textContent = "Dados Sincronizados (V6)";
+
+        // Mapeia Funcionários
+        PESSOAS = [];
+        DB_PESSOAS = {};
+        if (db.funcionarios) {
+            db.funcionarios.forEach(f => {
+                if (f.tipo === 'ponto') { 
+                    PESSOAS.push(f.nome);
+                    DB_PESSOAS[f.nome] = {
+                        matricula: f.matricula || '',
+                        admissao: '',
+                        funcao: f.cargo || f.vinculo || 'Funcionário',
+                        vinculo: f.vinculo || 'Funcionário',
+                        tipo: f.tipo
+                    };
+                }
+            });
+            PESSOAS.sort();
+        }
+
+        // --- CARREGA FERIADOS DO BANCO (FONTE VERDADEIRA) ---
+        FERIADOS_DB = {};
+        if (db.feriados) {
+            db.feriados.forEach(f => {
+                const ano = f.data.split('-')[0];
+                if (!FERIADOS_DB[ano]) FERIADOS_DB[ano] = [];
+                FERIADOS_DB[ano].push(f);
+            });
+        }
+
+        // Mapeia Férias
+        FERIAS = {};
+        if (db.ferias) {
+            db.ferias.forEach(fer => {
+                if (!FERIAS[fer.funcionario]) FERIAS[fer.funcionario] = [];
+                FERIAS[fer.funcionario].push({
+                    inicio: fer.inicio,
+                    fim: fer.fim
+                });
+            });
+        }
+
+        renderControles();
+    }
+    
+    // Escuta alterações no localStorage (ex: edição em outra aba)
+    window.addEventListener('storage', (e) => {
+        if(e.key === DB_INTEGRADO_KEY) {
+            console.log('Dados atualizados externamente. Recarregando...');
+            carregarDados();
+        }
+    });
+
+    function formatarDataBR(dataISO) {
+        if (!dataISO) return "--/--/----";
+        const [ano, mes, dia] = dataISO.split('-');
+        return `${dia}/${mes}/${ano}`;
+    }
+
+    function formatarDataISO(dataObj) {
+        return dataObj.toISOString().split('T')[0];
+    }
+    
+    function getDiaDaSemana(dataObj) {
+        const dias = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+        return dias[dataObj.getUTCDay()];
+    }
+
+    // --- NOVA LÓGICA DE VERIFICAÇÃO DE FERIADO ---
+    function verificarFeriado(dataISO) {
+        const [ano] = dataISO.split('-');
+        
+        if (FERIADOS_DB[ano] && FERIADOS_DB[ano].length > 0) {
+            return FERIADOS_DB[ano].find(f => f.data === dataISO) || null;
+        }
+
+        if (!CACHE_FERIADOS_AUTO[ano]) {
+            CACHE_FERIADOS_AUTO[ano] = gerarFeriadosLimeiraFallback(parseInt(ano));
+        }
+        return CACHE_FERIADOS_AUTO[ano].find(f => f.data === dataISO);
+    }
+    
+    function verificarFerias(nomePessoa, dataISO) {
+        const periodosFerias = FERIAS[nomePessoa] || [];
+        const dataVerificar = new Date(dataISO + "T00:00:00Z").getTime();
+        
+        return periodosFerias.some(periodo => {
+            const inicio = new Date(periodo.inicio + "T00:00:00Z").getTime();
+            const fim = new Date(periodo.fim + "T00:00:00Z").getTime();
+            return dataVerificar >= inicio && dataVerificar <= fim;
+        });
+    }
+
+    function simularMarcacoes(nomePessoa, dataISO, diaSemana) {
+        const feriado = verificarFeriado(dataISO);
+        const ferias = verificarFerias(nomePessoa, dataISO);
+        
+        let marcacoes = {
+            e1: "", s1: "", e2: "", s2: "", e3: "", s3: "",
+            total: "00:00", classe: "", observacao: ""
+        };
+
+        if (ferias) {
+            marcacoes.e1 = "FÉRIAS"; marcacoes.s1 = "FÉRIAS";
+            marcacoes.e2 = "FÉRIAS"; marcacoes.s2 = "FÉRIAS";
+            marcacoes.e3 = "FÉRIAS"; marcacoes.s3 = "FÉRIAS";
+            marcacoes.classe = "destaque-ferias";
+            marcacoes.total = "00:00";
+        } else if (feriado) {
+            // VERIFICA SE É PONTO FACULTATIVO
+            // Verifica o campo 'tipo' (preferencial) ou se o 'nome' contem facultativo
+            const tipoFeriado = feriado.tipo ? feriado.tipo.toLowerCase() : "";
+            const nomeFeriado = feriado.nome ? feriado.nome.toLowerCase() : "";
+            
+            const isPF = tipoFeriado.includes('facultativo') || nomeFeriado.includes('facultativo');
+            const textoFeriado = isPF ? "PF" : "FERIADO";
+
+            marcacoes.e1 = textoFeriado; marcacoes.s1 = textoFeriado;
+            marcacoes.e2 = textoFeriado; marcacoes.s2 = textoFeriado;
+            marcacoes.e3 = textoFeriado; marcacoes.s3 = textoFeriado;
+            marcacoes.classe = "destaque-feriado";
+            marcacoes.total = "00:00";
+        } else if (diaSemana === "Sábado" || diaSemana === "Domingo") {
+            marcacoes.e1 = "FOLGA"; marcacoes.s1 = "FOLGA";
+            marcacoes.e2 = "FOLGA"; marcacoes.s2 = "FOLGA";
+            marcacoes.e3 = "FOLGA"; marcacoes.s3 = "FOLGA";
+            marcacoes.classe = "destaque-folga";
+            marcacoes.total = "00:00";
+        }
+        return marcacoes;
+    }
+    
+    function gerarPeriodos() {
+        PERIODOS = []; 
+        const hoje = new Date();
+        let dataBase = new Date(hoje.getFullYear(), hoje.getMonth(), 11);
+        if (hoje.getDate() < 11) dataBase.setMonth(dataBase.getMonth() - 1);
+
+        for (let i = 0; i < 24; i++) {
+            let dataInicio = new Date(dataBase);
+            dataInicio.setMonth(dataInicio.getMonth() - 1);
+            let dataFim = new Date(dataBase);
+            dataFim.setDate(dataFim.getDate() - 1);
+            
+            PERIODOS.push({
+                inicio: formatarDataISO(dataInicio),
+                fim: formatarDataISO(dataFim)
+            });
+            dataBase.setMonth(dataBase.getMonth() - 1);
+        }
+    }
+    
+    function renderControles() {
+        const controlesContainer = document.getElementById('controles-container');
+        
+        if (PERIODOS.length === 0) gerarPeriodos();
+        
+        controlesContainer.innerHTML = `
+            <div class="controles-item">
+                <label for="periodo-inicio">Data Início:</label>
+                <input type="date" id="periodo-inicio" class="w-full md:w-auto">
+            </div>
+            <div class="controles-item">
+                <label for="periodo-fim">Data Fim:</label>
+                <input type="date" id="periodo-fim" class="w-full md:w-auto">
+            </div>
+            <div class="controles-item ml-auto">
+                <button onclick="atualizarDadosPonto()" class="botao-primario w-full md:w-auto">Gerar Relatório</button>
+            </div>
+        `;
+        
+        if (PONTO_INICIO && PONTO_FIM) {
+             document.getElementById('periodo-inicio').value = PONTO_INICIO;
+             document.getElementById('periodo-fim').value = PONTO_FIM;
+             atualizarDadosPonto(); 
+        } else if (PERIODOS.length > 0) {
+             document.getElementById('periodo-inicio').value = PERIODOS[0].inicio;
+             document.getElementById('periodo-fim').value = PERIODOS[0].fim;
+        }
+    }
+    
+    function atualizarDadosPonto() {
+        const mainContainer = document.getElementById('main-container');
+        mainContainer.innerHTML = '';
+        
+        const dataInicio = document.getElementById('periodo-inicio').value;
+        const dataFim = document.getElementById('periodo-fim').value;
+        
+        localStorage.setItem(LS_KEYS.pontoInicio, dataInicio);
+        localStorage.setItem(LS_KEYS.pontoFim, dataFim);
+        
+        if (!dataInicio || !dataFim) {
+            mainContainer.innerHTML = '<p class="p-4 text-center text-gray-600">Por favor, selecione a data de início e fim.</p>';
+            return;
+        }
+
+        const periodoSelecionado = {
+            inicio: dataInicio,
+            fim: dataFim,
+            label: `Período: ${formatarDataBR(dataInicio)} a ${formatarDataBR(dataFim)}`
+        };
+        
+        PESSOAS.forEach(nome => {
+            mainContainer.appendChild(criarCartaoPessoa(nome, periodoSelecionado));
+        });
+    }
+
+    function criarCartaoPessoa(nome, periodo) {
+        const info = DB_PESSOAS[nome] || { matricula: "N/A", vinculo: "Funcionário" };
+        const isEstagiario = info.vinculo === 'Estagiário' || info.tipo === 'Estagiário';
+        const cols = isEstagiario ? 7 : 9; 
+
+        // --- DATAS ESPECÍFICAS PARA ESTAGIÁRIOS (Ciclo 16 a 15) ---
+        let dataInicioPessoa = periodo.inicio;
+        let dataFimPessoa = periodo.fim;
+        let labelPeriodoPessoa = periodo.label;
+
+        if (isEstagiario) {
+            const globalFim = new Date(periodo.fim + "T00:00:00");
+            const gAno = globalFim.getFullYear();
+            const gMes = globalFim.getMonth(); 
+            
+            const estFim = new Date(gAno, gMes, 15);
+            const estIni = new Date(gAno, gMes - 1, 16);
+            
+            dataInicioPessoa = formatarDataISO(estIni);
+            dataFimPessoa = formatarDataISO(estFim);
+            labelPeriodoPessoa = `Período: ${formatarDataBR(dataInicioPessoa)} a ${formatarDataBR(dataFimPessoa)}`;
+        }
+        
+        const container = document.createElement('div');
+        container.className = 'container-pessoa';
+        container.dataset.tipo = isEstagiario ? 'estagiario' : 'funcionario';
+        container.dataset.periodoLabel = labelPeriodoPessoa; // Guardando para excel
+        
+        // Cabeçalho da Tabela
+        let headersHTML = '';
+        if (isEstagiario) {
+            headersHTML = `
+                <tr>
+                    <th>Dia</th> <th>Dia da Semana</th> <th colspan="2">1º período</th>
+                    <th colspan="2">2º período</th> <th>Total</th>
+                </tr>
+                <tr>
+                    <th></th> <th></th> <th>Entrada</th> <th>Saída</th>
+                    <th>Entrada</th> <th>Saída</th> <th></th>
+                </tr>
+            `;
+        } else {
+            headersHTML = `
+                <tr>
+                    <th>Dia</th> <th>Dia da Semana</th> <th colspan="2">1º período</th>
+                    <th colspan="2">2º período</th> <th colspan="2">3º período</th> <th>Total</th>
+                </tr>
+                <tr>
+                    <th></th> <th></th> <th>Entrada</th> <th>Saída</th>
+                    <th>Entrada</th> <th>Saída</th> <th>Entrada</th> <th>Saída</th> <th></th>
+                </tr>
+            `;
+        }
+
+        let colGroupHTML = '';
+        for(let i=0; i<cols; i++) {
+            if (i === 1) { // Aumenta largura da coluna B (Dia da Semana) visualmente (+100px aprox)
+                colGroupHTML += '<col style="width: 100px">'; // Ajustado para 100px conforme solicitado
+            } else {
+                colGroupHTML += '<col style="width: 80px">';
+            }
+        }
+
+        container.innerHTML = `
+            <h2 class="cabecalho-pessoa">
+                ${nome} 
+                <span style="font-size:0.8rem; float:right; background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:4px;">
+                    ${info.vinculo}
+                </span>
+            </h2>
+            <div class="info-container">
+                <div class="info-pessoa">
+                    <p><strong>Nome:</strong> ${nome} <span class="ml-4"><strong>Matrícula:</strong> ${info.matricula}</span></p>
+                    <p><strong>Secretaria:</strong> Secretaria Municipal de Fazenda</p> <!-- REMOVIDA A BORDA VISUAL NO SITE -->
+                    <p><strong>Função:</strong>  <span class="ml-4"><strong>Admissão:</strong> </span></p>
+                </div>
+                <div class="info-periodo">
+                    <p><strong>${labelPeriodoPessoa}</strong></p>
+                </div>
+            </div>
+            <div class="grid-container">
+                <table class="grid-ponto" style="width: ${cols * 80 + 20}px; min-width: ${cols * 80 + 20}px;">
+                    <colgroup>${colGroupHTML}</colgroup>
+                    <thead>${headersHTML}</thead>
+                    <tbody class="grid-body"></tbody>
+                </table>
+            </div>
+        `;
+        
+        const gridBody = container.querySelector('.grid-body');
+        
+        let dataCorrente = new Date(dataInicioPessoa + "T00:00:00Z");
+        const dataFim = new Date(dataFimPessoa + "T00:00:00Z");
+        let rowCount = 0;
+
+        while (dataCorrente <= dataFim) {
+            const dataISO = formatarDataISO(dataCorrente);
+            const diaSemana = getDiaDaSemana(dataCorrente);
+            const marcacoes = simularMarcacoes(nome, dataISO, diaSemana);
+            const diaApenas = dataISO.split('-')[2]; 
+            
+            const tr = document.createElement('tr');
+            if (marcacoes.classe) tr.className = marcacoes.classe;
+            
+            if (isEstagiario) {
+                if (marcacoes.observacao) { 
+                    tr.innerHTML = `<td>${diaApenas}</td><td>${diaSemana}</td><td colspan="4">${marcacoes.observacao}</td><td>${marcacoes.total}</td>`;
+                } else {
+                    tr.innerHTML = `
+                        <td>${diaApenas}</td><td>${diaSemana}</td>
+                        <td>${marcacoes.e1}</td> <td>${marcacoes.s1}</td>
+                        <td>${marcacoes.e2}</td> <td>${marcacoes.s2}</td>
+                        <td>${marcacoes.total}</td>
+                    `;
+                }
+            } else {
+                if (marcacoes.observacao) { 
+                    tr.innerHTML = `<td>${diaApenas}</td><td>${diaSemana}</td><td colspan="6">${marcacoes.observacao}</td><td>${marcacoes.total}</td>`;
+                } else {
+                    tr.innerHTML = `
+                        <td>${diaApenas}</td><td>${diaSemana}</td>
+                        <td>${marcacoes.e1}</td> <td>${marcacoes.s1}</td>
+                        <td>${marcacoes.e2}</td> <td>${marcacoes.s2}</td>
+                        <td>${marcacoes.e3}</td> <td>${marcacoes.s3}</td>
+                        <td>${marcacoes.total}</td>
+                    `;
+                }
+            }
+            gridBody.appendChild(tr);
+            dataCorrente.setUTCDate(dataCorrente.getUTCDate() + 1);
+            rowCount++;
+        }
+        
+        // Linhas vazias para completar a página
+        // AJUSTADO PARA 43 PARA SUBIR 2 LINHAS
+        const emptyRowsNeeded = Math.max(0, 43 - (15 + rowCount));
+        for (let i = 0; i < emptyRowsNeeded; i++) {
+            gridBody.innerHTML += `<tr><td colspan="${cols}" class="b-none">&nbsp;</td></tr>`;
+        }
+        
+        // RODAPÉ: Totais e Assinatura
+        if (isEstagiario) {
+             gridBody.innerHTML += `
+                <!-- Espaço Assinatura -->
+                <tr><td colspan="7" class="b-none" style="height: 30px;">&nbsp;</td></tr>
+                
+                <!-- Assinatura -->
+                <tr>
+                    <td colspan="3" class="footer-signature-line">&nbsp;</td>
+                    <td class="b-none"></td>
+                    <td colspan="3" class="footer-signature-line">&nbsp;</td>
+                </tr>
+                <tr>
+                    <td colspan="3" class="footer-signature">Estagiário</td>
+                    <td class="b-none"></td>
+                    <td colspan="3" class="footer-signature">Responsável</td>
+                </tr>
+            `;
+        } else {
+             gridBody.innerHTML += `
+                <!-- Total Horas -->
+                <tr>
+                    <td colspan="5" class="b-none"></td>
+                    <td colspan="3" class="footer-totals text-center">Total de horas no período:</td>
+                    <td class="footer-totals b-none">&nbsp;</td> <!-- H47 sem borda -->
+                </tr>
+                <tr><td colspan="9" class="b-none">&nbsp;</td></tr> <!-- LINHA DE ESPAÇAMENTO REINSERIDA -->
+                
+                <!-- Totais Dias e Carga -->
+                <tr>
+                    <td colspan="2" class="footer-totals">Total de Dias Úteis/mês:</td>
+                    <td class="footer-totals">&nbsp;</td> <!-- C49 com borda -->
+                    <td colspan="2" class="footer-totals">N° Horas/Dia: 08</td>
+                    <td class="b-none"></td>
+                    <td colspan="3" class="footer-totals">Total de horas a trabalhar:</td>
+                </tr>
+                
+                <!-- Espaço Assinatura -->
+                <tr><td colspan="9" class="b-none" style="height: 30px;">&nbsp;</td></tr>
+                
+                <!-- Assinatura -->
+                <tr>
+                    <td colspan="4" class="footer-signature-line">&nbsp;</td>
+                    <td class="b-none"></td>
+                    <td colspan="4" class="footer-signature-line">&nbsp;</td>
+                </tr>
+                <tr>
+                    <td colspan="4" class="footer-signature">Funcionário</td>
+                    <td class="b-none"></td>
+                    <td colspan="4" class="footer-signature">Responsável</td>
+                </tr>
+            `;
+        }
+
+        return container;
+    }
+
+    // --- EXPORTAÇÃO EXCEL ATUALIZADA ---
+    async function exportarHTMLparaExcel() {
+        const dataInicioEl = document.getElementById('periodo-inicio');
+        const dataFimEl = document.getElementById('periodo-fim');
+
+        if (!dataInicioEl || !dataFimEl || !dataInicioEl.value || !dataFimEl.value) {
+            alert("Por favor, gere um relatório de ponto antes de exportar.");
+            return;
+        }
+        
+        const dataInicioISO = dataInicioEl.value;
+        const dataFimISO = dataFimEl.value;
+        const dataInicioNome = formatarDataBR(dataInicioISO).replace(/\//g, '-');
+        const dataFimNome = formatarDataBR(dataFimISO).replace(/\//g, '-');
+        const fileName = `Relatorio_Ponto_${dataInicioNome}_a_${dataFimNome}.xlsx`;
+
+        const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+        const brasaoImg = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOsAAADWCAMAAAAHMIWUAAACB1BMVEX////s7OwAn+MAAADkBhPw8PDx8fHq6eYAg8OWlJEAL0bq6uoApOvjAADOzs4AX4tlZWXFwr95eXnd3d339/fk5OTV1dWxsbENAAAAfrvg4OC7u7uRkZFubm5NZ3YHSGKIiIidnZ1VVVWnp6cAm0DrBRNAQEBdXV2AgIC0s7FPS0W/vrxpaWmJiYl8Ag3TDBj/9QBqDxBKSkoALgAAOAAAQAAkHBQwKiUAEAAAGAAAIgAAHAAAnkEDkz/GAACRAACnAAAXDQA0NDRDQ0MAfDAARgAAdjEAijcANxaXAACBAACwAABYAADCBRHsYmbyoqQ5MywkJCQYGBgAXBoJTyQAby4AXjAJNh0AYikAJwAAbCEAWBooNS1IAAAAfS02AADpPED4z872xsP86OcrAADlMTfRAAApIxkdFQCDeoFJXFIOiEIVJB4AQhYLJRcLl9CWpK8PQyVDjrx4n7c8SEFhhZqbiwByagDj0wEzkMCLggB8kpsWNCN8el8UQy46JjNUTSxZUF1xaSWNiFvAswsgMQxqgiFQdyMmEiQqOy4AEhxEOkVaRQAXFzH/+wD14AbIuACIfzVlWww9ZiZHRAkAmFUuFSlxaz2FhV8AN0ejn4tSIiRnTE0nPUgARGsAHC5qOjpqJykvWD5ccnLthYgzFxPqVFb1sLD0lJYhAADDHyTqdHj1XmH9ImniAAAgAElEQVR4nO19i38T153vKMczRhGaSDNnRlNJ02oelkYPY2JAMkQDyJY1DiFGxnphg/EjxjGKnTphSZq66abN7iZtt9nb3b17d9O7ezelmMT9I+/vnJENBj8kYxDdj38fkKXR0cz5nt/7PBnmmI7pmI7pmI7pmI7pmI6pm8RyDIN5mbzlgkZS6nZ9XgxpqsgwvWWBYcKoDJ/5MkKooME7STXgle1y/Y6GJIEgSqAUZjy5BHwupBjGo2TTvXwO8YAaQQPIOV0weNztuj4HWYCPkRBgY9SsIjA4Dm99WeCrhkgDBDWQ4hDykpdUCtGCf33EpX3wmiJ8Y7I5QGxlyyjEpMrAXII1oPBbRb0oyTACCmJPABFpZuTQX5UeGznCLBcGoxdE8jZdLoQT72OGy+bgmiJvlRWQTFoF2sOgzGZzaKRrFe+MuAhUXVOycXifRha89qM0EVo5iHQdcQzOLhGAcI3h0yzRZIlhy4WAV6PqC82QK/91WKpkVolzTFJJEW6JVAOThMdJYLEXZZEPsGaJQQJVZomM41SOZeRCOQ52mciChfqFLBViXuf3f1a3SSosgRHikbcQg0+KwhBcKpghIp+BAmmBAoKLMbSkL5EvfEuAOg0wMUvMsIESIAhUwFWqAa8yBZYCKC2iZBy4B2oYJNUnTgXFQBXL5LOgknJBNRUgWMIoQJC3YMmoYIC8E4ZK75dfdR8EEqsvpZWkl2hkGr0fSCFih7iIuHt5HOQJC91v2UKhgJScQpB7qUi/0sQu6aB9WW9YIexL5pRyrH0XQsy3rA0qgBKXC70vrpZHRAIKG6gQA/nt3JoGidNxI6kIeXnVKBjb+ZkHzUygDCPLuxZvg0Skg+tBh/79C6MIUuK+Jy/g+BLn0/bQzvZITkKLlcNPXcX9nue56REQXygXlB2OUNOOwH7KiQLSkztu5EXKUdz5OShciIYUGtwdMfk0SPu4x59FlEugXFfDCy6nM3wWqS/i3rzxxAcdMoPgUqEbeQE2MlHa6uWcKBSyaOQFVyJEDJYbb75sCpYhuNWJ+iSyqNAvZUiA+wKpt0CyJbCE1ot8ym7kE1Ccl3Qa7QiKRezjC1akjEIZmkAReLVeotbiMlKBi0KBOBuDpmcvmIJoKUyfNYJJfoi8L88gJ0FiWUuxCNY0Mg4s/9zk6S9ktbBRKEDuECyUVZR6LgfeLtHIT0CBspJFip5kxchLaeOwCgluDiQ4nAN3HllSXkIL8xNEZLm4khIlQ0cQDL4sCociYBi4lKKABPsSSy++iYOIyBEJl4iTkV96Oi0goR+lIFZ+GQFjBL1PwGoo8RIe9gx5iaNL5158lwWmOpJEWWLzEy8iMDywBgLSQZ561RdumgJu1GKgHDxPinYl7UgWsi9Fb8JLLljvS7RIz1ZCR8KLbmUPiKxYoM4UK13trfbS4OkFkifu9vgSv6ah/hf7sAPo6Sz+iEkqU1fDyBA/6CjxKvVmBo+44SFYabkYETLo7nL1KTIUdKSpgJzNpRS9xcznHmwRZVk+MsGw3Njm6EjPSu5o8XOSNTw8gZnrVmwkwkQnho8gv0+g3BFrLyZGPoDK3IEld/11WmuFHXyU0SLMBMZakIljn+5eDVuhQ9aXLaPU4eq0B+Gt+EhFS507NjmCUVSj/doeLTbh4Scm4hxrTEyoWBvRqPOQdEOPeUKdS42sFI64n8tCKc/Wu2xnPxUDE9YwHmTSE8PAQ1nnYyEOY+zxsORV50M66TuPB3DEMITB4WiHNUui3PZ7fCRd52wCLbUsnbeDIRZsDCdFlcH9gTjWQlwGM6KK5QzraRGbtuAjOOsIl/CF9AkPDieY60JHVQ6RQT5KUuqIrLFX6bjvAatxwzchIsyKaZaLpbEa0If7OTwobWHloiFOjMczwzxOiJyY9rCGEDV4YbiTOhutztrg+0h9bsUVy+TR6SUkdKhOoRjmImqE9bCshxN4VpZZzLG8wG3zVc5guCTxPpyRWSjlEbUA5mS9o8d4aceihpTnT7q4eIEKlZhCqXYdBE23JA1pHMu5EssJEY6AAV5G6B/3esJH/kBr6GKL1RwbnshQe+Vr1wp6wwynohz1sc/XG6RCmB0OMUQmUXsuO6KTWSFMWmczoW3dlAZFzHEeSaIizPVbPEuFWPKxHIctbZvZvhE5TX+fvN7v2/9B2ySXXT6EA8/VUU7GtnEKUe/XltHAgzE5YBF5ikvcBMVKecfrUUvIJEZUgkqCKJMjQowSAVWIWQLbKgbwDRwDvvoyaigSD7VXyQzVL2wUCkvo8Cl8msxjsUgGlWzLYKQ1RgiyekgXeVWX8TCtv0xZaQzyog/sMVxikwjFMWFiguPCsjbio9obpqxOctGE5hGMQAQnfL5YO/aGJbm7DEqmK88xKOBVCv0GEQxeaaNzCQtCIKSHWNUTjMd4jnWxxpFFcHFWiA2LepiKMEKIcjFmiD5fQmYpj68bYMSgMTgppKvYiEgJTY3q7SkOF1UKXq/yXIEFH4cUDkSqXG5DebjhsJyQOY/qY31gfFysLOAiyglMTKh6hogwHoZrxEaxPFLVeJJc4xIIRTnAamD4JefjwOuyWowR2vJ1oGa6mCS+1hM63CAEiRs4QVnScEJpS1nFQQ/BCN7SQ7gTmGhhHaT6KOseg1orUFcKDPAHsNZPoYbcS5wxHJPJPTghDVzGRptzJiJeJq0kxLS6pBxq0NLjjhYlc6jcbg9liHhPNq3zWI4louF4CyuidpaLCIkwB2Y3Qi7FMXkbi9I4ipUmtrBq6Uwg4mMty0f4Pti2E0kXsqkcSqUONxIcaE3OkALt5+aWAag4MaGrER9mtrFeF8HVgnAPR4xoNGplVFXNwBst5EU8QGax0GI1axgQTUQTgwb5KXiodh+MU4oy4uWtbOEw0wzoqK4bnSbb/jnWiW6yHiHGYTEa51pYUYIPEWhgkp+4FWZ94aChRbVICG1hDcXTLOYHg0QQ2EAHuifHZCYYR4nDJIeckiKhV6dhsG9EooGRkVAzIX2Lr4OxtI+AlORgSIsJlKyoEeFF4lNYWVMntrDGYgkLRJ2YsGhnaY8HUk6qa55OIwpd0SVpO4ton4IJGhVwQQjpdRDPCBJI5MbxhqDGokZa9JCkDohjJT6kRQU1miYBgBgdCYA2RzScEWg4iZMdPjzjdhtz3qVOOcSnULacO0SfszdOucKFdSPAR6M8mXEYy/SHwgSxyIPGWoKqClZMC6V5oo9sUBNUA/B6jFgoYiUMGjBy2gTt12o/xZOIK8ZaDuVShU5TnlBWyR3GWQWu8yR4wJ6JBHDUZyRiEY5MbLcyAqgmZDUtYkVQ1lhG1YIAStYyZGJAOIqIg4XcSGhZxs7SF6OMCgEsdj69j7MQ+Kw2Cz+2OXgC6guWKeqDGFWPQpV5b8IyaM8hDvORUMggFEqmZSo2nkg0I0RYBodUAeBGrAhEjoNbcqg+dff9iC8rqD+11JpW3yb5FNehinrbU+8Hme1KiQipMQOD6loyA2qnGh6yAsnot8AUB7cUFhLXCPDV0iJEkPmoHhVJ22gcw1ve69ucoR5Was/3SNlcL8ODh+ToEqD2yIJ8we0FTrbTQIT3rQFKWjVqvjU9RBI8C7QIJwESv5cOiaGooJGxY0Pvl5iwEJAZMXAdt2bWDJLXdkVSI3lnBkmM0bboSyT26CD+IBJz5ow7J4ZMaIgy2AqIjKgm0sTACsaBioAjMQGaxhMdgVdtMMiIXvJL+EYnI2YQy7RnbYZzENp2NC4skJYhXVWptn4lVZBPHnUgE5LPONBCkmWpHiYyEsWM1C+0PaQmRtUkWdBgcUxIpx3KZMGWDjyNy0y4vSg1SAIgt1na6wUUSRpIMtdIe46Kn7aHo0V7RZJWbYf0FnmijDEIGA21zWx7+8kxS2Q8QkZiNRpkQBwemAANZKThNu8QQK5qJ8u5A0q6lEGFWIzIZbk9DY9M2iXk1IrLw07TuUvqGIrzjC/qPcyIMJhhogGQFoBORJGoIiZu4bbtasvJZpGSaevpLPjjQkGmS2raqt5ks1l3ajZqmhXAmh7Rmf5gAnk17yFI03RkGDKZch1iuA9u6ivgcic6Gcb3RBVUsNrP7JLgqRJtspVJTzr1ZqVSq5iNivNFYnRGYDj5xycOS6+jEOUintBxfwU1UH2ik5UDkDItdShRwZTS7jzD8Eq+ZtcrlWZztVkZc+wpouU/fm1vOvnhh/t8+ZOtDnw8jLRKpVGpX+ikGymTM2jkwYUO9lTYiLp9PHzbgVbcrJSqjTG73gDGVu1z4gFYX/upd58vt7Ey3DBCDirVhzoZ8aWrt3BaVdDBgx5qa11bB8SfddbstTW7VlpzalX7Lt4f68kTYvCjdrAynpvnq2uVRsvTt5tFY95aQtmUN3eQlvNICI4gxsNrHQiOca5hDzWazrpZqbsivCfWDz/6+GcfhYM/fe3jjz88eRBWRlyvV9bO0c/84HqbMUIZoXI5DtHf+wcYKBXyIU0RlM6YG3mrWWnkK6Xmmu3cw/thDfX65L8BrPCX311rW1jd6auRM6vVCfLRc37GPtOe5xECaZwELyUeEEBJhRiES0ohJRid5ICh+/VatVhxVpv2mMuVPbB+1CvyUjQcjPXysuen+2AVL4wOkhr0vzVGB7OWi5XiZHs5OGkjL4S4krJ/tq8hQZLdOdDtEq8y3Cf3P11t1Js1x6m3Oq/3whr82YmPkumI9vGJDyMf7yrELtZYMT9F9M1Xzw/BH+ktu54vxdqtU1gpK4nyAX2CVhYV4kpHHVTGGUv67JPTa6ViszgaCDMsvw/WD4mS/vznf/PzE3t6HherUCzlp4kMrptDwCh1pnHBbB9rGSW1XM46wJr5jISi5NR0u2Zek6LOtPaLzz6tVT6/LogQ+F+P7IMV6ORHMs/voauPsVozlZJ5BoTkpjnKM+G3zGFhptpuAiOQ9S1sOwFFWEuhdrun8NcrvyyaZ3jv35a++NX9X8vWyqRr6ffxOR8BVP7EAViFmdKQ7axKzLA5FWISgDM4OdluziRk28GJKduxaLXJV+47CAyb9iCjV7OfffnN3xXNaXl/rCc+PhHVvD8/8fP9sarOynLFLMKNGyuadCF/geNuTLc7u0BsoyAWyvFYZ/3m39lmrVY951tt/O2X3/y9bdv3mAOwBsVQ0ODF0P5Y784MMomiORlTq1Uh4JSWGbxeadtkirzYewCOGMplO1zYdK9ZstcqU8bZNe+n/2A37ZnYAVhf+/DjEz+FeGJPhaVY2c9HI0y4bpuVrxzzq5X8DQgL7t1ru1YGUpbKI7rq3bNLhCvruLfc2Yr4hPN5s7lufzH9tXTDdmrmlpz9+ORhiWKV6Gxsbdq0V4t5xSGdHrSLok3q9XpzS6mlQmHPniSeJKypwU6gMlqxVHIqTdRIRIulyrYIM4OvH5Z+Q7CGrtNQZmTGrEIwlj9LjECioxnSVtZHho/3GiPvR0HGk+1sFEWehvTGrr/VsG421yr29FZ9hN7DUoBgtVzZk28A1rpj/5Z8UDty+2kU1ApoLzA4BVKeUjpcORC3q0p+bbX222qtkp/aFjPBc0hiKdatqD02VVqr5EdpC3Y2axkXsvutDA4n1feRomQDnUzIld8ynUYT1VCzmp98nEUJvufCuk03q8g2FfdJHWE1CnR9434UDmXan5An06VXHxRte6jWsJ23nohrjgorj1adNmP+HSSg9gRUbjdAHDw79EWEifxuzW407XNfPJkuPj9Ww/0jTFcOsVEFY8Q7yV/aoOiMaU//45e//+Z3teJvd4rYvlhZdp/vWlgTkxdo73J6Mn/WjfhkowNveOSLL+QV08w7v/rm9Ce/Kz4lZ3tiZVmfLxTy+PbC28IaOWeaF4igRLawRoYmOx/6PkLSnWrTdn715T/9S5tYWU/65pkLk5Pnz9xMe3ZF28KqO6ZZItgiNxpUhuUh21w7YrlsnyBPiIB3LZml+//rlzPtYGUldf2smTdN0zbNM3VV2gWtizV81h6r5s+QqGK0SHaZYD+wq87nXcKqfXDjxvq9Iae5ZpemI4mpp4ZudsPKegKlvNm0zUbTdJqmOZPYhbUuVm1qjNcdB2I4Yyp/Hu4XLzp1u/2A+GgJ6zPAoGbdqaxVzHgAsGKS6e+DldW+ngbBRFUHNcw6AlVvrGvPgHWxqqMxsAb5c2lGq+YRfJ4yh6p2Z9Ooj5A892bMZqNWd5rIaXxVTfz637TwTRpM86HdsHKh6Xy+WrEbtlmyTYg8qg3THA1xu2HF9+pglwKEsf1nKojRRvOV5YrTPdskEbDVRr1WrNno809Pn/7y75zvOIbXh4xdsLLyvZWaWasXz5dsVDUrY2al7gxV4zK7C1YPzU/4FQj61Rl7gr+Qn1LxBWe5a1gZjz5p2qVSdaxh1z47ffr0H+47FVE7Z4+Kz2JlxXWnUgE1tceaZqVpNipm07HXms66yD6L1ef62EGnqH5h21+tms4wZtanXsLWA3uT9vWk49hO40KVYP3kfrPxBagkcQ3P8HW5ZDaK5mrdrgDEIhFgtGbXHLO0vAtf5QkaC4DUr31l2sgxL0Ckkhjt7h6CXGQ5ELibUeOVT09/+sk/N0tjtk0HdJ7GqoIIDAEvm0WlZJ+vmmur+WrTAWE2JzPPYk3G6N3xTbuEKpVafpRE2rG3urtT11a0b1Qnfv1Jo9gs1mrNGZLY7cTK8qPmWNVxzErJLJpmwzFtx6yPmVW7OmaO8uzTWI0WqljVrDu1RvEL+izU3X1OR1rJcGhqkJ/O1xqlyppDXe1TWCOTdr1aqdurtSbwFXxOZdWsVpuoWl2zJyPPYN3K+MWxfKPYqA5RiU6j7q4wzpxxOctPfh2aKoFDWWuan5Pw9Wm+njVrJdBR23QqDgkn4D1EFCW7VDPPPsvX7bGkQceuVFqJj2+iKxC3KTYzTbtG8NlKdKpUa642zEmKfidWziraH1Rsx643AJ9dadrNpq1UwCZXVu0ZgXsaKyMPuj0ckel8ZajVIcF11hN25BSZMosrAfAx5xvL1VK1UspPujuuPoVVBQ0166v2WAOCJltp5CFucuzmUMm0bSfzDFbfqjNKHQxer46h1rNwp8soj5hkcJl556zGDJe+qJYatWJ9eXg3vmqT+bzdLJGYH4ImxybxsE1SAHiZ1J7BKpTM1jhuvNHcZme3t62956yB9p1LWo5SaqB7mji4mwx7PNaZsx9M2TPnbLMIAAFh0bTPleyp1bNnrB0FCVbuDKRCo3Sq0ro502Knp5uWCXvVgP5VyalDRHBjuVSvJsAo6TNu3Z6JmyRJimaixuDXy2fAqVZvCDcHQ3BBCkvPxE0yWO2GWSRhorxiTtIMCi+P3exa9kqeH30LrI3t1ColUMHmOljP/im7GIO0JGLtktPRxRwezveBaQ75OLos8unI38UaLZpgress7ZU4Q7yqNDGVP0wX2xGSODxTXId8dNWurRF+imfN5oyFE2e13bC2CN80zQ/wXt8SrBbkTtX8NDB02aHD6jyEieZMF0N/QnhwylmtQURsD5lfkFFTu+FcHys6/bH9sd7cDyuvOiuhMXMGhPi3Yw2dTB8FDa+Vur5xbWY0X6rXqxDSrzP4a7tSctYgALT24+uqaa7uizVABiQde52T6vZ0lIlAXm+urHUzpWtR5ProVOM3itKY5vEYBEOlSrPpxPbB6hkz82eeVdQnsN4F5wpRxCgfHM1P80EC9dzy+syrsDWLHPnlp7///f21KIY4yKk2KnZpH31leUj7pvm9uogJ1sSQyHi+NotRq2jeiAyBEz7Xz9yd7HA28osh6T5kr//y2T18ttYw1yB4OiftjZUzpsz8lLEXY6kMk6nRatHWb9rm9bfAGZ+LQTh64Wj3fTkk8V8SrPcroemqvQbedtrauy+cC8btf/1XOx7cAyyxwyqxQvw5c2UlDyYeuEo0VXtFNpr+w+nTX97/Z+d/l5yxkjNNJg7u1RfuU1//2WsnT772s9czvr36wmWBzObF9+xKtUShxsgzQuhId345NIn/dv/+L+rmWulC5etlOpFwD6y+1Bsn3dlqJ99I7VoEsEaiNCnvL9XJOLM56tpfvt05/y+cRIk419XBSGtMTfCwuxBW39iel3fyDRXvUoQLoGHXCInnVwnUcy3zG+7ifnaMOxjGbofk/Kh9M/J/Pvs17VRQg7uR8e9PTkF83ditjI7OtoJBHTUhBdjyNB6DeQHDb22TAEzU4mSHCCEmk+l0jc9On/70kyA2GP2NXWnHdLUTuxZ5HZVaYxmJlcY2V8kEM3hY98yTrpJZejMzxRln5lwGnEn1U4L1P2SF+dNru07o2TmVaY85P0134pA4Zq6d3RE/8F00xX88ZdCRUpKPmjNfpz8nWL/87D+sc8H9ZvTvT78ZsmforKTYVL6xIyz0fPtmF7HeuQocWJ6yS9WqWTLXfln9+29O3/+E/86JJ360+wz3g+jkj9CFvP01SzuHzQs73Ix+8Uo3sfZ8C+4hUTRrazUS/9edxq/+I8xP58fO/+SQWP8dfWCTabQQ8VeqOzIb63JfN7H29N2J42BiqGGSUaySTUJEiYnO2GtFdCjGnnwDqZCpk3w/USzumBGjXenru9S9Lifga987CfEtu7FWKzk2qG3RnAkwqlNqmCvDb7x28rVO8b6BBiHDMR2dWKYdY8uRN3t6uogV/78eeP5lITSdb1YIra2tVCCFEZxaszmjGv/3P3/0DJ3Ygn/yxLNfvvFfZD2z74xpf43BMk0+MV+Kv0We9fZL2HJ+L6x9tAJW/7RdbazXmmbpRqBh3o3NQGZXOoOxrBHXu4PU+H+SKf8n3/gv/YmrFiVBiNJ+9XXTXuE/t+3649nd8u0e2q4veIPavYmjWEGyYtoZkGBn6oYlRf6xWQ18V3EqtT1GS7GcAk1+PbBPp6DumI0vKvniY8vkQgWsXUth2f/uc6twyQoL9+6RJT2/+KdPV8w1FTVrleKeKxH0Ez/Zd4G4MGOWztfqF7bnOcvv9bgPeqdrXYlbWEGM/+ReCf0TxBI1W19uFEt7r0TAv0F7fUWpf8psNPLFDCNHQlo0qhkuV7uJVQptYQXhcqeoeO9/c/qbT4rV5e+Kzvrev4ztv/jEqNrrZPb7+srkVHFm5uytni26+KeX72C5tKa/d+rtd7cr0XfxJp1c9oc//OGTX9wz15Tmfotp+P178NOTjYbZXLPNfN6ZKdZO9W0/pufylavDVuilnE/RIgO9/Y6/r++JOkBQ8T3xffy/fUYmJtmoevbw+5eHz5BFDc2ZafR9wkKX4DF+v7/1GKA7l6/efIm5Xf+lJ3A+fOj3w8e+W5oc0pYzy8uhLxqlynPMMeNQyWwiZKUx44m/S6BuzI37Hzdrz59f6m77wtvbYP2bzBwzS80xmppxTNOZaqyWqs/RiyAOmaa7BtG4fYdAxQsLjP8x2NsveG/0pylw+THYB8ycn7C2790/l0y76dhNc6g6tMfIcDoWUROBYTFg7DHTQ9ZGxtboskE2cYXK7zgAZa7NboG9/dLtU2ILrH+WWfCPz80vkrpcWWmW1ip2JaDc+n6XZYoyPxjyqSrGWjTERzPSsz2DvH4VNfJVsnAjdPsigbr5aJaZ3YDPLbC3uhATt8D6BzDu8TNz85jq0ru3GrZTVyrVU33v3BZ2GkxJUI0o5voHWdYYljhZCzy1sQg2ylfu9KyBBEuMPHiF3n4eMw8W/Q8HBphr/m5B3RbjBVDWcfjPjLvW8u0sqjfzDniKvounRozHZoQPSFjQfR6W7CtN95HjcehxAIV54fZlsO0DFXMl5FGvUk31P2SAsw/9sw9nmQdw9zvdgcowKjFQs9y4n2MWFriFh3PUWvb1XFov2Q3qFfv8l28lDNebCiHLx0pP9gSHWTZiCLTyOG39+cpF2nYDtYYeu0rFd3F8dpYZX2CYR3MMM0+gftu1ZN0C2+HvA9s04F/YGFhYmGeoawC0700QrH09Cw96wB3+MRbxWEFtkKcdwJLo8cB/jnwQMrLFy1rm1qWLiy3bM3ABvUlR+x+COs8ugOG7xiw+2PSDnPzyZUYRT5F2itRpnAEJe+Rf7AHE/h6/y1s32mEI+r6ei29f/Vboj8piWAr2W3GwTRlLC0uiGLGsP9668s4d/6MFpmVmB24PUKR+/8K8f+EasXw9DLhwiIZHujljggldvUNcPUMqtPjwGvPowcLCJmHQu09gBSt9rWfg3XcuX3nzv7/9/o/LOVVNBdT3bn179dSld354+BAaww82+4HL2IE3KdTNef/cwiZeePQAFGSBtN/lbp8Cwn8L8uYf31zcALVi5h8x1x5R57AD6yaDB64tLMDb8b88vPPD7A8/zD68szg+7n80N7dANBFEY4E01xNY55nNxXlyt82HG9egNXquxLqLFMg3CObY73/E4M2Hi4t4YXyRYHqKrwQrwbTJgPbN0YXii48YBgAB0xi8CJKxueVAKVb/NYwXqBEGQSbye+fqKzHSbF2hSkuE9xozh+cHBp6RYRfrAhH2OT9wcG5ubgBaB7DOAaAFQMTAv40nsG7OboJfJYJCVKLvnfKrMfjKhG6BL/T3bCz45+aAdbM79PUBDfII1gViVAlfmfnF2UW/i3UBZH8T8HIQMzBPyrDfP8f1bC4sPCC27UrmlTmwRxoET9vnX/TPzfvnFwhbt7ACOG7+oYt1Hm/gOYoVaAM8FcFKaKEH5HlhjuGox3KxUvN+DRwakd9b3Z3F9RRpbpgzDqromtMWVv/DayCbLlZivR6BIM8xC/PzD1pYFwZAUQfmmEcgtj2PZdgND6lQ9709+JLzmoNIHLxEqrcI8VzPE1g3xv2zs7MPF/AiYAUx3qRY5wdmHw60sIL8Mg/nNgb8/sVrAzuw9hDsfRdfLaa6ZNy6SAS5Ff1syfDm/AbEASDe43OPxpk5FyuhB5vUDs/5Fx+Nk/hjfHbjAeFj3xNYQQRXUXUAAAgUSURBVFNPBbo7yX8P8ghUkFvRz3s/EKc492D+2uzso9nZxQGCeGBg84H/2jyh8YfXHvgXZ4kRgixm/MHGxvg4sUPvvrndv9TXd7nctc7vg0jWr/RsdaOeQt+ferfvL/658Z7Zhflr8xvjjxZn/zLrf5L6Zv0Pri3OP7o2C3nD5hwkbT/cQso2U9+53eUzxvcnfmQb7VWE0O1Ld0BEiXQ+WNyYewQCPb5xDcK/R/6NuQ1I7xfG5zY2N0DMHzwaX+x5500FfvNui6fv3Iq+ykgJRQZP3XF7GL+HiofU90iq9vAvG8C9+Qdzcw/n5/0P5jf9Axvj8/ObwO8HIM/XNv7Sc/nqTS0Dv6AdWSC9t6OvxnSm/YlPQPYJZmoAak621u2fuPr2RdDEh+Pjj4CJC7ObYJ0BK6Dc3Lh27WHPnXeuvEezXAshmgreufTnV1p6nyQp9v3bwJsfWufe90dCsZHbp96G1A2CA2AbRP19tOfRf/HypVvfZzQ+QQta6HYfCO/VwVfWIu1Kkbu3LvddcbFGImQj6ZBg/One9feunrpy6dKVS1euvHnrz/XzKJbwkC/drhhL6bl46nq0g0O1XhHiQveuujtDcEJE83gkOsSIA2ftNZ6PVVftvH1O9/AGx/JaxO1gFW59Fev2wpTDEm6dOWcYcZnlDDcrS9fXOazNFCsNsjNbxufhVKs1R4t/RZKZ56FwghwExKokBPIJ51c5Tjtfu07XedLDoLRYd+t3pKR6OA/r8QV8PoGskWQ57cbYPbLdAJkyzWLjr8sW7U981BiUWVYKoKlqJb8GWM+b9mjAMrCH7VeDXV+gcaQUDakiOapOqzkr1XWQYWOwWrzLE65qWqyLPaEvggSeY32shxOj36EJ4KvWr0fIKXU+Fr+amcyhCUdG7kqRe2R/BXAxEZaVIyI9dyOW8RivwlKUIyOfdu/cmHO38R1YY9bd0Yj+JzI9dbe2JvyPkWFOWLngmJWiM7nM4ahFx63o2FUwIXJ8fcrMN966+z9EjAUnTzZEGbqnJQUjakFMIbBsOgBYo5ZmycKKUzOdWLdreTT0Xd50Vs4m6OlI0aAqYzUAcZOQ9kUEepqhnDhrzjz/KZ+vBGlTM58vb2kk5oGZGU1L8HpsexJB5E+vfFbeLvGRnXvDYY8ohts8OOWYjumYjumYjumYjumY/scS7+v6hkQviyJL5VxX99PdldJJQmlyBqRGNrPj6WeSe/FJOmuBfAq6WQlvaOlWfhKGqxHSkc265VtpTVDT6PRujyfdStrChhZqZQIc+Q29FU7SPlMxRAY3QkFIhrYmSEghLfTUfHeJ1oBtPSrtPklsnXsJt09y5E4SIx8kSLiMFEVBKcaTRdkCshiLfFbIWQ5ld6t8+r1CGiODlALKuncMwWWEdI6R3fLumUo6yr6P6GIWDRVo9b0IZbfONRHpb3IiORqaLojUyMFpGB4ub50doT1RfIsitAZkv0j3De1vTaAUaTQDFaC8DH+TTLlwwORFHI+HfT7JB5WKML3xgsRJ4nBclHqZtJJDpLqozErBXKEXWsHy4eBSgXIpiQyfGEUqABB6JZ8735sc7ohVCiCeLfTTYrqIxZHWIU8o0xsm5xcxerYg0JpSrAlAEWvBSkHxFNqxX0gaeXt70wVSSvVIYkoRyamQOVII50ZYhhwpT47wTB10KDFgZTGZQqchlce95NxhHKdNlsgmlRjFSmtl4OzI9vGnBASRwvgSKwJLMG7JONLTHBvmKGo9xxJG07Ne3YMjRPKnl0LzZpTeXbAmaOvyO89eSCONwXLBglKkgTLkmPuYknw/Q6Qyq/XisNQm1pHs+4UCuZuOkJIh7c/FCSgRWj6u4BZWHlnuTrLwLuZiJRvMqwVRBNGHG7ijihaRa9IImSwbghJcOUdaobdQdrGmyIGKXpCQXnq+59NY8QgtjgtLO7Aq2WwWlXsZWRlWVZ2c28Et6YxKDnNK5xAqe3G7WMvkfGGi6Lw3USDy4WL1ohDnJTxsYRU89HAQeoruY6wKYE2QI4pbnQ6iFsjCN71I9/DZFLQ7rbxvC+vSUi7uZTxLKUnM5fCzWFO0OOdi5VWBnrOdRhnNK2ShlBJXswWDPt3LGvQ4Ci4pxEHh25Th1pnFMcI1KqAUK1cuIIRIHbdlOFcm94q552u6Mjyc48SW+BEyVNYVWC+Z8lFQeBBKmRYWXKwZjuyNZxALo8ANCOsZD6jblgxnqGKnXQlK58pxiX4k8AJIJDIsKzm4lqKVG+bCAqlMGbWwHnAqAOirLAIxKvJ6pABpaIo1iWKyLKpgAFBZEpO5HLFeCVnSCmXOxaqF5RjoKiihBL+nvWYGCvT6+kE6l8qyLCehykFUDvrSS0h0saot7gVlOV1IQbOkwlA+SjSR3IThFSgezLU2leBwa1fTaFgMlpGH6qsBdh6MlCjLFkqyhRzvCb6fdbEu8WFR3McWg8+hRM4hASKmn8uVMTPYMiop8DlwPUXau5+0Zsr1b0lSuiBgeC4ld9GVQN7qOOm6oBGAGAKFQq35WaJ7Un3Q5XIKEMVI+RS7dZMwkyTFczvPmkjT77IGgcgQ++UV3APtUJxJZ8lXPPU5cVpuvxHAsEiJIZttpV2PHoY/ovtWlBnybdi1s1IwIrdiCVZsMRO7v2/1hobTaSjRK9JSPhGEqpePbB1Sjd1SPpEaMo/oIeXpHVs3wW7xp0SRozXwbf2ea1WXVB0zHigP9/HIXAvJX9/Ui2M6pmM6pmM6pmM6pmN6qfT/AUG81TJfjgb4AAAAAElFTkSuQmCC"; 
+
+        const workbook = new ExcelJS.Workbook();
+        
+        const containers = document.querySelectorAll('.container-pessoa');
+        for (let i = 0; i < containers.length; i++) {
+            const container = containers[i];
+            
+            const infoPessoa = container.querySelectorAll('.info-pessoa p');
+            const nomeText = infoPessoa[0] ? infoPessoa[0].textContent : '';
+            const secretariaText = infoPessoa[1] ? infoPessoa[1].textContent : '';
+            const funcaoText = infoPessoa[2] ? infoPessoa[2].textContent : '';
+            
+            const nomeRaw = (nomeText.match(/Nome: (.*?) Matrícula:/) || [])[1]?.trim() || '';
+            const matriculaRaw = (nomeText.match(/Matrícula: (.*)/) || [])[1]?.trim() || '';
+            const secretariaRaw = secretariaText.replace('Secretaria: ', '').trim();
+            const periodoLabelRaw = container.dataset.periodoLabel || container.querySelector('.info-periodo p').textContent;
+
+            const isEstagiario = container.dataset.tipo === 'estagiario';
+            const sheetName = nomeRaw.substring(0, 30).replace(/[\\/?*\[\]]/g, '');
+            const sheet = workbook.addWorksheet(sheetName);
+
+            // Função helper para converter CM para Polegadas (ExcelJS usa inches)
+            const toInches = (cm) => cm / 2.54;
+
+            sheet.pageSetup = {
+                paperSize: 9, 
+                orientation: 'portrait',
+                fitToPage: false, 
+                scale: 98,
+                horizontalCentered: true,
+                verticalCentered: true, 
+                margins: {
+                    top: toInches(0.7),
+                    header: toInches(1.3),
+                    footer: toInches(1.3),
+                    right: toInches(0.6),
+                    left: toInches(1.2),
+                    bottom: toInches(1.4)
+                }
+            };
+
+            if (isEstagiario) {
+                sheet.columns = [
+                    { width: 8.8 }, 
+                    { width: 16 }, // Aumentado (B) para aprox 100px
+                    { width: 8.8 }, 
+                    { width: 8.8 }, 
+                    { width: 8.8 }, 
+                    { width: 8.8 }, 
+                    { width: 6.2 },  
+                    { width: 17.2 },
+                    { width: 0, hidden: true } // Coluna I oculta (9ª coluna)
+                ];
+
+                if (brasaoImg) {
+                    const imageId = workbook.addImage({ base64: brasaoImg, extension: 'png' });
+                    // Imagem não depende da coluna (usando ext para tamanho fixo de 100x100 e tl em A1)
+                    sheet.addImage(imageId, { 
+                        tl: { col: 0, row: 0 }, 
+                        ext: { width: 110, height: 100 }, // Alterado para 110x100
+                        editAs: 'oneCell' 
+                    });
+                    // Reserva espaço mesclando apenas A1:A4 (verticalmente) sem afetar largura da B
+                    sheet.mergeCells('A1:A4');
+                } else {
+                    sheet.mergeCells('A1:A4');
+                }
+
+                const headerStyle = { font: { name: 'Arial', bold: true, size: 12 }, alignment: { horizontal: 'center', vertical: 'middle' } };
+                
+                sheet.mergeCells('D2:H2');
+                const c2 = sheet.getCell('D2'); c2.value = "PREFEITURA MUNICIPAL DE LIMEIRA"; c2.style = headerStyle;
+                sheet.mergeCells('D3:H3');
+                const c3 = sheet.getCell('D3'); c3.value = "SECRETARIA MUNICIPAL DE FAZENDA"; c3.style = headerStyle;
+                sheet.mergeCells('D4:H4');
+                const c4 = sheet.getCell('D4'); c4.value = "DEPARTAMENTO DE DÍVIDA ATIVA"; c4.style = headerStyle;
+
+                sheet.getRow(5).values = [];
+
+                sheet.mergeCells('A6:H6');
+                const c6 = sheet.getCell('A6'); 
+                c6.value = "FOLHA DE FREQUENCIA DOS ESTAGIÁRIOS";
+                c6.style = { 
+                    font: { name: 'Arial', bold: true, size: 14 }, 
+                    alignment: { horizontal: 'center' },
+                    border: { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} } 
+                };
+                for(let k=1; k<=8; k++) sheet.getRow(6).getCell(k).style = c6.style;
+
+                sheet.getRow(7).values = [];
+
+                const infoStyle = { font: { name: 'Arial', size: 10 }, alignment: { vertical: 'middle', horizontal: 'left' } };
+                
+                const r8 = sheet.getRow(8); r8.values = [];
+                const c8 = r8.getCell(1); c8.value = "Secretaria: Fazenda"; c8.style = infoStyle;
+                sheet.mergeCells('A8:H8');
+
+                const r9 = sheet.getRow(9); r9.values = [];
+                const c9 = r9.getCell(1); c9.value = "Local: Divisão de Dívida Ativa"; 
+                // Removed border as requested
+                c9.style = infoStyle; 
+                sheet.mergeCells('A9:H9');
+
+                sheet.getRow(10).values = [];
+
+                const r11 = sheet.getRow(11); r11.values = [];
+                const c11 = r11.getCell(1); c11.value = `Nome: ${nomeRaw}`; c11.style = infoStyle;
+                sheet.mergeCells('A11:H11');
+
+                const r12 = sheet.getRow(12); r12.values = [];
+                const c12 = r12.getCell(1); c12.value = "Nível: superior"; c12.style = infoStyle;
+                sheet.mergeCells('A12:H12');
+
+                let textoPeriodo = periodoLabelRaw; 
+                try {
+                    const regexData = /(\d{2})\/(\d{2})\/(\d{4}) a (\d{2})\/(\d{2})\/(\d{4})/;
+                    const match = periodoLabelRaw.match(regexData);
+                    if (match) {
+                        const m1Index = parseInt(match[2], 10) - 1;
+                        const m2Index = parseInt(match[5], 10) - 1;
+                        const y = match[6];
+                        const nomeM1 = meses[m1Index];
+                        const nomeM2 = meses[m2Index];
+                        textoPeriodo = `Período: ${nomeM1}/${nomeM2} de ${y}`;
+                    }
+                } catch(e) {}
+
+                const r13 = sheet.getRow(13); r13.values = [];
+                sheet.mergeCells('A13:G13');
+                const c13 = r13.getCell(1); c13.value = textoPeriodo; 
+                c13.style = { font: { name: 'Arial', bold: true, size: 11 } };
+                const c13h = r13.getCell(8); c13h.value = "Carga horária: 06hs";
+                c13h.style = { font: { name: 'Arial', size: 10 }, alignment: { horizontal: 'right' } };
+
+                sheet.getRow(14).values = [];
+
+                const headerGridStyle = { font: { name: 'Arial', size: 10 }, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F2F2' } }, border: { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} }, font: { bold: true }, alignment: { horizontal: 'center', vertical: 'middle' } };
+                
+                const r15 = sheet.getRow(15);
+                const r16 = sheet.getRow(16);
+
+                sheet.mergeCells('A15:A16'); r15.getCell(1).value = "Dia"; r15.getCell(1).style = headerGridStyle; r16.getCell(1).style = headerGridStyle;
+                sheet.mergeCells('B15:B16'); r15.getCell(2).value = "Dia da Semana"; r15.getCell(2).style = headerGridStyle; r16.getCell(2).style = headerGridStyle;
+
+                sheet.mergeCells('C15:D15'); r15.getCell(3).value = "1º PERÍODO"; r15.getCell(3).style = headerGridStyle; r15.getCell(4).style = headerGridStyle;
+                sheet.mergeCells('E15:F15'); r15.getCell(5).value = "2º PERÍODO"; r15.getCell(5).style = headerGridStyle; r15.getCell(6).style = headerGridStyle;
+
+                r16.getCell(3).value = "Entrada"; r16.getCell(3).style = headerGridStyle;
+                r16.getCell(4).value = "Saída"; r16.getCell(4).style = headerGridStyle;
+                r16.getCell(5).value = "Entrada"; r16.getCell(5).style = headerGridStyle;
+                r16.getCell(6).value = "Saída"; r16.getCell(6).style = headerGridStyle;
+
+                sheet.mergeCells('G15:G16'); r15.getCell(7).value = "Total"; 
+                r15.getCell(7).style = headerGridStyle; r16.getCell(7).style = headerGridStyle;
+
+                sheet.mergeCells('H15:H16'); r15.getCell(8).value = "Assinatura";
+                r15.getCell(8).style = headerGridStyle; r16.getCell(8).style = headerGridStyle;
+
+                const tbody = container.querySelector('.grid-body');
+                const rows = tbody.querySelectorAll('tr');
+
+                rows.forEach(tr => {
+                    const tds = tr.querySelectorAll('td');
+                    
+                    const isTotalHoras = tr.innerText.includes('Total de horas no período');
+                    const isTotalDias = tr.innerText.includes('Total de Dias');
+                    const isSignature = tr.innerText.includes('Estagiário') && tr.innerText.includes('Responsável');
+                    const isSignatureLine = tr.querySelector('.footer-signature-line');
+
+                    const rowObj = sheet.addRow([]); 
+                    const isSpacer = tr.innerText.trim() === '';
+                    
+                    // ----------------------------------------------------
+                    // LÓGICA DE FUNDO CINZA (FOLGA, FÉRIAS, PF)
+                    // ----------------------------------------------------
+                    const textContent = tr.innerText.toUpperCase();
+                    const shouldGray = textContent.includes('FOLGA') || textContent.includes('FÉRIAS') || textContent.includes('PF') || textContent.includes('FERIADO');
+                    
+                    const cellStyle = { 
+                        font: { name: 'Arial', size: 10 }, 
+                        border: { top:{style:'thin'}, bottom:{style:'thin'}, left:{style:'thin'}, right:{style:'thin'} }, 
+                        alignment: { horizontal: 'center', vertical: 'middle' } 
+                    };
+                    
+                    if (shouldGray) {
+                        cellStyle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
+                    }
+
+                    if (isSignature || isSignatureLine) {
+                        if (isSignatureLine) {
+                            sheet.addRow([]); // Subiu uma celula (removido um addRow extra)
+                            const actualRow = sheet.getRow(rowObj.number + 1); // Ajustado índice
+                            sheet.mergeCells(actualRow.number, 1, actualRow.number, 4); 
+                            sheet.mergeCells(actualRow.number, 6, actualRow.number, 8); 
+                            const sLine = { border: { bottom: {style:'medium'} } };
+                            for(let k=1;k<=4;k++) actualRow.getCell(k).style = sLine;
+                            for(let k=6;k<=8;k++) actualRow.getCell(k).style = sLine;
+                        } else {
+                            sheet.mergeCells(rowObj.number, 1, rowObj.number, 4); 
+                            sheet.mergeCells(rowObj.number, 6, rowObj.number, 8);
+                            const cE = rowObj.getCell(1); cE.value = "Chefia Imediata"; 
+                            const cD = rowObj.getCell(6); cD.value = "Secretário/Diretor";
+                            // AUMENTAR FONTE ASSINATURA (ESTAGIARIO)
+                            const sText = { alignment: { horizontal: 'center' }, font: { name: 'Arial', size: 12, bold: true } };
+                            cE.style = sText; cD.style = sText;
+                            for(let k=1;k<=4;k++) rowObj.getCell(k).style = sText;
+                            for(let k=6;k<=8;k++) rowObj.getCell(k).style = sText;
+                        }
+                    } else if (isTotalHoras) {
+                         // Lógica H47 (Sem borda no valor)
+                        sheet.mergeCells(rowObj.number, 4, rowObj.number, 6);
+                        const cellLabel = rowObj.getCell(4); cellLabel.value = "Total de horas no período:";
+                        const labelStyle = { font: { name: 'Arial', size: 10, bold: true }, alignment: { horizontal: 'center', vertical: 'middle' }, border: { top:{style:'thin'}, bottom:{style:'thin'}, left:{style:'thin'}, right:{style:'thin'} } };
+                        for(let k=4; k<=6; k++) rowObj.getCell(k).style = labelStyle;
+                        
+                        const cellVal = rowObj.getCell(7); cellVal.value = ""; 
+                        // TIRA A BORDA (H47 equivalente, aqui col 7 'Total' ou col 8 'Assinatura' dependendo do layout)
+                        // No estagiário Col 7 é Total.
+                        cellVal.style = { border: null }; // REMOVENDO BORDA
+                    } else if (isTotalDias) {
+                         // Lógica C49 (Colocar borda na célula vazia entre totais)
+                        const boxStyle = { border: { top:{style:'thin'}, bottom:{style:'thin'}, left:{style:'thin'}, right:{style:'thin'} }, font: { name: 'Arial', size: 10, bold: true }, alignment: { vertical: 'middle' } };
+                        sheet.mergeCells(rowObj.number, 1, rowObj.number, 2);
+                        rowObj.getCell(1).value = "Total de Dias Úteis/mês:"; 
+                        for(let k=1; k<=2; k++) rowObj.getCell(k).style = boxStyle;
+
+                        // Célula do meio (C)
+                        const cMiddle = rowObj.getCell(3); 
+                        cMiddle.style = boxStyle; // COLOCA BORDA EM C49
+
+                        sheet.mergeCells(rowObj.number, 4, rowObj.number, 5);
+                        const c2 = rowObj.getCell(4); c2.value = "N° Horas/Dia: 08"; 
+                        for(let k=4; k<=5; k++) rowObj.getCell(k).style = boxStyle;
+                        
+                        sheet.mergeCells(rowObj.number, 6, rowObj.number, 7);
+                        rowObj.getCell(6).value = "Total de horas a trabalhar:"; 
+                        for(let k=6; k<=7; k++) rowObj.getCell(k).style = boxStyle;
+                    } else if (!isSpacer) {
+                        rowObj.getCell(1).value = tds[0].innerText; rowObj.getCell(1).style = cellStyle;
+                        rowObj.getCell(2).value = tds[1].innerText; rowObj.getCell(2).style = cellStyle;
+                        
+                        const colspan = parseInt(tds[2].getAttribute('colspan') || '1');
+                        if (colspan > 1) {
+                            sheet.mergeCells(rowObj.number, 3, rowObj.number, 6);
+                            const cObs = rowObj.getCell(3); cObs.value = tds[2].innerText;
+                            cObs.style = cellStyle;
+                            rowObj.getCell(4).style = cellStyle; rowObj.getCell(5).style = cellStyle; rowObj.getCell(6).style = cellStyle;
+                            rowObj.getCell(7).value = ""; rowObj.getCell(7).style = cellStyle;
+                        } else {
+                            rowObj.getCell(3).value = tds[2].innerText; rowObj.getCell(3).style = cellStyle;
+                            rowObj.getCell(4).value = tds[3].innerText; rowObj.getCell(4).style = cellStyle;
+                            rowObj.getCell(5).value = tds[4].innerText; rowObj.getCell(5).style = cellStyle;
+                            rowObj.getCell(6).value = tds[5].innerText; rowObj.getCell(6).style = cellStyle;
+                            rowObj.getCell(7).value = ""; rowObj.getCell(7).style = cellStyle;
+                        }
+                        const cSig = rowObj.getCell(8); cSig.value = ""; cSig.style = cellStyle; 
+                    }
+                });
+
+            } else {
+                // ==========================
+                // LÓGICA PARA FUNCIONÁRIOS
+                // ==========================
+                const totalCols = 9; // Aumentado para 9 para incluir Coluna I (Total)
+                const columns = [];
+                for(let c=0; c<totalCols; c++) {
+                    if (c === 8) columns.push({ width: 0, hidden: true }); // Coluna I oculta (índice 8)
+                    else if (c === 1) columns.push({ width: 16 }); // AUMENTADO (B) para aprox 100px
+                    else columns.push({ width: 10.1 });
+                }
+                sheet.columns = columns;
+
+                for(let r=1; r<=4; r++) sheet.getRow(r).values = [];
+                if (brasaoImg) {
+                    const imageId = workbook.addImage({ base64: brasaoImg, extension: 'png' });
+                    // Imagem não depende da coluna (usando ext para tamanho fixo de 100x100 e tl em A1)
+                    sheet.addImage(imageId, { 
+                        tl: { col: 0, row: 0 }, 
+                        ext: { width: 110, height: 100 }, // Alterado para 110x100
+                        editAs: 'oneCell' 
+                    });
+                    // Reserva espaço mesclando apenas A1:A4
+                    sheet.mergeCells('A1:A4'); 
+                } else { sheet.mergeCells('A1:A4'); }
+
+                const headerStyle = { font: { name: 'Arial', bold: true, size: 12 }, alignment: { horizontal: 'center', vertical: 'middle' } };
+                const endColLet = 'I'; // Agora vai até a coluna I
+
+                sheet.mergeCells(`C2:${endColLet}2`); sheet.getCell(`C2`).value = "PREFEITURA MUNICIPAL DE LIMEIRA"; sheet.getCell(`C2`).style = headerStyle;
+                sheet.mergeCells(`C3:${endColLet}3`); sheet.getCell(`C3`).value = "SECRETARIA MUNICIPAL DE FAZENDA"; sheet.getCell(`C3`).style = headerStyle;
+                sheet.mergeCells(`C4:${endColLet}4`); sheet.getCell(`C4`).value = "DEPARTAMENTO DE DÍVIDA ATIVA"; sheet.getCell(`C4`).style = headerStyle;
+
+                sheet.getRow(5).values = [];
+                
+                const rowFolha = sheet.getRow(6); rowFolha.values = ['FOLHA DE FREQUÊNCIA'];
+                sheet.mergeCells(`A6:${endColLet}6`);
+                const folhaStyle = { font: { name: 'Arial', bold: true, size: 14 }, alignment: { horizontal: 'center', border: { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} } } };
+                for(let i=1; i<=totalCols; i++) rowFolha.getCell(i).style = folhaStyle;
+                
+                sheet.getRow(7).values = [];
+
+                const infoStyle = { border: { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} }, font: { name: 'Arial', size: 10 }, alignment: { vertical: 'middle', horizontal: 'left' } };
+                const halfCols = Math.floor(totalCols / 2); // 4
+
+                const rowNome = sheet.getRow(8); rowNome.values = [];
+                const cellNome = rowNome.getCell(1); cellNome.value = `Nome: ${nomeRaw}`; cellNome.style = infoStyle;
+                const cellMat = rowNome.getCell(halfCols + 1); cellMat.value = `Matrícula: ${matriculaRaw}`; cellMat.style = infoStyle;
+                sheet.mergeCells(8, 1, 8, halfCols); sheet.mergeCells(8, halfCols + 1, 8, totalCols);
+                // Garantir borda em tudo
+                for(let k=1; k<=totalCols; k++) rowNome.getCell(k).style = infoStyle;
+
+                const rowSec = sheet.getRow(9); rowSec.values = [`Secretaria: ${secretariaRaw}`];
+                sheet.mergeCells(9, 1, 9, totalCols); 
+                // APLICAR BORDA NA MESCLAGEM SECRETARIA (A9:H9)
+                rowSec.getCell(1).style = infoStyle;
+                for(let k=1; k<=totalCols; k++) rowSec.getCell(k).style = infoStyle; // Reforço
+
+                const rowFuncao = sheet.getRow(10); rowFuncao.values = [];
+                const cellFuncao = rowFuncao.getCell(1); cellFuncao.value = `Função: `; cellFuncao.style = infoStyle;
+                const cellAdm = rowFuncao.getCell(halfCols + 1); cellAdm.value = `Admissão: `; cellAdm.style = infoStyle;
+                sheet.mergeCells(10, 1, 10, halfCols); sheet.mergeCells(10, halfCols + 1, 10, totalCols);
+                for(let k=1; k<=totalCols; k++) rowFuncao.getCell(k).style = infoStyle;
+
+                sheet.getRow(11).values = [];
+
+                const rowPeriodo = sheet.getRow(12); rowPeriodo.values = [periodoLabelRaw.toUpperCase()];
+                sheet.mergeCells(12, 1, 12, totalCols);
+                const periodoStyle = { border: { top: {style:'medium'}, left: {style:'medium'}, bottom: {style:'medium'}, right: {style:'medium'} }, font: { name: 'Arial', bold: true, size: 12 }, alignment: { horizontal: 'center' } };
+                for(let i=1; i<=totalCols; i++) rowPeriodo.getCell(i).style = periodoStyle;
+
+                sheet.getRow(13).values = [];
+
+                const rowH1 = sheet.getRow(14); const rowH2 = sheet.getRow(15);
+                const headerGridStyle = { font: { name: 'Arial', size: 10 }, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F2F2' } }, border: { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} }, font: { bold: true }, alignment: { horizontal: 'center', vertical: 'middle' } };
+                
+                sheet.mergeCells(14, 1, 15, 1); rowH1.getCell(1).value = 'Dia'; 
+                // Borda em A14:A15
+                rowH1.getCell(1).style = headerGridStyle; rowH2.getCell(1).style = headerGridStyle;
+                
+                sheet.mergeCells(14, 2, 15, 2); rowH1.getCell(2).value = 'Dia da Semana'; 
+                // Borda em B14:B15
+                rowH1.getCell(2).style = headerGridStyle; rowH2.getCell(2).style = headerGridStyle;
+                
+                sheet.mergeCells(14, 3, 14, 4); rowH1.getCell(3).value = '1º PERÍODO'; 
+                for(let c=3; c<=4; c++) rowH1.getCell(c).style = headerGridStyle;
+                rowH2.getCell(3).value = 'Entrada'; rowH2.getCell(3).style = headerGridStyle;
+                rowH2.getCell(4).value = 'Saída'; rowH2.getCell(4).style = headerGridStyle;
+                
+                sheet.mergeCells(14, 5, 14, 6); rowH1.getCell(5).value = '2º PERÍODO'; 
+                for(let c=5; c<=6; c++) rowH1.getCell(c).style = headerGridStyle;
+                rowH2.getCell(5).value = 'Entrada'; rowH2.getCell(5).style = headerGridStyle;
+                rowH2.getCell(6).value = 'Saída'; rowH2.getCell(6).style = headerGridStyle;
+                
+                sheet.mergeCells(14, 7, 14, 8); rowH1.getCell(7).value = '3º PERÍODO'; 
+                for(let c=7; c<=8; c++) rowH1.getCell(c).style = headerGridStyle;
+                rowH2.getCell(7).value = 'Entrada'; rowH2.getCell(7).style = headerGridStyle;
+                rowH2.getCell(8).value = 'Saída'; rowH2.getCell(8).style = headerGridStyle;
+
+                // COLUNA TOTAL (OCULTA)
+                sheet.mergeCells(14, 9, 15, 9); rowH1.getCell(9).value = 'Total';
+                rowH1.getCell(9).style = headerGridStyle; rowH2.getCell(9).style = headerGridStyle;
+
+                const tbody = container.querySelector('.grid-body');
+                const rows = tbody.querySelectorAll('tr');
+                rows.forEach(tr => {
+                    const tds = tr.querySelectorAll('td');
+                    const rowObj = sheet.addRow([]); 
+                    let currentCellIndex = 1;
+
+                    const isSignature = tr.querySelector('.footer-signature-line') || tr.querySelector('.footer-signature');
+                    const isTotalHoras = tr.innerText.includes('Total de horas no período');
+                    const isTotalDias = tr.innerText.includes('Total de Dias');
+
+                    if (isSignature) {
+                        const isLine = tr.querySelector('.footer-signature-line');
+                        // AUMENTAR FONTE ASSINATURA E NEGRITO
+                        const sigStyle = isLine ? { border: { bottom: {style:'medium'} } } : { alignment: { horizontal: 'center' }, font: { name: 'Arial', size: 12, bold: true } };
+                        const leftVal = isLine ? '' : 'Funcionário';
+                        const rightVal = isLine ? '' : 'Responsável';
+
+                        if (isLine) {
+                            sheet.addRow([]); sheet.addRow([]);
+                            const actualRow = sheet.getRow(rowObj.number + 2);
+                            
+                            sheet.mergeCells(actualRow.number, 1, actualRow.number, 4);
+                            const cL = actualRow.getCell(1); cL.value = leftVal;
+                            for(let k=1; k<=4; k++) actualRow.getCell(k).style = sigStyle;
+                            
+                            sheet.mergeCells(actualRow.number, 6, actualRow.number, 8);
+                            const cR = actualRow.getCell(6); cR.value = rightVal;
+                            for(let k=6; k<=8; k++) actualRow.getCell(k).style = sigStyle;
+                        } else {
+                            sheet.mergeCells(rowObj.number, 1, rowObj.number, 4);
+                            const cL = rowObj.getCell(1); cL.value = leftVal;
+                            for(let k=1; k<=4; k++) rowObj.getCell(k).style = sigStyle;
+                            
+                            sheet.mergeCells(rowObj.number, 6, rowObj.number, 8);
+                            const cR = rowObj.getCell(6); cR.value = rightVal;
+                            for(let k=6; k<=8; k++) rowObj.getCell(k).style = sigStyle;
+                        }
+
+                    } else if (isTotalDias) {
+                        const boxStyle = { border: { top:{style:'thin'}, bottom:{style:'thin'}, left:{style:'thin'}, right:{style:'thin'} }, font: { name: 'Arial', size: 10, bold: true }, alignment: { vertical: 'middle' } };
+                        sheet.mergeCells(rowObj.number, 1, rowObj.number, 2);
+                        const c1 = rowObj.getCell(1); c1.value = "Total de Dias Úteis/mês:"; 
+                        for(let k=1; k<=2; k++) rowObj.getCell(k).style = boxStyle;
+
+                        // C49 - Célula vazia entre totais (Col 3)
+                        const cMiddle = rowObj.getCell(3); 
+                        cMiddle.style = boxStyle; // COLOCA BORDA EM C49
+
+                        sheet.mergeCells(rowObj.number, 4, rowObj.number, 5);
+                        const c2 = rowObj.getCell(4); c2.value = "N° Horas/Dia: 08"; 
+                        for(let k=4; k<=5; k++) rowObj.getCell(k).style = boxStyle;
+                        
+                        // Alteração: Mescla de 6 a 8 (F a H)
+                        sheet.mergeCells(rowObj.number, 6, rowObj.number, 8);
+                        rowObj.getCell(6).value = "Total de horas a trabalhar:"; 
+                        for(let k=6; k<=8; k++) rowObj.getCell(k).style = boxStyle;
+                    } else if (isTotalHoras) {
+                        // Alteração: Mescla de 6 a 8 (F a H)
+                        sheet.mergeCells(rowObj.number, 6, rowObj.number, 8);
+                        const cellLabel = rowObj.getCell(6); cellLabel.value = "Total de horas no período:";
+                        const labelStyle = { font: { name: 'Arial', bold: true, size: 10 }, alignment: { horizontal: 'center', vertical: 'middle' }, border: { top:{style:'thin'}, bottom:{style:'thin'}, left:{style:'thin'}, right:{style:'thin'} } };
+                        for(let k=6; k<=8; k++) rowObj.getCell(k).style = labelStyle;
+                        
+                        // O valor vai para a coluna 9 (I) que está oculta
+                        const cellVal = rowObj.getCell(9); cellVal.value = ""; 
+                        cellVal.style = { border: null }; 
+
+                    } else {
+                        tds.forEach((td) => {
+                            let colspan = parseInt(td.getAttribute('colspan') || '1');
+                            const text = td.innerText.trim();
+                            const isNone = td.classList.contains('b-none');
+                            if (currentCellIndex > totalCols) return;
+
+                            if (colspan > 1) {
+                                try { sheet.mergeCells(rowObj.number, currentCellIndex, rowObj.number, currentCellIndex + colspan - 1); } catch(e) {}
+                            }
+                            
+                            const cell = rowObj.getCell(currentCellIndex); cell.value = text;
+                            if (!isNone) {
+                                
+                                // ----------------------------------------------------
+                                // LÓGICA DE FUNDO CINZA (FOLGA, FÉRIAS, PF)
+                                // ----------------------------------------------------
+                                const textContent = tr.innerText.toUpperCase();
+                                const shouldGray = textContent.includes('FOLGA') || textContent.includes('FÉRIAS') || textContent.includes('PF') || textContent.includes('FERIADO');
+
+                                const style = { font: { name: 'Arial', size: 10 }, border: { top:{style:'thin'}, bottom:{style:'thin'}, left:{style:'thin'}, right:{style:'thin'} }, alignment: { horizontal: 'center', vertical: 'middle' } };
+                                
+                                if (shouldGray) {
+                                    style.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
+                                }
+
+                                if (td.classList.contains('footer-totals')) { style.font = { name: 'Arial', bold: true, size: 10 }; style.alignment = { horizontal: 'left' }; }
+                                for(let k=0; k<colspan; k++) rowObj.getCell(currentCellIndex + k).style = style;
+                            }
+                            currentCellIndex += colspan;
+                        });
+                    }
+                });
+            }
+        }
+
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", fileName);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    document.addEventListener('DOMContentLoaded', carregarDados);
+    window.addEventListener('focus', carregarDados);
+    </script>
+</body>
+</html>

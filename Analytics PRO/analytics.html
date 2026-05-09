@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics PRO - Consolidador Executivo</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Design System Corporativo - Clean & Enterprise */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --bg-body: #f4f4f5;
+            --bg-card: #ffffff;
+            --sidebar-bg: #09090b;
+            --sidebar-hover: #1e293b;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --black: #000000;
+            --accent: #ea580c; 
+            --accent-light: #fff7ed;
+            --radius-md: 8px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+            --font: 'Inter', sans-serif;
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        body { font-family: var(--font); background-color: var(--bg-body); color: var(--text-main); margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; }
+        
+        /* BARRA LATERAL */
+        .sidebar { width: 260px; background-color: var(--sidebar-bg); color: #a1a1aa; display: flex; flex-direction: column; flex-shrink: 0; z-index: 50; }
+        .sidebar-header { padding: 25px 20px; font-size: 17px; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #1e293b; }
+        .sidebar-header i { color: var(--accent); font-size: 22px; }
+        .sidebar-nav { flex-grow: 1; padding: 20px 0; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+        .nav-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #475569; padding: 15px 20px 5px; }
+        .nav-item { padding: 12px 20px; margin: 0 10px; border-radius: 6px; display: flex; align-items: center; gap: 12px; font-size: 13px; font-weight: 500; cursor: pointer; transition: 0.2s; border-left: 3px solid transparent; }
+        .nav-item:hover { background-color: var(--sidebar-hover); color: #fff; }
+        .nav-item.active { background-color: #ffffff; color: var(--black); font-weight: 600; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .nav-item i { width: 18px; text-align: center; }
+        
+        /* TOPBAR & MAIN CONTENT */
+        .main-content { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        .topbar { background: var(--bg-card); border-bottom: 1px solid var(--border); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm); z-index: 40; height: 75px; box-sizing: border-box; }
+        .page-title { font-size: 20px; font-weight: 700; margin: 0; }
+        
+        /* BOTÕES MÁGICOS E FILTROS */
+        .topbar-actions { display: flex; gap: 12px; align-items: center; }
+        .btn-export { background: #f8fafc; border: 1px solid var(--border); color: var(--text-main); padding: 9px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-export:hover { background: #e2e8f0; }
+        .btn-export.excel { color: #059669; border-color: #059669; background: #ecfdf5; }
+        .btn-export.excel:hover { background: #d1fae5; }
+        .btn-export.html { color: #2563eb; border-color: #2563eb; background: #eff6ff; }
+        .btn-export.html:hover { background: #dbeafe; }
+        .btn-upload-master { background: var(--black); color: #fff; border: 1px solid var(--black); padding: 10px 20px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; box-shadow: var(--shadow-md); }
+        .btn-upload-master:hover { background: #334155; transform: translateY(-1px); }
+
+        .btn-danger { background: transparent; color: #dc2626; border: 1px solid transparent; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        .btn-danger:hover { background: #fef2f2; border-color: #fecaca; }
+
+        .content-area { padding: 30px; overflow-y: auto; flex-grow: 1; }
+        .tab-section { display: none; animation: fadeIn 0.3s ease; height: 100%; }
+        .tab-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* TELA 1: INÍCIO */
+        .empty-state { text-align: center; margin-top: 80px; }
+        .empty-state i { font-size: 64px; color: #cbd5e1; margin-bottom: 20px; }
+        .empty-state h2 { margin: 0 0 10px 0; font-size: 24px; font-weight: 700; color: var(--text-main); }
+        .empty-state p { margin: 0 0 30px 0; color: var(--text-muted); font-size: 15px; line-height: 1.6; }
+
+        /* KPIS & GRÁFICOS */
+        .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .kpi-card { background: var(--bg-card); border: 1px solid var(--border); padding: 25px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); border-top: 4px solid var(--black); display: flex; flex-direction: column; justify-content: space-between; }
+        .kpi-card.highlight { border-top-color: var(--accent); }
+        .kpi-card.warning { border-top-color: #f59e0b; }
+        .kpi-card.danger { border-top-color: #dc2626; }
+        .kpi-title { font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 10px; display: block; letter-spacing: 0.5px; }
+        .kpi-value { font-size: 32px; font-weight: 800; color: var(--text-main); line-height: 1; }
+        .kpi-sub { font-size: 13px; font-weight: 500; margin-top: 8px; color: var(--text-muted); }
+
+        .charts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px; margin-bottom: 40px; }
+        .chart-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 25px; box-shadow: var(--shadow-sm); }
+        .chart-title { font-size: 15px; font-weight: 700; color: var(--text-main); margin: 0 0 20px 0; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); padding-bottom: 15px;}
+        .canvas-container { position: relative; height: 320px; width: 100%; }
+
+        /* TABELAS DE RANKING */
+        .ranking-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        .ranking-table th { text-align: left; padding: 12px 10px; color: var(--text-muted); border-bottom: 2px solid var(--border); font-size: 12px; text-transform: uppercase; }
+        .ranking-table td { padding: 12px 10px; border-bottom: 1px solid var(--border); }
+        .progress-cell { position: relative; overflow: hidden; border-radius: 4px; }
+        .progress-bg { position: absolute; top: 0; left: 0; height: 100%; background: rgba(15, 23, 42, 0.08); z-index: 0; border-radius: 4px; }
+        .progress-text { position: relative; z-index: 1; font-weight: 600; font-family: monospace; font-size: 15px; }
+
+        /* MATRIZ E BUSCAS */
+        .matrix-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .search-bar { width: 400px; padding: 12px 18px; border: 1px solid var(--border); border-radius: 6px; font-family: var(--font); font-size: 14px; outline: none; transition: 0.2s; box-shadow: inset 0 1px 2px rgba(0,0,0,0.02); }
+        .search-bar:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.1); }
+        
+        .excel-wrapper { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; overflow-x: auto; max-height: calc(100vh - 220px); overflow-y: auto; box-shadow: var(--shadow-sm); }
+        .excel-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; text-align: left; }
+        .excel-table th, .excel-table td { border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 15px 20px; white-space: nowrap; }
+        .excel-table th:last-child, .excel-table td:last-child { border-right: none; }
+        
+        .excel-table thead th { background: #f8fafc; font-weight: 700; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid #cbd5e1; color: var(--text-main); font-size: 13px; text-transform: uppercase; }
+        .excel-table th:first-child, .excel-table td:first-child { position: sticky; left: 0; background: var(--bg-card); z-index: 5; font-weight: 500; border-right: 2px solid #cbd5e1; min-width: 300px; }
+        .excel-table thead th:first-child { background: #f8fafc; z-index: 15; }
+        .excel-table tbody tr:hover td { background-color: #f1f5f9; }
+        
+        .excel-section td { background: var(--black) !important; color: white !important; font-weight: 700 !important; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; padding: 18px 20px; }
+        .data-row td:first-child { padding-left: 40px; color: var(--text-muted); font-weight: 500; }
+        .val-num { text-align: right; font-family: monospace; font-size: 15px; font-weight: 600; color: var(--text-main); }
+        .col-total { background-color: var(--accent-light) !important; font-weight: 800 !important; color: var(--accent) !important; }
+
+        /* GESTÃO E ARQUIVOS */
+        .folders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
+        .folder-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 25px; box-shadow: var(--shadow-sm); cursor: pointer; transition: 0.2s; }
+        .folder-card:hover { border-color: var(--black); transform: translateY(-3px); box-shadow: var(--shadow-md); }
+        .folder-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .folder-header i { font-size: 40px; color: var(--accent); }
+        .folder-year { font-size: 24px; font-weight: 800; margin: 0; }
+        
+        .file-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-card); margin-bottom: 10px;}
+        .file-input-name { border: none; font-weight: 600; font-size: 15px; outline: none; border-bottom: 1px solid transparent; width: 300px; font-family: var(--font); padding: 5px 0; color: var(--text-main); }
+        .file-input-name:focus { border-bottom-color: var(--accent); }
+
+        /* LOADER & TOAST */
+        #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 2000; flex-direction: column; justify-content: center; align-items: center; }
+        .spinner { border: 4px solid var(--border); border-top: 4px solid var(--accent); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        #toast { position: fixed; bottom: -60px; right: 30px; background: var(--black); color: white; padding: 15px 25px; border-radius: 8px; font-size: 14px; z-index: 2000; transition: 0.4s ease; opacity: 0; display: flex; align-items: center; gap: 12px; }
+        #toast.show { bottom: 30px; opacity: 1; }
+    </style>
+</head>
+<body>
+
+    <div id="loader"><div class="spinner"></div><strong style="color:var(--text-main); font-size:16px;">Processando Algoritmo Avançado...</strong></div>
+    <div id="toast"><i class="fa-solid fa-circle-check" style="color: #10b981;"></i> <span id="toast-msg">Ação concluída.</span></div>
+
+    <aside class="sidebar">
+        <div class="sidebar-header"><i class="fa-solid fa-bolt"></i> Analytics PRO</div>
+        <nav class="sidebar-nav">
+            <div class="nav-label">Plataforma</div>
+            <div class="nav-item active" onclick="navegar('inicio', this, 'Importação de Dados')"><i class="fa-solid fa-house"></i> Início</div>
+            
+            <div class="nav-label">Relatórios Visuais</div>
+            <div class="nav-item" onclick="navegar('dashboard', this, 'Dashboard Consolidado')"><i class="fa-solid fa-chart-pie"></i> Dashboard Geral</div>
+            <div class="nav-item" onclick="navegar('insights', this, 'Insights Avançados')"><i class="fa-solid fa-magnifying-glass-chart"></i> Insights Avançados</div>
+            <div class="nav-item" onclick="navegar('funcionarios', this, 'Análise de Funcionários')"><i class="fa-solid fa-users"></i> Funcionários</div>
+            <div class="nav-item" onclick="navegar('servicos', this, 'Análise de Serviços')"><i class="fa-solid fa-list-check"></i> Serviços</div>
+            
+            <div class="nav-label">Comparações Globais</div>
+            <div class="nav-item" onclick="navegar('planilha', this, 'Matriz de Comparação de Dados')"><i class="fa-solid fa-table"></i> Matriz Consolidada</div>
+            <div class="nav-item" onclick="navegar('datas', this, 'Organização Anual')"><i class="fa-regular fa-folder-closed"></i> Pastas por Ano</div>
+            <div class="nav-item" onclick="navegar('arquivos', this, 'Gestão de Ficheiros')"><i class="fa-solid fa-file-excel"></i> Gestão de Ficheiros</div>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <div class="topbar">
+            <h2 class="page-title" id="page-title-text">Importação de Dados</h2>
+            
+            <div class="topbar-actions">
+                <select id="filtro-global" onchange="atualizarFiltroGlobal()" class="search-bar" style="width: auto; padding: 9px 16px; display: none; background: #f8fafc; font-weight: 600;">
+                    <option value="ALL">📊 Todos os Relatórios</option>
+                </select>
+
+                <button class="btn-export excel" onclick="baixarExcelAvançado()" id="btn-export-excel" style="display:none;"><i class="fa-solid fa-file-excel"></i> Baixar (Excel)</button>
+                <button class="btn-export html" onclick="baixarDashboardHTML()" id="btn-export-html" style="display:none;"><i class="fa-solid fa-code"></i> Baixar HTML</button>
+                
+                <label class="btn-upload-master">
+                    <i class="fa-solid fa-paperclip"></i> Anexar Excel / CSV
+                    <input type="file" multiple accept=".xlsx, .xls, .csv" style="display:none;" onchange="processarFicheiros(event)">
+                </label>
+            </div>
+        </div>
+
+        <div class="content-area">
+
+            <div id="inicio" class="tab-section active">
+                <div class="empty-state">
+                    <i class="fa-solid fa-layer-group"></i>
+                    <h2>Sistema Preparado para Extração</h2>
+                    <p>O algoritmo procura automaticamente pelos cabeçalhos das suas planilhas e cruza todos os dados sem erros.<br>Clique no botão negro <strong>"Anexar Excel / CSV"</strong> no canto superior direito para começar.</p>
+                </div>
+            </div>
+
+            <div id="dashboard" class="tab-section">
+                <div class="kpi-row">
+                    <div class="kpi-card highlight"><span class="kpi-title">Meses Analisados</span><div class="kpi-value" id="kpi-count">0</div></div>
+                    <div class="kpi-card"><span class="kpi-title">Volume Total (Acumulado)</span><div class="kpi-value" id="kpi-vol">0</div></div>
+                    <div class="kpi-card"><span class="kpi-title">Finalizados</span><div class="kpi-value" id="kpi-fin" style="color: #059669;">0</div></div>
+                    <div class="kpi-card warning"><span class="kpi-title">Aguardando</span><div class="kpi-value" id="kpi-agu" style="color:#f59e0b;">0</div></div>
+                    <div class="kpi-card danger"><span class="kpi-title">Evasões</span><div class="kpi-value" id="kpi-eva" style="color:#dc2626;">0</div></div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-box" style="grid-column: 1 / -1;"><h3 class="chart-title"><i class="fa-solid fa-chart-line"></i> Evolução de Volume (Linha do Tempo)</h3><div class="canvas-container" id="box-mixed-vol"></div></div>
+                    <div class="chart-box"><h3 class="chart-title"><i class="fa-solid fa-chart-column"></i> Produtividade (Finalizados vs Evasão)</h3><div class="canvas-container" id="box-bar-status"></div></div>
+                    <div class="chart-box"><h3 class="chart-title"><i class="fa-solid fa-arrow-trend-up"></i> Tendência de Macro-Categorias</h3><div class="canvas-container" id="box-line-cat"></div></div>
+                </div>
+            </div>
+
+            <div id="insights" class="tab-section">
+                <div class="charts-grid">
+                    <div class="chart-box" style="grid-column: 1 / -1;"><h3 class="chart-title"><i class="fa-solid fa-layer-group"></i> Proporção de Categorias por Mês (100% Empilhado)</h3><div class="canvas-container" id="box-stacked-cat"></div></div>
+                    <div class="chart-box" style="display:flex; flex-direction:column; align-items:center;"><h3 class="chart-title" style="width: 100%;"><i class="fa-solid fa-satellite-dish"></i> Sazonalidade de Categoria (Radar)</h3><div class="canvas-container" id="box-radar" style="max-width: 450px;"></div></div>
+                    <div class="chart-box" style="display:flex; flex-direction:column; align-items:center;"><h3 class="chart-title" style="width: 100%;"><i class="fa-solid fa-chart-pie"></i> Taxa de Sucesso Global</h3><div class="canvas-container" id="box-pie-status" style="max-width: 400px;"></div></div>
+                </div>
+            </div>
+
+            <div id="funcionarios" class="tab-section">
+                <div class="kpi-row">
+                    <div class="kpi-card highlight"><span class="kpi-title">Top Atendente Global</span><div class="kpi-value" id="kpi-top-func" style="font-size:24px;">-</div><div class="kpi-sub" id="kpi-top-func-vol">Volume: 0</div></div>
+                    <div class="kpi-card"><span class="kpi-title">Atendentes Únicos</span><div class="kpi-value" id="kpi-total-funcs">0</div></div>
+                </div>
+                <div class="matrix-header" style="margin-bottom: 15px;">
+                    <input type="text" id="searchFunc" class="search-bar" onkeyup="filtrarTabelaInput('rank-atendentes', this.value)" placeholder="🔍 Filtrar atendente pelo nome...">
+                </div>
+                <div class="chart-box" style="padding: 0; overflow: hidden; border: 1px solid var(--border);">
+                    <h3 class="chart-title" style="padding: 20px; margin: 0; background: #f8fafc;"><i class="fa-solid fa-ranking-star"></i> Ranking Detalhado de Atendentes</h3>
+                    <table class="ranking-table" id="rank-atendentes">
+                        <thead><tr><th style="padding: 15px;">Atendente</th><th style="padding: 15px;">Tempo Médio (Último Lido)</th><th style="padding: 15px;">Volume Consolidado</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="servicos" class="tab-section">
+                <div class="kpi-row">
+                    <div class="kpi-card highlight"><span class="kpi-title">Serviço Mais Procurado</span><div class="kpi-value" id="kpi-top-serv" style="font-size:16px;">-</div><div class="kpi-sub" id="kpi-top-serv-vol">Volume: 0</div></div>
+                    <div class="kpi-card"><span class="kpi-title">Tipos de Serviços Solicitados</span><div class="kpi-value" id="kpi-total-servs">0</div></div>
+                </div>
+                <div class="matrix-header" style="margin-bottom: 15px;">
+                    <input type="text" id="searchServ" class="search-bar" onkeyup="filtrarTabelaInput('rank-servicos', this.value)" placeholder="🔍 Filtrar por serviço, setor ou categoria...">
+                </div>
+                <div class="chart-box" style="padding: 0; overflow: hidden; border: 1px solid var(--border);">
+                    <h3 class="chart-title" style="padding: 20px; margin: 0; background: #f8fafc;"><i class="fa-solid fa-table-list"></i> Ranking Detalhado de Serviços</h3>
+                    <table class="ranking-table" id="rank-servicos">
+                        <thead><tr><th style="padding: 15px;">Macro-Categoria</th><th style="padding: 15px;">Setor</th><th style="padding: 15px;">Serviço</th><th style="padding: 15px;">Tempo Médio (Último Lido)</th><th style="padding: 15px;">Volume Total</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="planilha" class="tab-section">
+                <div class="matrix-header">
+                    <input type="text" id="searchTable" class="search-bar" onkeyup="filtrarMatriz()" placeholder="🔍 Filtrar serviços, categorias ou atendentes na matriz...">
+                </div>
+                <div class="excel-wrapper"><table class="excel-table" id="tabela-matriz"></table></div>
+            </div>
+
+            <div id="datas" class="tab-section"><div class="folders-grid" id="folders-container"></div></div>
+            
+            <div id="arquivos" class="tab-section">
+                <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                    <h3 style="margin: 0; font-size: 16px;">Controlo de Ficheiros</h3>
+                    <button class="btn btn-danger" onclick="limparTudo()"><i class="fa-solid fa-trash-can"></i> Apagar Tudo</button>
+                </div>
+                <div id="file-list-container" style="display: flex; flex-direction: column; gap: 10px;"></div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // ==========================================
+        // BANCO DE DADOS LOCAL (IndexedDB) E ESTADO
+        // ==========================================
+        let baseDados = [];
+        let globalSelectedId = "ALL";
+        const bwColors = ['#0f172a', '#334155', '#475569', '#64748b', '#94a3b8', '#cbd5e1', '#e2e8f0'];
+
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.color = '#64748b';
+
+        const DB_NAME = 'AnalyticsPRO_DB';
+        const STORE_NAME = 'relatorios';
+        let db;
+
+        async function initDB() {
+            return new Promise((resolve, reject) => {
+                let request = indexedDB.open(DB_NAME, 1);
+                request.onupgradeneeded = (e) => {
+                    let database = e.target.result;
+                    if (!database.objectStoreNames.contains(STORE_NAME)) {
+                        database.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                    }
+                };
+                request.onsuccess = (e) => { db = e.target.result; resolve(); };
+                request.onerror = (e) => { reject(e); };
+            });
+        }
+
+        function salvarTodosDadosDB() {
+            if (!db) return;
+            let tx = db.transaction(STORE_NAME, 'readwrite');
+            let store = tx.objectStore(STORE_NAME);
+            store.clear();
+            baseDados.forEach(r => store.put(r));
+        }
+
+        function carregarTodosDadosDB() {
+            return new Promise((resolve, reject) => {
+                if (!db) resolve([]);
+                let tx = db.transaction(STORE_NAME, 'readonly');
+                let store = tx.objectStore(STORE_NAME);
+                let req = store.getAll();
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject([]);
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            await initDB();
+            let saved = await carregarTodosDadosDB();
+            if (saved && saved.length > 0) {
+                baseDados = saved;
+                atualizarSistemaGlobal();
+                showToast("Sessão anterior restaurada automaticamente.");
+            }
+        });
+
+        // ==========================================
+        // UTILITÁRIOS
+        // ==========================================
+        function showToast(mensagem) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = mensagem;
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
+        }
+
+        function navegar(tabId, elementoBtn, tituloStr) {
+            if (baseDados.length === 0 && tabId !== 'inicio') { showToast('Anexe ficheiros primeiro.'); return; }
+            document.querySelectorAll('.tab-section').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            elementoBtn.classList.add('active');
+            document.getElementById('page-title-text').innerText = tituloStr;
+            
+            if(tabId === 'dashboard' || tabId === 'insights' || tabId === 'funcionarios' || tabId === 'servicos') {
+                setTimeout(gerarTodosGraficos, 50);
+            }
+        }
+
+        function formatNumber(num) { return num.toLocaleString('pt-PT'); }
+        function timeToSec(t) { if(!t || typeof t !== 'string') return 0; let p = t.split(':'); if(p.length !== 3) return 0; return (+p[0]*3600) + (+p[1]*60) + (+p[2]); }
+        function secToTime(s) { if(isNaN(s) || s < 0) return "00:00:00"; s = Math.round(s); let h = Math.floor(s/3600); let m = Math.floor((s%3600)/60); let sc = s%60; return String(h).padStart(2,'0')+":"+String(m).padStart(2,'0')+":"+String(sc).padStart(2,'0'); }
+
+        // ==========================================
+        // GESTÃO DE FILTROS E DADOS ATIVOS
+        // ==========================================
+        function getDadosAtivos() {
+            if (globalSelectedId === "ALL") return baseDados;
+            return baseDados.filter(r => r.id == globalSelectedId);
+        }
+
+        function atualizarFiltroGlobal() {
+            globalSelectedId = document.getElementById('filtro-global').value;
+            renderizarKPIsETabelas();
+            gerarMatrizExcel();
+            gerarTodosGraficos();
+        }
+
+        function atualizarSelectFiltro() {
+            const select = document.getElementById('filtro-global');
+            if (baseDados.length === 0) {
+                select.style.display = 'none';
+                return;
+            }
+            select.style.display = 'inline-block';
+            let html = `<option value="ALL">📊 Todos os Relatórios</option>`;
+            baseDados.forEach(r => {
+                html += `<option value="${r.id}" ${globalSelectedId == r.id ? 'selected' : ''}>📅 ${r.nome}</option>`;
+            });
+            select.innerHTML = html;
+        }
+
+        // Filtro em tempo real para as tabelas das abas (Busca)
+        function filtrarTabelaInput(tableId, termo) {
+            let filter = termo.toUpperCase();
+            let tbody = document.getElementById(tableId).getElementsByTagName("tbody")[0];
+            let tr = tbody.getElementsByTagName("tr");
+            for (let i = 0; i < tr.length; i++) {
+                let tdTexto = tr[i].textContent || tr[i].innerText;
+                tr[i].style.display = tdTexto.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+            }
+        }
+
+        // ==========================================
+        // EXTRAÇÃO INTELIGENTE DA ESTRUTURA
+        // ==========================================
+        async function processarFicheiros(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+            document.getElementById('loader').style.display = 'flex';
+
+            for (let i = 0; i < files.length; i++) { await extrairDados(files[i]); }
+
+            salvarTodosDadosDB(); // Salva no banco local
+            document.getElementById('loader').style.display = 'none';
+            event.target.value = ''; 
+            atualizarSistemaGlobal();
+            showToast(`${files.length} relatório(s) integrados com sucesso.`);
+        }
+
+        function extrairDados(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        
+                        let anoDoc = new Date().getFullYear().toString();
+
+                        let relatorio = { 
+                            id: Date.now() + Math.floor(Math.random()*1000), 
+                            nome: file.name.replace('.xlsx','').replace('.csv','').substring(0, 30),
+                            ano: anoDoc,
+                            kpis: { total: 0, finalizados: 0, aguardando: 0, evasao: 0 },
+                            categorias: {}, atendentes: {}, servicos: {} 
+                        };
+
+                        workbook.SheetNames.forEach(sheetName => {
+                            const rawData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: "" });
+                            
+                            for(let i=0; i < rawData.length; i++) {
+                                let rowUpper = rawData[i].map(c => String(c).trim().toUpperCase());
+
+                                // 1. DASHBOARD
+                                if (rowUpper.some(c => c.includes("TOTAL ATEND"))) {
+                                    let idxTot = rowUpper.findIndex(c => c.includes("TOTAL ATEND"));
+                                    let idxFin = rowUpper.findIndex(c => c.includes("FINALIZADO"));
+                                    let idxAgu = rowUpper.findIndex(c => c.includes("AGUARDANDO"));
+                                    let idxEva = rowUpper.findIndex(c => c.includes("EVASAO") || c.includes("COMPARECEU"));
+
+                                    if(rawData[i+1]) {
+                                        let vals = rawData[i+1];
+                                        if(idxTot > -1) relatorio.kpis.total = parseInt(vals[idxTot]) || 0;
+                                        if(idxFin > -1) relatorio.kpis.finalizados = parseInt(vals[idxFin]) || 0;
+                                        if(idxAgu > -1) relatorio.kpis.aguardando = parseInt(vals[idxAgu]) || 0;
+                                        if(idxEva > -1) relatorio.kpis.evasao = parseInt(vals[idxEva]) || 0;
+                                    }
+                                }
+
+                                // 2. CATEGORIAS
+                                if (rowUpper.some(c => c.includes("MACRO")) && !rowUpper.some(c => c.includes("SERVICO") || c.includes("SERVIÇO"))) {
+                                    let idxCat = rowUpper.findIndex(c => c.includes("MACRO"));
+                                    let idxQtd = rowUpper.findIndex(c => c.includes("QUANTIDADE") || c.includes("TOTAL"));
+                                    
+                                    if(idxCat > -1 && idxQtd > -1) {
+                                        for(let j=i+1; j < rawData.length; j++) {
+                                            let k = String(rawData[j][idxCat]||'').trim(); 
+                                            let v = parseInt(rawData[j][idxQtd]) || 0;
+                                            if(k && k !== "" && !k.toUpperCase().includes("MACRO")) {
+                                                relatorio.categorias[k] = (relatorio.categorias[k] || 0) + v;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // 3. ATENDENTES
+                                if (rowUpper.some(c => c.includes("FUNCIONARIO") || c.includes("NOME"))) {
+                                    let idxFunc = rowUpper.findIndex(c => c.includes("FUNCIONARIO") || c.includes("NOME"));
+                                    let idxQtd = rowUpper.findIndex(c => c.includes("QUANTIDADE") || c.includes("ATENDIMENTO"));
+                                    let idxTmp = rowUpper.findIndex(c => c.includes("TEMPO"));
+                                    
+                                    if(idxFunc > -1 && idxQtd > -1) {
+                                        for(let j=i+1; j < rawData.length; j++) {
+                                            let rawNome = String(rawData[j][idxFunc]||'').trim();
+                                            if(!rawNome || rawNome === "") break;
+                                            
+                                            let k = rawNome.split('-')[0].trim();
+                                            let v = parseInt(rawData[j][idxQtd]) || 0;
+                                            let t = idxTmp > -1 ? String(rawData[j][idxTmp]||'00:00:00') : '00:00:00';
+                                            
+                                            if(k && !k.includes("FUNCIONARIO") && !k.includes("NOME")) {
+                                                if(!relatorio.atendentes[k]) relatorio.atendentes[k] = {qtd: 0, tempo: 0};
+                                                relatorio.atendentes[k].qtd += v;
+                                                relatorio.atendentes[k].tempo = timeToSec(t); 
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // 4. SERVICOS
+                                if (rowUpper.some(c => c === "SERVICO" || c === "SERVIÇO" || c.includes("SERVICO"))) {
+                                    let idxMac = rowUpper.findIndex(c => c.includes("MACRO"));
+                                    let idxSet = rowUpper.findIndex(c => c === "SETOR" || c === "GRUPO");
+                                    let idxSrv = rowUpper.findIndex(c => c.includes("SERVICO") || c.includes("SERVIÇO"));
+                                    let idxQtd = rowUpper.findIndex(c => c.includes("QUANTIDADE") || c.includes("QTD"));
+                                    let idxTmp = rowUpper.findIndex(c => c.includes("TEMPO"));
+                                    
+                                    if(idxSrv > -1 && idxQtd > -1) {
+                                        for(let j=i+1; j < rawData.length; j++) {
+                                            let srv = String(rawData[j][idxSrv]||'').trim();
+                                            if(!srv || srv === "") break;
+                                            
+                                            let v = parseInt(rawData[j][idxQtd]) || 0;
+                                            let mac = idxMac > -1 ? String(rawData[j][idxMac]||'').trim() : "Outros";
+                                            let set = idxSet > -1 ? String(rawData[j][idxSet]||'').trim() : "Geral";
+                                            let t = idxTmp > -1 ? String(rawData[j][idxTmp]||'00:00:00') : '00:00:00';
+                                            
+                                            if(srv && !srv.includes("SERVICO")) {
+                                                let chave = `${mac}|${set}|${srv}`;
+                                                if(!relatorio.servicos[chave]) relatorio.servicos[chave] = {qtd: 0, tempo: 0, mac: mac, set: set, srv: srv};
+                                                relatorio.servicos[chave].qtd += v;
+                                                relatorio.servicos[chave].tempo = timeToSec(t);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+
+                        if(relatorio.kpis.total === 0) relatorio.kpis.total = relatorio.kpis.finalizados + relatorio.kpis.evasao + relatorio.kpis.aguardando;
+                        baseDados.push(relatorio);
+                        resolve();
+                    } catch (err) { console.error(`Erro ficheiro:`, err); resolve(); }
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // ==========================================
+        // RENDERIZAÇÃO DE UI
+        // ==========================================
+        function atualizarSistemaGlobal() {
+            atualizarSelectFiltro();
+            
+            if(baseDados.length === 0) {
+                document.getElementById('inicio').classList.add('active');
+                document.querySelectorAll('.nav-item')[0].classList.add('active');
+                document.getElementById('btn-export-excel').style.display = 'none';
+                document.getElementById('btn-export-html').style.display = 'none';
+                return;
+            }
+            
+            document.getElementById('btn-export-excel').style.display = 'inline-flex';
+            document.getElementById('btn-export-html').style.display = 'inline-flex';
+            
+            if(document.getElementById('inicio').classList.contains('active')) { document.querySelectorAll('.nav-item')[1].click(); }
+
+            renderizarKPIsETabelas();
+            gerarMatrizExcel();
+            renderizarPastasAnos();
+            renderizarGestaoArquivos();
+            gerarTodosGraficos();
+        }
+
+        function renderizarKPIsETabelas() {
+            let vol = 0, fin = 0, agu = 0, eva = 0;
+            let aggFunc = {}, aggServ = {};
+            let ativos = getDadosAtivos();
+            
+            ativos.forEach(r => { 
+                vol += r.kpis.total; fin += r.kpis.finalizados; agu += r.kpis.aguardando; eva += r.kpis.evasao; 
+                Object.keys(r.atendentes).forEach(k => {
+                    if(!aggFunc[k]) aggFunc[k] = {qtd:0, t:0};
+                    aggFunc[k].qtd += r.atendentes[k].qtd; aggFunc[k].t = r.atendentes[k].tempo; 
+                });
+                Object.keys(r.servicos).forEach(k => {
+                    if(!aggServ[k]) aggServ[k] = {qtd:0, t:0, mac:r.servicos[k].mac, set:r.servicos[k].set, srv:r.servicos[k].srv};
+                    aggServ[k].qtd += r.servicos[k].qtd; aggServ[k].t = r.servicos[k].tempo;
+                });
+            });
+            
+            document.getElementById('kpi-count').innerText = ativos.length;
+            document.getElementById('kpi-vol').innerText = formatNumber(vol);
+            document.getElementById('kpi-fin').innerText = formatNumber(fin);
+            document.getElementById('kpi-eva').innerText = formatNumber(eva + agu);
+
+            let fArr = Object.entries(aggFunc).sort((a,b)=>b[1].qtd-a[1].qtd);
+            let sArr = Object.entries(aggServ).sort((a,b)=>b[1].qtd-a[1].qtd);
+            let maxF = fArr[0] ? fArr[0][1].qtd : 1;
+            let maxS = sArr[0] ? sArr[0][1].qtd : 1;
+
+            if(fArr.length > 0) {
+                document.getElementById('kpi-top-func').innerText = fArr[0][0];
+                document.getElementById('kpi-top-func-vol').innerText = `Volume Consolidado: ${formatNumber(fArr[0][1].qtd)}`;
+            } else {
+                document.getElementById('kpi-top-func').innerText = "-";
+                document.getElementById('kpi-top-func-vol').innerText = `Volume: 0`;
+            }
+            document.getElementById('kpi-total-funcs').innerText = fArr.length;
+
+            if(sArr.length > 0) {
+                document.getElementById('kpi-top-serv').innerText = sArr[0][1].srv.substring(0,35);
+                document.getElementById('kpi-top-serv-vol').innerText = `Volume Consolidado: ${formatNumber(sArr[0][1].qtd)}`;
+            } else {
+                document.getElementById('kpi-top-serv').innerText = "-";
+                document.getElementById('kpi-top-serv-vol').innerText = `Volume: 0`;
+            }
+            document.getElementById('kpi-total-servs').innerText = sArr.length;
+
+            document.getElementById('rank-atendentes').querySelector('tbody').innerHTML = fArr.map(f => {
+                let pct = (f[1].qtd/maxF)*100; let tStr = secToTime(f[1].t);
+                let cor = f[1].t > 600 ? (f[1].t > 900 ? '#ef4444' : '#f59e0b') : '#10b981';
+                return `<tr><td style="padding:15px;">${f[0]}</td><td style="padding:15px; font-family:monospace; font-weight:bold; color:${cor};">${tStr}</td><td style="padding:15px;" class="progress-cell"><div class="progress-bg" style="width:${pct}%;"></div><span class="progress-text">${formatNumber(f[1].qtd)}</span></td></tr>`;
+            }).join('');
+
+            document.getElementById('rank-servicos').querySelector('tbody').innerHTML = sArr.map(s => {
+                let pct = (s[1].qtd/maxS)*100; let tStr = secToTime(s[1].t);
+                let cor = s[1].t > 600 ? (s[1].t > 900 ? '#ef4444' : '#f59e0b') : '#10b981';
+                return `<tr><td style="padding:15px;"><span style="background:#e2e8f0;padding:4px 8px;border-radius:4px;font-size:11px;">${s[1].mac}</span></td><td style="padding:15px;">${s[1].set}</td><td style="padding:15px; font-weight:600;">${s[1].srv}</td><td style="padding:15px; font-family:monospace; font-weight:bold; color:${cor};">${tStr}</td><td style="padding:15px;" class="progress-cell"><div class="progress-bg" style="width:${pct}%;"></div><span class="progress-text">${formatNumber(s[1].qtd)}</span></td></tr>`;
+            }).join('');
+        }
+
+        // ==========================================
+        // MATRIZ CONSOLIDADA
+        // ==========================================
+        function gerarMatrizExcel() {
+            const table = document.getElementById('tabela-matriz');
+            let ativos = getDadosAtivos();
+            if(ativos.length === 0) { table.innerHTML = ''; return; }
+
+            let thead = `<thead><tr><th>MÉTRICA / DESCRIÇÃO</th>`;
+            ativos.forEach(r => { thead += `<th>${r.nome}</th>`; });
+            thead += `<th class="col-total">TOTAL GERAL</th><th class="col-total">MÉDIA / MÊS</th></tr></thead>`;
+
+            let tbody = `<tbody>`;
+
+            function buildRow(label, keyExt) {
+                let html = `<tr class="data-row"><td>${label}</td>`;
+                let total = 0;
+                ativos.forEach(r => { let val = keyExt(r) || 0; total += val; html += `<td class="val-num">${formatNumber(val)}</td>`; });
+                let media = ativos.length > 0 ? (total / ativos.length) : 0;
+                html += `<td class="val-num col-total">${formatNumber(total)}</td><td class="val-num col-total">${formatNumber(Math.round(media))}</td></tr>`;
+                return html;
+            }
+
+            tbody += `<tr class="excel-section"><td colspan="${ativos.length + 3}">1. INDICADORES GERAIS (KPIS)</td></tr>`;
+            tbody += buildRow("Volume Total de Atendimentos", r => r.kpis.total);
+            tbody += buildRow("Atendimentos Finalizados", r => r.kpis.finalizados);
+            tbody += buildRow("Aguardando", r => r.kpis.aguardando);
+            tbody += buildRow("Não Compareceu (Evasão)", r => r.kpis.evasao);
+
+            tbody += `<tr class="excel-section"><td colspan="${ativos.length + 3}">2. MACRO-CATEGORIAS</td></tr>`;
+            let cats = new Set(); ativos.forEach(r => Object.keys(r.categorias).forEach(c => cats.add(c)));
+            Array.from(cats).sort().forEach(cat => { tbody += buildRow(`↳ ${cat}`, r => r.categorias[cat]); });
+
+            tbody += `<tr class="excel-section"><td colspan="${ativos.length + 3}">3. PRODUTIVIDADE DE ATENDENTES</td></tr>`;
+            let atends = new Set(); ativos.forEach(r => Object.keys(r.atendentes).forEach(a => atends.add(a)));
+            Array.from(atends).sort().forEach(ate => { tbody += buildRow(`↳ ${ate}`, r => r.atendentes[ate]?r.atendentes[ate].qtd:0); });
+
+            tbody += `<tr class="excel-section"><td colspan="${ativos.length + 3}">4. DETALHAMENTO DE SERVIÇOS</td></tr>`;
+            let servsMap = new Map(); 
+            ativos.forEach(r => {
+                Object.keys(r.servicos).forEach(chave => {
+                    if(!servsMap.has(chave)) {
+                        let p = chave.split('|');
+                        servsMap.set(chave, { chaveOriginal: chave, srv: p.length === 3 ? p[2] : chave });
+                    }
+                });
+            });
+            Array.from(servsMap.values()).sort((a,b) => a.srv.localeCompare(b.srv)).forEach(item => { 
+                tbody += buildRow(`↳ ${item.srv}`, r => r.servicos[item.chaveOriginal]?r.servicos[item.chaveOriginal].qtd:0); 
+            });
+
+            table.innerHTML = thead + tbody + `</tbody>`;
+        }
+
+        function filtrarMatriz() {
+            let filter = document.getElementById("searchTable").value.toUpperCase();
+            let tr = document.getElementById("tabela-matriz").getElementsByTagName("tr");
+            for (let i = 1; i < tr.length; i++) {
+                if (tr[i].classList.contains('excel-section')) continue; 
+                let td = tr[i].getElementsByTagName("td")[0]; 
+                if (td) {
+                    let text = td.textContent || td.innerText;
+                    tr[i].style.display = text.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+                }
+            }
+        }
+
+        // ==========================================
+        // OUTRAS ABAS (Pastas e Ficheiros) - Mostra todos os arquivos
+        // ==========================================
+        function renderizarPastasAnos() {
+            const container = document.getElementById('folders-container');
+            container.innerHTML = '';
+            let dadosAno = {};
+            baseDados.forEach(r => { if(!dadosAno[r.ano]) dadosAno[r.ano] = []; dadosAno[r.ano].push(r); });
+            Object.keys(dadosAno).sort((a,b) => b - a).forEach(ano => {
+                let fs = dadosAno[ano];
+                let card = document.createElement('div');
+                card.className = 'folder-card';
+                card.innerHTML = `
+                    <div class="folder-header" onclick="let e=this.nextElementSibling; e.style.display=e.style.display==='flex'?'none':'flex';">
+                        <div>
+                            <h3 class="folder-year">${ano}</h3>
+                            <span style="font-size:13px; color:var(--text-muted);">${fs.length} Documentos Analisados</span>
+                        </div>
+                        <i class="fa-regular fa-folder-open"></i>
+                    </div>
+                    <div class="file-list-in-folder" style="display:none; flex-direction:column; gap:10px; margin-top:15px; border-top:1px solid var(--border); padding-top:15px;">
+                        ${fs.map(f => `<div class="mini-file"><span>${f.nome}</span><strong>${formatNumber(f.kpis.total)} Atend.</strong></div>`).join('')}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderizarGestaoArquivos() {
+            const container = document.getElementById('file-list-container');
+            container.innerHTML = '';
+            baseDados.forEach(rel => {
+                const item = document.createElement('div');
+                item.className = 'file-item';
+                item.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:15px;">
+                        <i class="fa-solid fa-file-excel" style="font-size:20px; color:#111827;"></i>
+                        <input type="text" class="file-input-name" value="${rel.nome}" onchange="renomear(${rel.id}, this.value)">
+                    </div>
+                    <button class="btn btn-danger" onclick="remover(${rel.id})"><i class="fa-solid fa-trash-can"></i> Remover</button>
+                `;
+                container.appendChild(item);
+            });
+        }
+        function remover(id) { 
+            baseDados = baseDados.filter(r => r.id !== id); 
+            if(globalSelectedId == id) globalSelectedId = "ALL";
+            salvarTodosDadosDB();
+            atualizarSistemaGlobal(); 
+            showToast("Ficheiro excluído."); 
+        }
+        function limparTudo() { 
+            if(confirm("Apagar todos os relatórios?")) { 
+                baseDados = []; 
+                globalSelectedId = "ALL";
+                salvarTodosDadosDB();
+                atualizarSistemaGlobal(); 
+            } 
+        }
+        function renomear(id, n) { 
+            let r = baseDados.find(r => r.id === id); 
+            if(r) r.nome = n; 
+            salvarTodosDadosDB();
+            atualizarSistemaGlobal(); 
+            showToast("Nome atualizado."); 
+        }
+
+        // ==========================================
+        // GRÁFICOS (DESTRUIÇÃO SEGURA)
+        // ==========================================
+        function resetCanvas(containerId, canvasId) {
+            const container = document.getElementById(containerId);
+            if (!container) return null;
+            container.innerHTML = ''; 
+            const newCanvas = document.createElement('canvas');
+            newCanvas.id = canvasId;
+            container.appendChild(newCanvas);
+            return newCanvas.getContext('2d');
+        }
+
+        function gerarTodosGraficos() {
+            let ativos = getDadosAtivos();
+            if(ativos.length === 0) return;
+            const labelsStr = ativos.map(r => r.nome.length > 15 ? r.nome.substring(0,15)+'...' : r.nome);
+
+            try {
+                new Chart(resetCanvas('box-mixed-vol', 'chart-mixed-vol'), {
+                    data: { labels: labelsStr, datasets: [
+                        { type: 'bar', label: 'Volume Total', data: ativos.map(r => r.kpis.total), backgroundColor: '#0f172a', borderRadius: 4, yAxisID: 'y' },
+                        { type: 'line', label: 'Evasão', data: ativos.map(r => r.kpis.evasao), borderColor: '#dc2626', backgroundColor: '#dc2626', borderWidth: 2, tension: 0.3, yAxisID: 'y1' }
+                    ]}, options: { responsive: true, maintainAspectRatio: false, scales: { y: { type: 'linear', position: 'left' }, y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false } } } }
+                });
+            } catch(e) {}
+
+            try {
+                new Chart(resetCanvas('box-bar-status', 'chart-bar-status'), {
+                    type: 'bar', data: { labels: labelsStr, datasets: [ 
+                        { label: 'Finalizados', data: ativos.map(r => r.kpis.finalizados), backgroundColor: '#10b981' }, 
+                        { label: 'Aguardando', data: ativos.map(r => r.kpis.aguardando), backgroundColor: '#f59e0b' },
+                        { label: 'Evasão', data: ativos.map(r => r.kpis.evasao), backgroundColor: '#dc2626' } 
+                    ]}, options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } } }
+                });
+            } catch(e) {}
+
+            try {
+                let cats = new Set(); ativos.forEach(r => Object.keys(r.categorias).forEach(c => cats.add(c)));
+                let dsLinhaCat = Array.from(cats).map((cat, i) => ({ label: cat, data: ativos.map(r => r.categorias[cat] || 0), borderColor: bwColors[i % bwColors.length], tension: 0.2, borderWidth: 2 }));
+                new Chart(resetCanvas('box-line-cat', 'chart-line-cat'), { type: 'line', data: { labels: labelsStr, datasets: dsLinhaCat }, options: { maintainAspectRatio: false } });
+
+                let stackedDatasets = Array.from(cats).map((cat, i) => {
+                    let dataPct = ativos.map(r => { let t = r.kpis.total; return t > 0 ? ((r.categorias[cat]||0) / t * 100).toFixed(1) : 0; });
+                    return { label: cat, data: dataPct, backgroundColor: bwColors[i % bwColors.length] };
+                });
+                new Chart(resetCanvas('box-stacked-cat', 'chart-stacked-cat'), { type: 'bar', data: { labels: labelsStr, datasets: stackedDatasets }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true, max: 100 } } } });
+
+                let cTotal = {}; ativos.forEach(r => { Object.keys(r.categorias).forEach(k => cTotal[k] = (cTotal[k]||0) + r.categorias[k]); });
+                new Chart(resetCanvas('box-pie-status', 'chart-pie-status'), { type: 'pie', data: { labels: Object.keys(cTotal), datasets: [{ data: Object.values(cTotal), backgroundColor: bwColors, borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false } });
+
+                let dsRadar = ativos.map((r, i) => ({ label: r.nome, data: Array.from(cats).map(cat => r.categorias[cat] || 0), borderColor: bwColors[i % bwColors.length], backgroundColor: 'transparent', borderWidth: 2 }));
+                new Chart(resetCanvas('box-radar', 'chart-radar'), { type: 'radar', data: { labels: Array.from(cats).map(c=>c.substring(0,15)), datasets: dsRadar }, options: { responsive: true, maintainAspectRatio: false, scales: { r: { ticks: { display: false } } } } });
+            } catch(e) {}
+        }
+
+        // ==========================================
+        // EXPORTAÇÃO EXCELJS (MANTÉM EXPORTANDO TODOS OS DADOS)
+        // ==========================================
+        async function baixarExcelAvançado() {
+            if(baseDados.length === 0) return;
+            showToast("A gerar Excel formatado (Múltiplas Abas)...");
+
+            if (typeof ExcelJS === 'undefined') {
+                await new Promise(r => { let s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js'; s.onload = r; document.head.appendChild(s); });
+            }
+
+            const wb = new ExcelJS.Workbook();
+            const mesesNomes = baseDados.map(r => r.nome);
+
+            function criarAbaComparativa(nomeAba, corHex, definicaoColunasFixas, listaItens, extratorValor) {
+                const ws = wb.addWorksheet(nomeAba, {properties:{tabColor:{argb:corHex}}, views:[{state:'frozen', xSplit:definicaoColunasFixas.length, ySplit:1}]});
+                
+                let cols = [...definicaoColunasFixas];
+                mesesNomes.forEach(m => cols.push({header: m.toUpperCase(), key: m, width: 16}));
+                cols.push({header: 'TOTAL GERAL', key: 'tot', width: 18});
+                ws.columns = cols;
+
+                let headerRow = ws.getRow(1);
+                headerRow.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+                headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: corHex } };
+                headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
+                headerRow.height = 25;
+
+                listaItens.forEach(item => {
+                    let rowData = {};
+                    definicaoColunasFixas.forEach(c => rowData[c.key] = item[c.key]);
+                    
+                    let total = 0;
+                    baseDados.forEach(r => {
+                        let val = extratorValor(r, item);
+                        rowData[r.nome] = val || 0;
+                        total += (val || 0);
+                    });
+                    
+                    rowData.tot = total;
+                    let newRow = ws.addRow(rowData);
+                    newRow.font = { name: 'Arial', size: 10 };
+                });
+
+                ws.eachRow((row, rowNumber) => {
+                    if(rowNumber > 1) {
+                        row.eachCell((cell, colNumber) => {
+                            if(colNumber > definicaoColunasFixas.length) {
+                                cell.numFmt = '#,##0';
+                                cell.alignment = { horizontal: 'right' };
+                                if (colNumber === cols.length) {
+                                    cell.font = { name: 'Arial', size: 10, bold: true, color: { argb: corHex } };
+                                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+                                }
+                            }
+                        });
+                    }
+                });
+                ws.autoFilter = { from: {row: 1, column: 1}, to: {row: 1, column: cols.length} };
+            }
+
+            let totA = baseDados.reduce((s,r)=>s+r.kpis.total,0); let finA = baseDados.reduce((s,r)=>s+r.kpis.finalizados,0); let aguA = baseDados.reduce((s,r)=>s+r.kpis.aguardando,0); let evaA = baseDados.reduce((s,r)=>s+r.kpis.evasao,0);
+            
+            let aggF = {}; baseDados.forEach(r => Object.keys(r.atendentes).forEach(k => { if(!aggF[k]) aggF[k]={qtd:0,t:0}; aggF[k].qtd+=r.atendentes[k].qtd; aggF[k].t=r.atendentes[k].tempo; }));
+            let fTop = Object.entries(aggF).sort((a,b)=>b[1].qtd-a[1].qtd).slice(0,5);
+            
+            let aggS = {}; baseDados.forEach(r => Object.keys(r.servicos).forEach(k => { if(!aggS[k]) aggS[k]={qtd:0,t:0,mac:r.servicos[k].mac, set:r.servicos[k].set, srv:r.servicos[k].srv}; aggS[k].qtd+=r.servicos[k].qtd; aggS[k].t=r.servicos[k].tempo; }));
+            let sTop = Object.entries(aggS).sort((a,b)=>b[1].qtd-a[1].qtd).slice(0,5);
+
+            let cats = new Set(); baseDados.forEach(r => Object.keys(r.categorias).forEach(c => cats.add(c)));
+            let atends = new Set(); baseDados.forEach(r => Object.keys(r.atendentes).forEach(a => atends.add(a)));
+            let servsMap = new Map(); baseDados.forEach(r => { Object.keys(r.servicos).forEach(chave => { if(!servsMap.has(chave)) { let p = chave.split('|'); servsMap.set(chave, { chaveOriginal: chave, mac: p.length===3?p[0]:'Outros', set: p.length===3?p[1]:'Geral', srv: p.length===3?p[2]:chave }); } }); });
+
+            const wsDash = wb.addWorksheet('Dashboard', {properties:{tabColor:{argb:'FF1E293B'}}, views:[{showGridLines:false}]});
+            wsDash.columns = [{width:3},{width:25},{width:20},{width:5},{width:25},{width:20},{width:3}];
+            wsDash.mergeCells('B2:F3'); let t = wsDash.getCell('B2'); t.value = 'PAINEL EXECUTIVO - COMPARAÇÃO GERAL'; t.font = {name:'Arial', size:16, bold:true, color:{argb:'FFFFFFFF'}}; t.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FF0F172A'}}; t.alignment = {vertical:'middle', horizontal:'center'};
+            wsDash.mergeCells('B4:F4'); wsDash.getCell('B4').value = `Consolidado de ${baseDados.length} Meses Analisados`; wsDash.getCell('B4').alignment = {horizontal:'center'};
+
+            let kpis = [['TOTAL ATEND.', totA, 'FF0EA5E9', 'B'], ['FINALIZADOS', finA, 'FF10B981', 'C'], ['AGUARDANDO', aguA, 'FFF59E0B', 'E'], ['NAO COMPARECEU', evaA, 'FFEF4444', 'F']];
+            kpis.forEach(k => {
+                let c = k[3]; wsDash.getCell(c+'6').value = k[0]; wsDash.getCell(c+'6').font = {name:'Arial', size:10, bold:true, color:{argb:'FFFFFFFF'}}; wsDash.getCell(c+'6').fill = {type:'pattern', pattern:'solid', fgColor:{argb:k[2]}}; wsDash.getCell(c+'6').alignment = {horizontal:'center'};
+                wsDash.getCell(c+'7').value = k[1]; wsDash.getCell(c+'7').font = {name:'Arial', size:20, bold:true, color:{argb:'FF1E293B'}}; wsDash.getCell(c+'7').fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFF8FAFC'}}; wsDash.getCell(c+'7').alignment = {horizontal:'center'};
+            });
+
+            if(fTop.length > 0) { wsDash.getCell('B10').value = 'Top Funcionarios (Soma)'; wsDash.getCell('B10').font = {bold:true}; wsDash.addTable({name:'DashFunc', ref:'B11', headerRow:true, style:{theme:'TableStyleMedium2', showRowStripes:true}, columns:[{name:'Funcionario'},{name:'Atendimentos'}], rows: fTop.map(f=>[f[0], f[1].qtd])}); }
+            if(sTop.length > 0) { wsDash.getCell('E10').value = 'Top Servicos (Soma)'; wsDash.getCell('E10').font = {bold:true}; wsDash.addTable({name:'DashServ', ref:'E11', headerRow:true, style:{theme:'TableStyleMedium4', showRowStripes:true}, columns:[{name:'Servico'},{name:'Qtd'}], rows: sTop.map(s => [s[1].srv.substring(0,35), s[1].qtd])}); }
+
+            let rH = Math.max(fTop.length, sTop.length) + 14;
+            wsDash.getCell('B'+rH).value = 'Evolucao Historica Mensal'; wsDash.getCell('B'+rH).font = {bold:true};
+            wsDash.addTable({name:'DashHist', ref:'B'+(rH+1), headerRow:true, style:{theme:'TableStyleMedium3', showRowStripes:true}, columns:[{name:'Mes'},{name:'Total'},{name:'Finalizado'},{name:'Aguardando'},{name:'Evasao'}], rows: baseDados.map(r => [r.nome, r.kpis.total, r.kpis.finalizados, r.kpis.aguardando, r.kpis.evasao])});
+
+            criarAbaComparativa('Resumo Categorias', 'FF8B5CF6', [{header: 'MACRO-CATEGORIA', key: 'desc', width: 40}], Array.from(cats).map(c => ({ desc: c })), (r, item) => r.categorias[item.desc]);
+            criarAbaComparativa('Atendentes', 'FF2563EB', [{header: 'NOME DO FUNCIONÁRIO', key: 'desc', width: 45}], Array.from(atends).map(a => ({ desc: a })), (r, item) => r.atendentes[item.desc] ? r.atendentes[item.desc].qtd : 0);
+            
+            let servsLista = Array.from(servsMap.values()).sort((a,b) => a.mac.localeCompare(b.mac) || a.set.localeCompare(b.set));
+            criarAbaComparativa('Servicos', 'FF10B981', [{header: 'MACRO-CATEGORIA', key: 'mac', width: 25}, {header: 'SETOR', key: 'set', width: 35}, {header: 'SERVIÇO', key: 'srv', width: 45}], servsLista, (r, item) => r.servicos[item.chaveOriginal] ? r.servicos[item.chaveOriginal].qtd : 0);
+
+            const wsMatriz = wb.addWorksheet('Matriz Consolidada', {properties:{tabColor:{argb:'FFEA580C'}}, views:[{state:'frozen',xSplit:1,ySplit:2}]});
+            let colsMat = [{header: 'DESCRIÇÃO DO ITEM / MÉTRICA', key: 'desc', width: 45}];
+            baseDados.forEach(r => colsMat.push({header: r.nome, key: r.nome, width: 20}));
+            colsMat.push({header: 'TOTAL GERAL', key: 'tot', width: 20});
+            wsMatriz.columns = colsMat;
+            wsMatriz.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } }; wsMatriz.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } };
+            
+            function addMatRow(label, keyExt, isSec = false) {
+                let rD = { desc: label }; let total = 0;
+                baseDados.forEach(r => { let val = keyExt ? (keyExt(r) || 0) : ""; if(val !== "") total += val; rD[r.nome] = val; });
+                if(!isSec) { rD.tot = total; }
+                let rRow = wsMatriz.addRow(rD);
+                if(isSec) { rRow.font = { bold: true, color: { argb: 'FFFFFFFF' } }; rRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF475569' } }; }
+                else { rRow.eachCell((cell, colN) => { if(colN > 1) { cell.numFmt = '#,##0'; cell.alignment = {horizontal:'right'}; } }); }
+            }
+
+            addMatRow("1. INDICADORES GERAIS (KPIS)", null, true); addMatRow("Total de Atendimentos", r => r.kpis.total); addMatRow("Atendimentos Finalizados", r => r.kpis.finalizados); addMatRow("Não Compareceu (Evasão)", r => r.kpis.evasao);
+            addMatRow("2. MACRO-CATEGORIAS", null, true); Array.from(cats).sort().forEach(cat => addMatRow(` ${cat}`, r => r.categorias[cat]));
+            addMatRow("3. ATENDENTES", null, true); Array.from(atends).sort().forEach(ate => addMatRow(` ${ate}`, r => r.atendentes[ate]?r.atendentes[ate].qtd:0));
+            addMatRow("4. SERVIÇOS", null, true); Array.from(servsMap.values()).sort((a,b) => a.srv.localeCompare(b.srv)).forEach(item => addMatRow(` ${item.srv}`, r => r.servicos[item.chaveOriginal]?r.servicos[item.chaveOriginal].qtd:0));
+
+            const buf = await wb.xlsx.writeBuffer();
+            const b = new Blob([buf], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+            const l = document.createElement('a'); l.href = URL.createObjectURL(b); l.download = 'Neo_Analytics_Comparativo.xlsx'; l.click();
+        }
+
+        // ==========================================
+        // EXPORTAÇÃO DASHBOARD HTML
+        // ==========================================
+        function baixarDashboardHTML() {
+            if(baseDados.length === 0) return;
+            
+            let tot = 0, fin = 0, agu = 0, eva = 0;
+            let aggCat = {}, aggFunc = {}, aggServ = {};
+            
+            baseDados.forEach(r => { 
+                tot += r.kpis.total; fin += r.kpis.finalizados; agu += r.kpis.aguardando; eva += r.kpis.evasao; 
+                Object.keys(r.categorias).forEach(k => aggCat[k] = (aggCat[k]||0) + r.categorias[k]);
+                Object.keys(r.atendentes).forEach(k => { if(!aggFunc[k]) aggFunc[k]={qtd:0,t:0}; aggFunc[k].qtd+=r.atendentes[k].qtd; aggFunc[k].t=r.atendentes[k].tempo; });
+                Object.keys(r.servicos).forEach(k => { if(!aggServ[k]) aggServ[k]={qtd:0,t:0,mac:r.servicos[k].mac,set:r.servicos[k].set,srv:r.servicos[k].srv}; aggServ[k].qtd+=r.servicos[k].qtd; aggServ[k].t=r.servicos[k].tempo; });
+            });
+
+            let fArr = Object.entries(aggFunc).sort((a,b)=>b[1].qtd-a[1].qtd);
+            let sArr = Object.entries(aggServ).sort((a,b)=>b[1].qtd-a[1].qtd);
+            let headMeses = baseDados.map(r => `<th>${r.nome.substring(0,10)}</th>`).join('');
+
+            let htmlStr = `<!DOCTYPE html><html lang="pt-br"><head><meta charset="UTF-8"><title>Neo Premium Comparativo</title>
+            <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"><\/script>
+            <style>
+                @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;700&display=swap');
+                :root{--bg1:#050505;--bg2:#1a1a2e;--card-bg:rgba(15,23,42,0.6);--text:#e2e8f0;--border:rgba(56,189,248,0.1);--shadow:0 10px 30px rgba(0,0,0,0.5);}
+                body{background:var(--bg1);background-image:radial-gradient(circle at 50% 0%,var(--bg2) 0%,var(--bg1) 70%);color:var(--text);font-family:'Space Grotesk',sans-serif;margin:0;padding:20px;}
+                .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;padding:20px;background:var(--card-bg);border:1px solid var(--border);border-radius:16px;}
+                .title{font-size:24px;font-weight:700;background:linear-gradient(90deg,#00f2fe,#4facfe);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:0}
+                .grid-kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;margin-bottom:20px}
+                .grid-charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;margin-bottom:20px}
+                .card{background:var(--card-bg);border:1px solid var(--border);border-radius:20px;padding:25px;position:relative;box-shadow:var(--shadow);}
+                .kpi-title{font-size:11px;text-transform:uppercase;color:#94a3b8}
+                .kpi-val{font-size:36px;font-weight:700;margin:0;line-height:1}
+                .glow-c{color:#00f2fe;text-shadow:0 0 20px rgba(0,242,254,0.3)} .glow-g{color:#10b981;text-shadow:0 0 20px rgba(16,185,129,0.3)} .glow-r{color:#ef4444;text-shadow:0 0 20px rgba(239,68,68,0.3)} 
+                .chart-wrapper{height:300px;width:100%;position:relative}
+                .chart-title{font-size:14px;color:var(--text);text-transform:uppercase;margin-bottom:15px;font-weight:700;border-bottom:1px solid var(--border);padding-bottom:10px}
+                table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
+                th,td{padding:10px;text-align:left;border-bottom:1px solid var(--border)}
+                th{color:#94a3b8;font-weight:700;text-transform:uppercase;white-space:nowrap;}
+                .table-wrapper{max-height:400px;overflow:y:auto;overflow-x:auto;position:relative}
+                tbody tr:hover{background-color:rgba(56,189,248,0.05);}
+            </style></head><body>
+            <div class="header"><div><h1 class="title">NEO ANALYTICS PREMIUM - COMPARAÇÃO GLOBAL</h1><p style="margin:5px 0 0 0;color:#64748b;font-size:14px">Consolidado: ${baseDados.length} Meses Analisados</p></div></div>
+            <div class="grid-kpi">
+                <div class="card"><div class="kpi-title">Total Atendimentos</div><div class="kpi-val glow-c">${tot}</div></div>
+                <div class="card"><div class="kpi-title">Finalizados</div><div class="kpi-val glow-g">${fin}</div></div>
+                <div class="card"><div class="kpi-title">Evasão</div><div class="kpi-val glow-r">${eva}</div></div>
+            </div>
+            
+            <div class="card" style="margin-bottom:20px; overflow-x: auto;">
+                <div class="chart-title">Matriz Comparativa (Geral)</div>
+                <table>
+                    <thead><tr><th>MÉTRICA</th>${headMeses}<th>TOTAL</th></tr></thead>
+                    <tbody>
+                        <tr><td style="font-weight:bold;color:#fff;">Volume Total</td>${baseDados.map(r=>`<td>${r.kpis.total}</td>`).join('')}<td style="font-weight:bold;color:#00f2fe">${tot}</td></tr>
+                        <tr><td style="font-weight:bold;color:#fff;">Finalizados</td>${baseDados.map(r=>`<td>${r.kpis.finalizados}</td>`).join('')}<td style="font-weight:bold;color:#10b981">${fin}</td></tr>
+                        <tr><td style="font-weight:bold;color:#fff;">Evasão</td>${baseDados.map(r=>`<td>${r.kpis.evasao}</td>`).join('')}<td style="font-weight:bold;color:#ef4444">${eva}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card" style="margin-bottom:20px"><div class="chart-title">Evolução Histórica (Volume Total)</div><div class="chart-wrapper" id="cHist"></div></div>
+            <div class="grid-charts">
+                <div class="card"><div class="chart-title">Top 10 Funcionários Globais</div><div class="chart-wrapper" id="cTopF"></div></div>
+                <div class="card"><div class="chart-title">Distribuição por Macro-Categoria</div><div class="chart-wrapper" id="cSetor"></div></div>
+            </div>
+            
+            <div class="card" style="margin-bottom:20px">
+                <div class="chart-title">Ranking de Funcionários Comparativo</div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead><tr><th>Nome do Funcionário</th>${headMeses}<th>Total Geral</th></tr></thead>
+                        <tbody>`;
+            
+            fArr.forEach(f => {
+                let valCols = baseDados.map(r => `<td>${r.atendentes[f[0]]?r.atendentes[f[0]].qtd:0}</td>`).join('');
+                htmlStr += `<tr><td>${f[0]}</td>${valCols}<td style="font-weight:bold;color:#00f2fe;">${f[1].qtd}</td></tr>`;
+            });
+
+            htmlStr += `</tbody></table></div></div>
+            
+            <div class="card">
+                <div class="chart-title">Ranking de Serviços Comparativo</div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead><tr><th>Macro-Categoria</th><th>Serviço</th>${headMeses}<th>Total Geral</th></tr></thead>
+                        <tbody>`;
+            
+            sArr.forEach(s => {
+                let p = s[0].split('|'); let mac = p.length===3?p[0]:'Outros'; let srv = p.length===3?p[2]:s[0];
+                let valCols = baseDados.map(r => `<td>${r.servicos[s[0]]?r.servicos[s[0]].qtd:0}</td>`).join('');
+                htmlStr += `<tr><td><span style="background:rgba(56,189,248,0.1);padding:2px 6px;border-radius:4px;font-size:10px">${mac}</span></td><td>${srv}</td>${valCols}<td style="font-weight:bold;color:#10b981;">${s[1].qtd}</td></tr>`;
+            });
+            
+            htmlStr += `</tbody></table></div></div><script>
+            let cL = ${JSON.stringify(baseDados.map(r=>r.nome.substring(0,15)))};
+            let ctxH = echarts.init(document.getElementById("cHist"));
+            ctxH.setOption({ tooltip: {trigger: "axis"}, xAxis: {type: "category", data: cL}, yAxis: {type: "value"}, series: [{data: ${JSON.stringify(baseDados.map(r=>r.kpis.total))}, type: "line", smooth: true, areaStyle: {color: "rgba(0, 242, 254, 0.2)"}, lineStyle: {color: "#00f2fe"}}] });
+
+            let ctxF = echarts.init(document.getElementById("cTopF"));
+            ctxF.setOption({ tooltip: {}, xAxis: {type: "value"}, yAxis: {type: "category", data: ${JSON.stringify(fArr.slice(0,10).map(f=>f[0].split(" - ")[0]).reverse())}}, series: [{data: ${JSON.stringify(fArr.slice(0,10).map(f=>f[1].qtd).reverse())}, type: "bar", itemStyle: {color: "#00f2fe", borderRadius: [0, 5, 5, 0]}}] });
+
+            let ctxCat = echarts.init(document.getElementById("cSetor"));
+            ctxCat.setOption({ tooltip: {trigger: "item"}, series: [{type: "pie", radius: ["40%", "70%"], data: ${JSON.stringify(Object.entries(aggCat).map(e=>({value:e[1], name:e[0]})))}, itemStyle: {borderRadius: 5, borderColor: "#1a1a2e", borderWidth: 2}}] });
+            <\/script></body></html>`;
+
+            const blob = new Blob([htmlStr], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url;
+            a.download = `Dashboard_Premium_Comparativo.html`;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+            showToast("Dashboard HTML exportado com sucesso.");
+        }
+    </script>
+</body>
+</html>
