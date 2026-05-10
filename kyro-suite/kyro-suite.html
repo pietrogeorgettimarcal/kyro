@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kyro V5.4 - Suite Profissional</title>
+  <title>Kyro Suite - Master Edition (Raw Data Engine)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -14,731 +14,380 @@
           fontFamily: {
             sans: ['Inter', 'sans-serif'],
             serif: ['Playfair Display', 'serif'],
+            mono: ['JetBrains Mono', 'monospace'],
           },
-          colors: {
-            brand: {
-              50: '#f0f9ff',
-              100: '#e0f2fe',
-              500: '#0ea5e9',
-              600: '#0284c7',
-              900: '#0c4a6e',
-            }
-          },
-          animation: {
-            'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-            'fade-in': 'fadeIn 0.2s ease-out',
-          },
-          keyframes: {
-            slideUp: {
-              '0%': { transform: 'translateY(20px)', opacity: '0' },
-              '100%': { transform: 'translateY(0)', opacity: '1' },
-            },
-            fadeIn: {
-              '0%': { opacity: '0' },
-              '100%': { opacity: '1' },
-            }
-          }
         }
       }
     }
   </script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <style>
-    /* Scrollbar Minimalista */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-    .dark ::-webkit-scrollbar-thumb { background: #334155; }
-    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-    /* Utilitários de Impressão */
+    ::-webkit-scrollbar-thumb { background: #d4d4d8; }
+    .dark ::-webkit-scrollbar-thumb { background: #3f3f46; }
+    .tab-active { border-bottom: 2px solid black; color: black; font-weight: 700; }
+    .dark .tab-active { border-bottom: 2px solid white; color: white; }
     @media print {
       body * { visibility: hidden; }
       #printable-area, #printable-area * { visibility: visible; }
-      #printable-area { 
-        position: absolute; left: 0; top: 0; width: 100%; 
-        background: white; padding: 2cm; color: black; 
-      }
+      #printable-area { position: absolute; left: 0; top: 0; width: 100%; padding: 0; }
       .no-print { display: none !important; }
     }
-
-    /* Efeitos de foco sutis */
-    .btn-action { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
-    .btn-action:active { transform: scale(0.98); }
-    
-    /* Input Switch */
-    .toggle-checkbox:checked { right: 0; border-color: #0ea5e9; }
-    .toggle-checkbox:checked + .toggle-label { background-color: #0ea5e9; }
   </style>
 </head>
 
-<body class="flex flex-col h-screen overflow-hidden bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 transition-colors duration-300 font-sans selection:bg-brand-100 selection:text-brand-900 dark:selection:bg-brand-900 dark:selection:text-brand-100">
+<body class="flex flex-col h-screen overflow-hidden bg-white dark:bg-[#0a0a0a] text-zinc-800 dark:text-zinc-300 font-sans">
 
-  <div id="toast-container" class="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none"></div>
+  <div id="toast-container" class="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none"></div>
 
-  <header class="h-16 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 flex-shrink-0 z-30 transition-colors no-print">
-    <div class="max-w-[1600px] mx-auto px-4 h-full flex items-center justify-between">
-      
-      <div class="flex items-center gap-3 select-none">
-        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 text-white flex items-center justify-center font-serif font-bold text-lg shadow-lg shadow-slate-200 dark:shadow-none">K</div>
-        <div>
-          <h1 class="text-sm font-semibold tracking-wide text-slate-900 dark:text-white">Kyro Suite</h1>
-          <p class="text-[10px] text-slate-500 uppercase tracking-widest font-medium">Jurídico Inteligente</p>
-        </div>
+  <header class="bg-zinc-50 dark:bg-[#111] border-b border-zinc-200 dark:border-zinc-800 no-print flex-shrink-0 z-30 overflow-x-auto custom-scrollbar">
+    <div class="max-w-[1600px] mx-auto px-6 h-14 flex items-center justify-between min-w-[800px]">
+      <div class="flex items-center gap-3 pr-8">
+        <div class="w-6 h-6 bg-black dark:bg-white text-white dark:text-black flex items-center justify-center font-serif font-bold text-xs">K</div>
+        <h1 class="text-xs font-bold tracking-widest uppercase whitespace-nowrap">Kyro Suite <span class="font-normal text-zinc-400">Raw Data Engine</span></h1>
       </div>
+      
+      <nav class="flex gap-6 h-full items-center flex-1">
+        <button onclick="switchTab('tab-gerador')" id="btn-tab-gerador" class="text-[10px] uppercase tracking-widest text-zinc-400 hover:text-black dark:hover:text-white transition-all h-full tab-active whitespace-nowrap">Gerador Automático</button>
+        <button onclick="switchTab('tab-db')" id="btn-tab-db" class="text-[10px] uppercase tracking-widest text-zinc-400 hover:text-black dark:hover:text-white transition-all h-full whitespace-nowrap">Banco de Leis (Consulta)</button>
+      </nav>
 
-      <div class="flex items-center gap-2 md:gap-4">
-        
-        <div class="flex items-center gap-3 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600">
-            <div class="relative inline-block w-8 align-middle select-none">
-                <input type="checkbox" id="ai-mode-toggle" class="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-2 border-slate-300 appearance-none cursor-pointer left-0 transition-all duration-300" onclick="handleToggleClick()">
-                <label for="ai-mode-toggle" class="toggle-label block overflow-hidden h-4 rounded-full bg-slate-300 cursor-pointer transition-colors duration-300"></label>
-            </div>
-            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 min-w-[60px] text-center" id="mode-label">Offline</span>
-        </div>
-
-        <div class="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
-
-        <button onclick="toggleHistory()" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-brand-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" title="Histórico">
-            <i class="fa-solid fa-clock-rotate-left"></i>
-        </button>
-        <button onclick="toggleConfigModal()" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-brand-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors relative" title="Configurações">
-            <i class="fa-solid fa-sliders"></i>
-            <span id="config-badge" class="hidden absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full border border-white dark:border-slate-800"></span>
-        </button>
-        <button onclick="toggleTheme()" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-amber-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-            <i class="fa-solid fa-moon dark:hidden"></i>
-            <i class="fa-solid fa-sun hidden dark:inline"></i>
-        </button>
+      <div class="flex items-center gap-4 pl-4">
+        <button onclick="toggleTheme()" class="text-zinc-500 hover:text-black dark:hover:text-white transition-colors" title="Modo Escuro/Claro"><i class="fa-solid fa-circle-half-stroke"></i></button>
       </div>
     </div>
   </header>
 
   <main class="flex-1 flex overflow-hidden relative max-w-[1600px] mx-auto w-full">
     
-    <aside id="history-sidebar" class="absolute top-0 right-0 h-full w-80 bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl shadow-2xl border-l border-slate-200 dark:border-slate-700 z-40 transform translate-x-full transition-transform duration-300 flex flex-col no-print">
-        <div class="p-5 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
-            <h3 class="font-serif font-bold text-slate-800 dark:text-white text-lg">Histórico</h3>
-            <button onclick="toggleHistory()" class="text-slate-400 hover:text-red-500 transition-colors"><i class="fa-solid fa-times"></i></button>
+    <section id="tab-gerador" class="flex-1 grid grid-cols-1 lg:grid-cols-2 h-full">
+      <div class="flex flex-col border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#0a0a0a] no-print relative">
+        <div class="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
+          <span class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Fatos do Requerimento</span>
+          <button onclick="document.getElementById('input-text').value=''" class="text-[9px] text-zinc-400 hover:text-red-500 uppercase tracking-widest">Limpar Tudo</button>
         </div>
-        <div id="history-list" class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
-            <div class="text-center text-slate-400 text-sm mt-10">Nenhum registro recente.</div>
+        <textarea id="input-text" class="flex-1 p-6 bg-transparent focus:outline-none font-mono text-sm leading-relaxed text-zinc-800 dark:text-zinc-300 resize-none custom-scrollbar" placeholder="Cole a narrativa do requerimento aqui...&#10;&#10;O motor irá extrair as palavras-chave e buscar a literalidade das leis no Banco de Dados para fundamentar o despacho."></textarea>
+        <div class="p-4 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-[#111]">
+          <button onclick="gerarDespachoDinamico()" class="w-full py-4 flex justify-center items-center gap-3 bg-black dark:bg-white text-white dark:text-black text-xs font-bold uppercase tracking-widest hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all active:scale-[0.99]">
+            <i class="fa-solid fa-bolt"></i> Extrair Leis e Gerar Despacho
+          </button>
         </div>
-        <div class="p-4 border-t border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50">
-            <button onclick="clearHistory()" class="w-full py-2.5 text-xs font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition border border-transparent hover:border-red-100">Limpar Histórico</button>
-        </div>
-    </aside>
+      </div>
 
-    <div id="config-modal" class="hidden absolute top-20 right-4 w-96 bg-white dark:bg-slate-800 shadow-2xl rounded-2xl border border-slate-200 dark:border-slate-700 z-50 p-6 animate-slide-up no-print">
-        <div class="flex justify-between items-center mb-6">
-          <div>
-            <h3 class="font-serif font-bold text-lg text-slate-800 dark:text-white">Configuração API</h3>
-            <p class="text-xs text-slate-500">Google Gemini 2.5 Integration</p>
-          </div>
-          <button onclick="toggleConfigModal()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center justify-center transition-colors"><i class="fa-solid fa-times"></i></button>
-        </div>
-        
-        <div class="space-y-4">
-            <div>
-                <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2 uppercase tracking-wide">Chave de Acesso</label>
-                <input type="password" id="api-key-input" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all font-mono text-slate-600 dark:text-slate-300 placeholder-slate-400" placeholder="AIzaSy...">
-            </div>
-
-            <div class="flex gap-3 pt-2">
-                <button onclick="testApiKey()" class="flex-1 px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 text-xs font-semibold transition-colors">
-                    Testar Conexão
-                </button>
-                <button onclick="saveApiKey()" class="flex-1 px-4 py-2 rounded-lg bg-slate-900 dark:bg-brand-600 hover:bg-slate-800 dark:hover:bg-brand-500 text-white text-xs font-semibold shadow-lg shadow-slate-200 dark:shadow-none transition-colors">
-                    Salvar Chave
-                </button>
-            </div>
-            
-            <div id="test-result" class="hidden p-3 rounded-lg text-xs bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700"></div>
-            
-            <div class="pt-4 border-t border-slate-100 dark:border-slate-700 text-center">
-                <button onclick="clearApiKey()" class="text-xs text-red-400 hover:text-red-600 hover:underline transition-colors">Remover credenciais salvas</button>
+      <div class="flex flex-col bg-zinc-50 dark:bg-[#0f0f0f] overflow-y-auto p-8 lg:p-12 relative custom-scrollbar">
+        <div id="output-header" class="hidden flex justify-between mb-8 border-b border-zinc-200 dark:border-zinc-800 pb-4 no-print">
+            <span class="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Documento Gerado</span>
+            <div class="flex gap-4">
+                <button onclick="exportToWord()" class="text-[10px] font-bold uppercase tracking-widest hover:text-black dark:hover:text-white transition-colors">Exportar Word</button>
+                <button onclick="copyToClipboard()" class="text-[10px] font-bold uppercase tracking-widest hover:text-black dark:hover:text-white transition-colors">Copiar</button>
             </div>
         </div>
-    </div>
+        <div id="printable-area" class="hidden">
+            <div class="border-b border-black mb-8 pb-4 text-center">
+                <h1 class="text-sm font-bold font-sans uppercase tracking-widest text-black">Prefeitura Municipal de Limeira</h1>
+                <h2 class="text-xs font-sans uppercase tracking-widest mt-1 text-black">Secretaria de Assuntos Jurídicos / Dívida Ativa</h2>
+            </div>
+            <div id="print-content" class="text-justify font-serif text-base leading-loose text-black"></div>
+        </div>
+        <div id="output-text" class="font-serif text-base leading-loose whitespace-pre-wrap outline-none text-zinc-900 dark:text-zinc-200" contenteditable="true"></div>
+        <div id="placeholder" class="h-full flex flex-col items-center justify-center text-zinc-300 dark:text-zinc-700 select-none no-print">
+            <i class="fa-solid fa-database text-4xl mb-4"></i>
+            <p class="text-[10px] uppercase tracking-widest font-mono text-center max-w-xs">Aguardando entrada de dados para cruzar com a legislação</p>
+        </div>
+      </div>
+    </section>
 
-    <div class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-0 lg:gap-px bg-slate-200 dark:bg-slate-700 h-full">
-      
-      <section class="bg-white dark:bg-slate-900 flex flex-col h-full overflow-hidden relative group no-print">
-        
-        <div class="px-6 py-4 flex justify-between items-center border-b border-slate-100 dark:border-slate-800">
-            <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                <i class="fa-solid fa-feather-pointed text-slate-400"></i> Entrada
-            </h2>
-            <div class="flex gap-2">
-                <button onclick="toggleDictation()" class="p-2 text-slate-400 hover:text-brand-600 transition-colors" title="Ditado">
-                    <i class="fa-solid fa-microphone"></i>
-                </button>
-                <div class="relative group/tooltip">
-                    <select onchange="insertTemplate(this.value); this.value=''" class="appearance-none bg-slate-50 dark:bg-slate-800 border-none text-xs font-medium text-slate-600 dark:text-slate-300 py-1.5 pl-3 pr-8 rounded-md cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors focus:ring-0">
-                        <option value="">Inserir Modelo...</option>
-                        <option value="deferimento">Deferimento Padrão</option>
-                        <option value="citacao">Citação Edital</option>
-                        <option value="prescricao">Prescrição CTN</option>
-                    </select>
-                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
-                        <i class="fa-solid fa-chevron-down text-[10px]"></i>
-                    </div>
-                </div>
+    <section id="tab-db" class="hidden flex-1 flex flex-col bg-white dark:bg-[#0a0a0a] overflow-hidden">
+        <div class="p-6 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-[#111] flex gap-4">
+            <div class="flex-1 relative">
+                <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400"></i>
+                <input type="text" id="search-db" oninput="filterDB()" placeholder="Pesquise por qualquer artigo, lei, súmula ou assunto em toda a base..." class="w-full pl-12 pr-4 py-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm focus:outline-none focus:border-black dark:focus:border-white transition-colors">
             </div>
         </div>
+        <div id="list-db" class="flex-1 overflow-y-auto p-6 space-y-4 font-mono text-xs leading-relaxed custom-scrollbar"></div>
+    </section>
 
-        <div class="flex-1 relative">
-            <textarea id="input-text" spellcheck="true"
-            class="w-full h-full p-6 resize-none focus:outline-none bg-transparent font-mono text-base text-slate-700 dark:text-slate-300 placeholder-slate-300 dark:placeholder-slate-700 leading-relaxed custom-scrollbar"
-            placeholder="Comece a digitar ou cole seu texto jurídico aqui..." oninput="updateCounters('input')"></textarea>
-            
-            <div class="absolute bottom-4 right-6 text-[10px] font-medium text-slate-300 dark:text-slate-600 bg-white dark:bg-slate-900 px-2 py-1 rounded-md border border-slate-100 dark:border-slate-800 shadow-sm pointer-events-none">
-               <span id="input-counter">0 palavras</span>
-            </div>
-        </div>
-
-        <div class="p-4 bg-slate-50/80 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 backdrop-blur-sm">
-            <div class="grid grid-cols-6 gap-2">
-                
-                <button onclick="routeProcess('correcao')" class="btn-action flex flex-col items-center justify-center p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-brand-300 dark:hover:border-brand-700 hover:shadow-md transition-all group">
-                    <i class="fa-solid fa-wand-magic-sparkles text-slate-400 group-hover:text-brand-500 mb-2 text-lg"></i>
-                    <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-white uppercase">Corrigir</span>
-                </button>
-
-                <button onclick="routeProcess('rebuscado')" class="btn-action flex flex-col items-center justify-center p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-md transition-all group">
-                    <i class="fa-solid fa-scroll text-slate-400 group-hover:text-amber-500 mb-2 text-lg"></i>
-                    <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-white uppercase">Formalizar</span>
-                </button>
-
-                <button onclick="routeProcess('simplificar')" class="btn-action flex flex-col items-center justify-center p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-cyan-300 dark:hover:border-cyan-700 hover:shadow-md transition-all group">
-                    <i class="fa-solid fa-comments text-slate-400 group-hover:text-cyan-500 mb-2 text-lg"></i>
-                    <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-white uppercase">Simplificar</span>
-                </button>
-
-                <button onclick="routeProcess('tecnico')" class="btn-action col-span-2 md:col-span-1 flex flex-col items-center justify-center p-3 rounded-xl bg-slate-800 dark:bg-slate-700 border border-slate-900 dark:border-slate-600 hover:bg-slate-700 dark:hover:bg-slate-600 shadow-lg shadow-slate-200 dark:shadow-none transition-all group">
-                    <i class="fa-solid fa-gavel text-white/90 mb-2 text-lg"></i>
-                    <span class="text-[10px] font-bold text-white uppercase tracking-wide">Despacho</span>
-                </button>
-
-                <button onclick="routeProcess('resumo')" class="btn-action flex flex-col items-center justify-center p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-700 hover:shadow-md transition-all group">
-                    <i class="fa-solid fa-list-check text-slate-400 group-hover:text-purple-500 mb-2 text-lg"></i>
-                    <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-white uppercase">Resumir</span>
-                </button>
-
-                <button onclick="routeProcess('extracao')" class="btn-action flex flex-col items-center justify-center p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-pink-300 dark:hover:border-pink-700 hover:shadow-md transition-all group">
-                    <i class="fa-solid fa-fingerprint text-slate-400 group-hover:text-pink-500 mb-2 text-lg"></i>
-                    <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-white uppercase">Dados</span>
-                </button>
-
-            </div>
-        </div>
-      </section>
-
-      <section class="bg-slate-50 dark:bg-[#0f172a] flex flex-col h-full overflow-hidden relative">
-        
-        <div class="px-6 py-4 flex justify-between items-center border-b border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm no-print">
-            <h2 class="text-sm font-semibold text-brand-600 dark:text-brand-400 uppercase tracking-widest flex items-center gap-2">
-                <i class="fa-solid fa-file-signature"></i> Resultado
-                <span id="badge-mode" class="text-[9px] bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full ml-2 font-medium">Aguardando</span>
-            </h2>
-            
-            <div class="flex gap-2">
-                <button onclick="exportToWord()" class="text-xs font-medium flex items-center gap-2 text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-brand-900/30 px-3 py-1.5 rounded-lg hover:bg-brand-100 dark:hover:bg-brand-900/50 transition-colors">
-                    <i class="fa-solid fa-file-word"></i> Word
-                </button>
-                <button onclick="copyToClipboard()" id="btn-copy" class="text-xs font-medium flex items-center gap-2 text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
-                    <i class="fa-regular fa-copy"></i> Copiar
-                </button>
-            </div>
-        </div>
-
-        <div class="flex-1 p-8 md:p-12 overflow-y-auto custom-scrollbar relative" id="output-container">
-            
-            <div id="printable-area" class="hidden">
-                <div class="border-b-2 border-black mb-8 pb-4 text-center">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Bras%C3%A3o_de_Limeira.svg/1200px-Bras%C3%A3o_de_Limeira.svg.png" style="height: 60px; display: block; margin: 0 auto 10px auto;" class="grayscale">
-                    <h1 class="text-xl font-bold font-serif uppercase tracking-widest">Prefeitura Municipal de Limeira</h1>
-                    <h2 class="text-xs font-sans uppercase tracking-widest mt-1">Secretaria de Assuntos Jurídicos</h2>
-                </div>
-                <div id="print-content" class="text-justify font-serif text-lg leading-loose"></div>
-            </div>
-
-            <div id="placeholder-state" class="h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-600 no-print select-none">
-                <div class="w-24 h-24 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 shadow-inner">
-                    <i class="fa-solid fa-scale-balanced text-4xl text-slate-300 dark:text-slate-600"></i>
-                </div>
-                <h3 class="text-lg font-serif font-medium text-slate-600 dark:text-slate-400 mb-2">Área de Processamento</h3>
-                <p class="text-sm text-slate-400 max-w-xs text-center">Selecione uma ferramenta na barra inferior esquerda para transformar seu texto.</p>
-            </div>
-
-            <div id="loader-state" class="hidden h-full flex flex-col items-center justify-center no-print">
-                <div class="relative w-16 h-16 mb-4">
-                    <div class="absolute top-0 left-0 w-full h-full border-4 border-slate-100 dark:border-slate-800 rounded-full"></div>
-                    <div class="absolute top-0 left-0 w-full h-full border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
-                </div>
-                <p class="text-sm font-medium text-slate-500 dark:text-slate-400 animate-pulse" id="loader-msg">Processando...</p>
-            </div>
-
-            <div id="content-state" class="hidden h-full flex flex-col no-print animate-fade-in">
-                <div id="output-text" class="prose prose-slate dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 leading-8 text-justify whitespace-pre-wrap font-serif text-lg outline-none focus:ring-0" contenteditable="true"></div>
-            </div>
-
-        </div>
-      </section>
-
-    </div>
   </main>
 
   <script>
-    // --- ESTADO DO SISTEMA ---
-    let userApiKey = ""; 
-    let useAI = false; 
-    let history = JSON.parse(localStorage.getItem('kyro_history') || '[]');
+    // =====================================================================
+    // 1. BANCO DE DADOS BRUTO E LITERAL (A FONTE DA VERDADE)
+    // O motor vai ler os campos "tags" e, se achar no texto do requerimento, 
+    // vai inserir o "textoLiteral" direto no Despacho.
+    // Você pode colar milhares de artigos aqui seguindo este mesmo padrão.
+    // =====================================================================
+    const BaseDeLeis = [
+        // LEGISLAÇÃO MUNICIPAL DE LIMEIRA (LO 5.494/2015, LO 1.890/1983, LC 41/1991, LC 442/2009)
+        { 
+            diploma: "Lei Ordinária nº 5.494/2015 (Limeira)", 
+            artigo: "Art. 35", 
+            categoria: "Posturas e Limpeza",
+            tags: ["limpeza", "limpo", "mato", "roçado", "muro", "calçada", "roçada", "entulho", "lixo"], 
+            textoLiteral: "Art. 35. Os proprietários ou possuidores a qualquer título de imóveis não edificados... são obrigados a mantê-los limpos, capinados e isentos de quaisquer materiais inservíveis. § 1º O descumprimento do disposto no caput deste artigo ensejará a notificação do infrator para que providencie a limpeza... § 2º Não atendida a notificação, será lavrado o Auto de Infração e Imposição de Multa. A regularização posterior à lavratura do auto não elide a infração.",
+            teseDespacho: "A infração restou perfeitamente caracterizada no momento em que a fiscalização constatou a ausência de manutenção. Pelo princípio do tempus regit actum, a limpeza tardia do imóvel constitui mero cumprimento de dever contínuo inerente à propriedade (obrigação propter rem) e não extingue a multa aplicada com fulcro no supracitado Art. 35 da LO 5.494/2015."
+        },
+        { 
+            diploma: "Lei Ordinária nº 1.890/1983 (CTM Limeira)", 
+            artigo: "Art. 7º", 
+            categoria: "Sujeição Passiva IPTU",
+            tags: ["vendi", "vendeu", "contrato de compra", "gaveta", "nome do antigo", "ilegitimidade passiva"], 
+            textoLiteral: "Art. 7º. Contribuinte do imposto é o proprietário do imóvel, o titular do seu domínio útil, ou o seu possuidor a qualquer título. Parágrafo Único. Respondem solidariamente pelo pagamento do imposto o justo possuidor, o titular do direito de usufruto, uso ou habitação, os promitentes compradores imitidos na posse, os cessionários, os posseiros, os comodatários e os ocupantes a qualquer título do imóvel, ainda que pertencente a qualquer pessoa física ou jurídica, de direito público ou privado, isenta do imposto ou a ele imune.",
+            teseDespacho: "Como se depreende da letra da lei municipal (CTM), em consonância com a Súmula 399 do STJ e o Art. 1.245 do Código Civil (que exige o registro imobiliário para transferência de propriedade), os contratos de gaveta não são oponíveis à Fazenda Pública. A municipalidade tem a faculdade de cobrar o IPTU do proprietário tabular constante no Cartório de Imóveis."
+        },
+        { 
+            diploma: "Lei Complementar nº 41/1991 (Limeira)", 
+            artigo: "Normas Gerais de Dívida Ativa", 
+            categoria: "Dívida Ativa",
+            tags: ["dívida ativa", "inscrição", "certidão"], 
+            textoLiteral: "Constitui Dívida Ativa do Município a proveniente de crédito dessa natureza, regularmente inscrita na repartição administrativa competente, depois de esgotado o prazo fixado, para pagamento, pela lei ou por decisão final proferida em processo regular.",
+            teseDespacho: "O crédito sub examine encontra-se regularmente inscrito em Dívida Ativa, gozando, portanto, de liquidez, certeza e exigibilidade (presunção juris tantum), cabendo ao administrado o ônus da prova inequívoca em contrário."
+        },
 
-    // --- NOTIFICAÇÕES TOAST (Design Refinado) ---
-    function showToast(message, type = 'info') {
-        const container = document.getElementById('toast-container');
-        const toast = document.createElement('div');
-        container.style.pointerEvents = 'none';
-        
-        const types = {
-            success: { icon: 'fa-check', bg: 'bg-emerald-500', border: 'border-emerald-400' },
-            error:   { icon: 'fa-xmark', bg: 'bg-rose-500', border: 'border-rose-400' },
-            warning: { icon: 'fa-exclamation', bg: 'bg-amber-500', border: 'border-amber-400' },
-            info:    { icon: 'fa-info', bg: 'bg-slate-800', border: 'border-slate-700' }
-        };
-        const style = types[type] || types.info;
+        // CÓDIGO TRIBUTÁRIO NACIONAL - CTN (L5172COMPILADO)
+        { 
+            diploma: "Lei nº 5.172/1966 (CTN)", 
+            artigo: "Art. 111", 
+            categoria: "Interpretação e Isenção",
+            tags: ["isenção", "aposentado", "doença", "câncer", "pensionista", "isento", "isentar"], 
+            textoLiteral: "Art. 111. Interpreta-se literalmente a legislação tributária que disponha sobre: I - suspensão ou exclusão do crédito tributário; II - outorga de isenção; III - dispensa do cumprimento de obrigações tributárias acessórias.",
+            teseDespacho: "Sendo a isenção uma modalidade de renúncia de receita que excepciona a regra geral de tributação, o rigor do Art. 111 do CTN exige a comprovação cabal, por parte do contribuinte, de todos os requisitos taxativos impostos pela lei municipal isentiva, não admitindo interpretação analógica ou extensiva."
+        },
+        { 
+            diploma: "Lei nº 5.172/1966 (CTN)", 
+            artigo: "Art. 123", 
+            categoria: "Convenções Particulares",
+            tags: ["contrato", "gaveta", "acordo particular", "ele que tem que pagar", "combinamos"], 
+            textoLiteral: "Art. 123. Salvo disposições de lei em contrário, as convenções particulares, relativas à responsabilidade pelo pagamento de tributos, não podem ser opostas à Fazenda Pública, para modificar a definição legal do sujeito passivo das obrigações tributárias correspondentes.",
+            teseDespacho: "O contrato firmado entre particulares não altera a sujeição passiva tributária. O Município não integra a relação de direito privado estabelecida entre as partes."
+        },
+        { 
+            diploma: "Lei nº 5.172/1966 (CTN)", 
+            artigo: "Art. 149", 
+            categoria: "Revisão de Lançamento",
+            tags: ["erro", "área construída", "metragem errada", "cobrança indevida", "revisão", "duplicidade"], 
+            textoLiteral: "Art. 149. O lançamento é efetuado e revisto de ofício pela autoridade administrativa nos seguintes casos: [...] IV - quando se comprove falsidade, erro ou omissão quanto a qualquer elemento definido na legislação tributária; VIII - quando deva ser apreciado fato não conhecido ou não provado por ocasião do lançamento anterior.",
+            teseDespacho: "O poder-dever de autotutela da Administração e o princípio da verdade material autorizam e determinam a revisão do lançamento tributário sempre que for constatado erro de fato nos cadastros imobiliários ou físicos (BIC), procedendo-se à respectiva retificação."
+        },
+        { 
+            diploma: "Lei nº 5.172/1966 (CTN)", 
+            artigo: "Art. 156", 
+            categoria: "Extinção do Crédito",
+            tags: ["extinção", "pagamento", "compensação"], 
+            textoLiteral: "Art. 156. Extinguem o crédito tributário: I - o pagamento; II - a compensação; III - a transação; IV - remissão; V - a prescrição e a decadência; VI - a conversão de depósito em renda...",
+            teseDespacho: "A baixa sistêmica só é autorizada mediante a ocorrência taxativa de um dos eventos elencados no artigo supramencionado."
+        },
+        { 
+            diploma: "Lei nº 5.172/1966 (CTN)", 
+            artigo: "Art. 173", 
+            categoria: "Decadência Tributária",
+            tags: ["decadência", "decaiu", "lançamento retroativo", "não lançou na época"], 
+            textoLiteral: "Art. 173. O direito de a Fazenda Pública constituir o crédito tributário extingue-se após 5 (cinco) anos, contados: I - do primeiro dia do exercício seguinte àquele em que o lançamento poderia ter sido efetuado; II - da data em que se tornar definitiva a decisão que houver anulado, por vício formal, o lançamento anteriormente efetuado.",
+            teseDespacho: "Constatado o transcurso do lapso temporal superior a cinco anos sem o efetivo lançamento e notificação válida ao contribuinte, opera-se a decadência (perda do direito material de lançar)."
+        },
+        { 
+            diploma: "Lei nº 5.172/1966 (CTN)", 
+            artigo: "Art. 174", 
+            categoria: "Prescrição Tributária",
+            tags: ["prescrição", "prescrito", "cinco anos", "5 anos", "não cobrou", "caducou a dívida"], 
+            textoLiteral: "Art. 174. A ação para a cobrança do crédito tributário prescreve em cinco anos, contados da data da sua constituição definitiva. Parágrafo único. A prescrição se interrompe: I - pelo despacho do juiz que ordenar a citação em execução fiscal; II - pelo protesto judicial; III - por qualquer ato judicial que constitua em mora o devedor; IV - por qualquer ato inequívoco ainda que extrajudicial, que importe em reconhecimento do débito pelo devedor.",
+            teseDespacho: "Transcorridos mais de 5 (cinco) anos desde a constituição definitiva do crédito sem a ocorrência de quaisquer marcos interruptivos delineados no parágrafo único do art. 174, resta fulminada a exigibilidade do crédito em decorrência da prescrição."
+        },
 
-        toast.className = `transform transition-all duration-300 ease-out translate-x-10 opacity-0 pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-lg shadow-xl backdrop-blur-md ${style.bg} text-white border ${style.border} min-w-[280px] max-w-sm`;
-        toast.innerHTML = `
-            <div class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-                <i class="fa-solid ${style.icon} text-xs"></i>
-            </div>
-            <span class="text-xs font-medium tracking-wide">${message}</span>
-        `;
-        
-        container.appendChild(toast);
-        
-        // Animação de entrada
-        requestAnimationFrame(() => {
-            toast.classList.remove('translate-x-10', 'opacity-0');
-        });
-
-        setTimeout(() => {
-            toast.classList.add('translate-x-10', 'opacity-0');
-            setTimeout(() => toast.remove(), 300);
-        }, 3500);
-    }
-
-    // --- TOGGLE IA / OFFLINE ---
-    function handleToggleClick() {
-        const checkbox = document.getElementById('ai-mode-toggle');
-        const label = document.getElementById('mode-label');
-
-        if (checkbox.checked) {
-            const sharedKey = localStorage.getItem('kyro_gemini_api_key');
-            if (!sharedKey || sharedKey.length < 5) {
-                checkbox.checked = false; 
-                document.getElementById('config-badge').classList.remove('hidden');
-                showToast("Configure a Chave API primeiro.", "warning");
-                toggleConfigModal(); 
-                return;
-            }
-            userApiKey = sharedKey;
-            useAI = true;
-            label.textContent = "IA Online";
-            label.className = "text-xs font-bold text-brand-600 dark:text-brand-400 min-w-[60px] text-center";
-            showToast("Gemini 2.5 Ativado", "success");
-        } else {
-            useAI = false;
-            label.textContent = "Offline";
-            label.className = "text-xs font-bold text-slate-500 dark:text-slate-400 min-w-[60px] text-center";
-            showToast("Modo Local Ativado", "info");
+        // JURISPRUDÊNCIA / SÚMULAS PACIFICADAS
+        { 
+            diploma: "Superior Tribunal de Justiça (STJ)", 
+            artigo: "Súmula 399", 
+            categoria: "Jurisprudência - IPTU",
+            tags: ["dono", "proprietário", "possuidor", "nome de outro"], 
+            textoLiteral: "Súmula 399 - Cabe à legislação municipal estabelecer o sujeito passivo do IPTU, podendo ser o proprietário do imóvel ou o seu possuidor a qualquer título.",
+            teseDespacho: "Jurisprudência pacificada corrobora a legitimidade das Fazendas Municipais em promover a cobrança em face daquele que detém o domínio tabular."
+        },
+        { 
+            diploma: "Supremo Tribunal Federal (STF)", 
+            artigo: "Súmula Vinculante 19", 
+            categoria: "Jurisprudência - Taxas",
+            tags: ["taxa de lixo", "coleta de lixo", "tcl", "lixo"], 
+            textoLiteral: "Súmula Vinculante 19 - A taxa cobrada exclusivamente em razão dos serviços públicos de coleta, remoção e tratamento de lixo não viola o artigo 145, II, da Constituição Federal.",
+            teseDespacho: "A taxa detém base constitucional por configurar serviço público específico e divisível de utilidade pública."
         }
+    ];
+
+    // =====================================================================
+    // 2. FUNÇÕES DE EXTRAÇÃO AUTOMÁTICA DE DADOS (REGEX)
+    // =====================================================================
+    function extrairDados(texto) {
+        const cpf = texto.match(/\b\d{3}\.\d{3}\.\d{3}-\d{2}\b/g) || [];
+        const cnpj = texto.match(/\b\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}\b/g) || [];
+        const inscricoes = texto.match(/\b\d{5}\b|\b\d{4,5}\.\d{3}\.\d{3}\b/g) || []; 
+        const processos = texto.match(/\b\d{4,5}\/\d{4}\b/g) || [];
+        const notacoes = texto.match(/(notificação|auto de infração) (nº|n°)? ?\d+\/\d+/gi) || [];
+        
+        let nome = "NÃO IDENTIFICADO";
+        const nomeMatch = texto.match(/(?:contribuinte|requerente|senhor|senhora|dona|seu)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/i);
+        if (nomeMatch) nome = nomeMatch[1];
+
+        return {
+            cpfCnpj: [...cpf, ...cnpj].join(', ') || 'NÃO INFORMADO',
+            inscricao: inscricoes.join(', ') || 'NÃO INFORMADA',
+            processos: [...processos, ...notacoes].join(', ') || 'NÃO INFORMADOS',
+            nome: nome.toUpperCase()
+        };
     }
 
-    // --- LÓGICA DE PROCESSAMENTO ---
-    function routeProcess(type) {
+    // =====================================================================
+    // 3. MOTOR DE GERAÇÃO DINÂMICA
+    // Ele cruza o texto do usuário com a BaseDeLeis, puxa a literalidade
+    // e constrói um despacho altamente embasado.
+    // =====================================================================
+    function gerarDespachoDinamico() {
         const text = document.getElementById("input-text").value.trim();
         if (!text) { 
-            showToast("A caixa de texto está vazia.", "warning"); 
-            document.getElementById("input-text").focus();
+            showToast("⚠️ O requerimento está vazio. Insira os dados do caso."); 
             return; 
         }
 
-        if (useAI) {
-            if(!userApiKey) {
-                userApiKey = localStorage.getItem('kyro_gemini_api_key');
-                if(!userApiKey) {
-                    showToast("Chave API não encontrada.", "error");
-                    document.getElementById('ai-mode-toggle').checked = false;
-                    handleToggleClick(); 
-                    processOffline(type, text);
-                    return;
-                }
-            }
-            processWithAI(type, text);
-        } else {
-            processOffline(type, text);
-        }
-    }
-
-    // --- MODO OFFLINE (Com Motor de Regras Tributárias) ---
-    function processOffline(type, text) {
-        setOutputState('loading', 'Analisando regras jurídicas locais...');
-        updateBadge('Modo Offline (Motor de Regras)');
-
-        setTimeout(() => { 
-            let result = "";
-            const today = new Date().toLocaleDateString('pt-BR');
-
-            switch(type) {
-                case 'simplificar':
-                    result = text.replace(/outrossim/gi, "além disso")
-                                 .replace(/destarte/gi, "dessa forma")
-                                 .replace(/data vênia/gi, "com todo respeito")
-                                 .replace(/adimplir/gi, "pagar");
-                    result += "\n\n(Nota: A simplificação Offline é baseada em dicionário de substituição.)";
-                    break;
-                case 'extracao':
-                    const monies = text.match(/R\$\s?[\d.,]+/gi) || [];
-                    const dates = text.match(/\d{2}\/\d{2}\/\d{4}/g) || [];
-                    // Adaptado para os formatos de inscrição municipal de 5 dígitos e processos gerais
-                    const idsInscricao = text.match(/\b\d{5}\b/g) || []; 
-                    const processes = text.match(/\d{4}\.\d{3}\.\d{6}-\d/g) || [];
-                    
-                    result = `📌 DADOS EXTRAÍDOS (OFFLINE):\n\n💰 Valores: ${monies.join(', ') || '-'}\n📅 Datas: ${dates.join(', ') || '-'}\n⚖️ Processos: ${processes.join(', ') || '-'}\n🏢 Inscrições Municipais: ${idsInscricao.join(', ') || '-'}`;
-                    break;
-                
-                // === NOVO MOTOR DE DESPACHOS TRIBUTÁRIOS OFFLINE ===
-                case 'tecnico':
-                    // Expressões Regulares para identificar o tema tributário
-                    const regexPrescricao = /(prescriç|prescrito|cinco anos|5 anos|transcurso.*tempo|art.\s*174)/gi;
-                    const regexDecadencia = /(decadênc|decaiu|prazo decadencial|art.\s*173)/gi;
-                    const regexImunidade = /(imunidade|templo|igreja|entidade.*assistência|partido.*político|art.\s*150)/gi;
-                    const regexParcelamento = /(parcelamento|acordo|dividir|parcelar|reparcelamento)/gi;
-
-                    // Variáveis padrão do modelo
-                    let titulo = "DESPACHO ADMINISTRATIVO TRIBUTÁRIO";
-                    let fundamentacao = "Legislação Tributária Municipal e Nacional (Lei nº 5.172/66)";
-                    let parecer = "Analisando preliminarmente o texto, faz-se necessária a remessa ao setor competente para verificação pormenorizada da situação fiscal do contribuinte.";
-
-                    // Lógica de decisão baseada no texto
-                    if (regexPrescricao.test(text)) {
-                        titulo = "RECONHECIMENTO DE PRESCRIÇÃO DO CRÉDITO TRIBUTÁRIO";
-                        fundamentacao = "Art. 174 do CTN (Lei nº 5.172/66), Súmula 409 do STJ e Jurisprudência pacificada do STF (RE 566.621).";
-                        parecer = "Verifica-se no presente caso o transcurso do prazo quinquenal para a cobrança do crédito tributário, sem a ocorrência de causas interruptivas (como o despacho do juiz que ordena a citação) ou suspensivas previstas em lei. Destarte, o crédito encontra-se fulminado pela prescrição, impondo-se a extinção da execução fiscal e/ou a baixa do débito em dívida ativa, sob pena de nulidade da CDA.";
-                    } 
-                    else if (regexDecadencia.test(text)) {
-                        titulo = "RECONHECIMENTO DE DECADÊNCIA TRIBUTÁRIA";
-                        fundamentacao = "Art. 173, inciso I, do CTN (Lei nº 5.172/66) e Súmula Vinculante aplicável.";
-                        parecer = "Constata-se que o ente tributante não procedeu ao lançamento do tributo dentro do prazo de 5 (cinco) anos, contados do primeiro dia do exercício seguinte àquele em que o lançamento poderia ter sido efetuado. Operou-se, portanto, a decadência, fenômeno que atinge o próprio direito de constituir o crédito tributário, tornando o débito inexigível.";
-                    } 
-                    else if (regexImunidade.test(text)) {
-                        titulo = "RECONHECIMENTO DE IMUNIDADE TRIBUTÁRIA";
-                        fundamentacao = "Art. 150, inciso VI, da Constituição Federal, Art. 9º do CTN e Súmula Vinculante 52 do STF.";
-                        parecer = "A entidade requerente demonstrou preencher os requisitos constitucionais para a fruição da limitação ao poder de tributar (imunidade), notadamente quanto ao patrimônio, renda e serviços estritamente vinculados às suas finalidades essenciais. Opina-se pelo deferimento do pleito, afastando-se a incidência de impostos como o IPTU sobre os imóveis afetados à sua atividade fim.";
-                    } 
-                    else if (regexParcelamento.test(text)) {
-                        titulo = "ANÁLISE DE PEDIDO DE PARCELAMENTO DE DÉBITOS";
-                        fundamentacao = "Art. 155-A do CTN (Lei nº 5.172/66) combinado com a Legislação Municipal vigente.";
-                        parecer = "Diante da manifestação expressa de vontade do contribuinte em regularizar o débito inscrito, o pedido de parcelamento atende aos requisitos formais. A concessão do benefício suspende a exigibilidade do crédito tributário, nos termos do Art. 151, inciso VI, do CTN. Encaminhe-se ao setor financeiro para emissão do Termo de Confissão de Dívida e das respectivas guias de recolhimento.";
-                    }
-
-                    // Montagem do documento final formatado
-                    result = `MUNICÍPIO DE LIMEIRA - SP\nSECRETARIA DE ASSUNTOS JURÍDICOS\nDEPARTAMENTO DE DÍVIDA ATIVA\n\nNATUREZA: ${titulo}\nDATA: ${today}\n\n1. RELATÓRIO\nTrata-se de expediente submetido a esta pasta, cujo teor principal traz a seguinte narrativa: "${text.substring(0, 150)}..."\n\n2. FUNDAMENTAÇÃO LEGAL E JURISPRUDENCIAL\nBase normativa aplicável à espécie: ${fundamentacao}\n\n3. PARECER TÉCNICO\n${parecer}\n\n4. CONCLUSÃO\nDiante do exposto, e em conformidade com as diretrizes do Código Tributário Nacional, submeto o presente à consideração superior para homologação e posterior atualização dos sistemas internos de controle fiscal.\n\nLimeira, SP.\n__________________________________\nAssessoria Jurídica - Dívida Ativa\n(Gerado eletronicamente via Kyro Suite)`;
-                    break;
-
-                case 'rebuscado':
-                    const dict = { "pedido": "pleito", "pedir": "requerer", "diz": "aduz", "fala": "relata", "dinheiro": "pecúnia", "pagar": "adimplir", "não": "negativo", "sim": "positivo", "dívida": "exação fiscal", "imposto": "tributo" };
-                    result = text;
-                    for (const [key, value] of Object.entries(dict)) {
-                        const regex = new RegExp(`\\b${key}\\b`, 'gi');
-                        result = result.replace(regex, value);
-                    }
-                    break;
-                case 'resumo':
-                    result = `SÍNTESE DOS FATOS TRIBUTÁRIOS:\n\n- ${text.split(/[.!?]/).filter(s=>s.trim().length > 10).slice(0, 3).join('.\n- ')}.`;
-                    break;
-                case 'correcao':
-                    result = text;
-                    showToast("No modo Offline, utilize a revisão nativa do sistema operacional.", "info");
-                    break;
-            }
-            
-            if(result) {
-                renderOutput(result);
-                addToHistory(type + ' (Local)', text, result);
-            }
-        }, 400); // Delay artificial ajustado
-    }
-
-    // --- MODO IA (Integração Gemini) ---
-    async function processWithAI(type, text) {
-        setOutputState('loading', 'Gemini 2.5 trabalhando...');
-        updateBadge('IA Gemini 2.5');
-
-        const baseContext = "Você é um Assistente Jurídico Sênior da Prefeitura de Limeira. Responda apenas com o texto solicitado, sem introduções como 'Aqui está o texto'.";
-        let prompt = "";
-
-        switch (type) {
-            case 'correcao': prompt = `${baseContext} Realize uma revisão gramatical e ortográfica rigorosa, mantendo o tom jurídico formal: "${text}"`; break;
-            case 'rebuscado': prompt = `${baseContext} Eleve o nível do texto para um padrão jurídico erudito, culto e formal: "${text}"`; break;
-            case 'simplificar': prompt = `${baseContext} Aplique técnicas de Legal Design e Linguagem Simples (Plain Language). Traduza o texto para que um cidadão leigo entenda perfeitamente, sem juridiquês: "${text}"`; break;
-            case 'tecnico': prompt = `${baseContext} Elabore um despacho jurídico técnico completo, com fundamentação teórica implícita, tom de autoridade e estrutura formal, baseando-se nestes fatos: "${text}"`; break;
-            case 'resumo': prompt = `${baseContext} Crie um resumo executivo em tópicos (bullet points) destacando os fatos principais e requerimentos: "${text}"`; break;
-            case 'extracao': prompt = `${baseContext} Extraia e liste: Datas, Valores Monetários (R$), Nomes de Envolvidos e Números de Processos/Leis. Formate como uma ficha técnica: "${text}"`; break;
-        }
-
-        try {
-            const apiKey = userApiKey || localStorage.getItem('kyro_gemini_api_key');
-            // Usando endpoint padrão de geração
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-            
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { temperature: 0.3 }
-                })
-            });
-
-            if (!response.ok) throw new Error("Falha na API");
-            
-            const data = await response.json();
-            const resultText = data.candidates[0].content.parts[0].text;
-
-            renderOutput(resultText);
-            addToHistory(type, text, resultText);
-            showToast("Processamento concluído", "success");
-
-        } catch (error) {
-            console.error(error);
-            showToast("Erro na conexão com IA.", "error");
-            document.getElementById('ai-mode-toggle').click(); // Volta para offline
-        }
-    }
-
-    // --- FUNÇÕES DE ARQUIVO E API ---
-    async function testApiKey() {
-        const key = document.getElementById('api-key-input').value.trim();
-        const resultDiv = document.getElementById('test-result');
+        const dados = extrairDados(text);
+        const txtUpper = text.toUpperCase();
         
-        if(key.length < 10) { showToast("Chave inválida.", "warning"); return; }
+        // 1. Cruzamento de Dados (Acha as leis aplicáveis)
+        let leisAplicaveis = [];
+        BaseDeLeis.forEach(lei => {
+            let matches = lei.tags.some(tag => txtUpper.includes(tag.toUpperCase()));
+            if (matches) leisAplicaveis.push(lei);
+        });
 
-        resultDiv.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Verificando...';
-        resultDiv.classList.remove('hidden', 'text-green-600', 'text-red-600');
-        resultDiv.classList.add('text-slate-500');
+        // 2. Monta o corpo do despacho com a letra da lei
+        let natureza = "DESPACHO TÉCNICO DE ENCAMINHAMENTO";
+        let fundamentacao = "Legislação Municipal / CTN";
+        let parecer = "Analisando os fatos narrados, e na ausência de elementos conclusivos primários, verifica-se a necessidade de diligência fiscal ou verificação junto aos sistemas.\n\nDetermino o encaminhamento ao setor técnico competente para levantamento de relatórios pertinentes.";
+        let deferimento = "Encaminhe-se para averiguação.";
 
-        try {
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`;
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: "Teste" }] }] })
+        if (leisAplicaveis.length > 0) {
+            // Pega a lei principal (a primeira que deu match) para ser o Título
+            natureza = "DESPACHO TÉCNICO E FUNDAMENTAÇÃO LEGAL";
+            fundamentacao = leisAplicaveis.map(l => `${l.diploma} - ${l.artigo}`).join(";\n");
+            
+            parecer = "Em sede de análise ao requerimento epigrafado, cumpre trazer à colação a estrita disposição da legislação de regência aplicável ao caso fático narrado pelo contribuinte:\n\n";
+            
+            leisAplicaveis.forEach(lei => {
+                parecer += `"${lei.textoLiteral}"\n`;
+                parecer += `${lei.teseDespacho}\n\n`;
             });
 
-            if (response.ok) {
-                resultDiv.innerHTML = '<i class="fa-solid fa-check-circle"></i> Chave Válida e Operacional';
-                resultDiv.classList.replace('text-slate-500', 'text-green-600');
-            } else { throw new Error(); }
-        } catch (e) {
-            resultDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Chave Inválida ou Erro de Rede';
-            resultDiv.classList.replace('text-slate-500', 'text-red-600');
+            // Lógica de deferimento baseada nas tags principais
+            if (txtUpper.includes("PRESCRIÇÃO") || txtUpper.includes("DECADÊNCIA") || txtUpper.includes("ERRO")) {
+                deferimento = "Ante ao estritamente exposto pelas disposições legais supracitadas, opino pelo DEFERIMENTO do pleito, cabendo à autoridade competente a baixa/revisão dos lançamentos.";
+            } else if (txtUpper.includes("LIMPEZA") || txtUpper.includes("GAVETA") || txtUpper.includes("VENDI")) {
+                deferimento = "Por força da normatização exposta e presunção de legitimidade dos atos da Administração Pública, opino pelo INDEFERIMENTO do pedido, não merecendo acolhida a tese exordial.";
+            } else {
+                deferimento = "Determino o prosseguimento do feito com base na legislação vinculada, devendo o setor subsequente proceder com as movimentações sistêmicas necessárias.";
+            }
         }
+
+        const resultado = 
+`PROCESSO / REF: ${dados.processos}
+REQUERENTE: ${dados.nome}
+CPF/CNPJ: ${dados.cpfCnpj}
+INSCRIÇÃO: ${dados.inscricao}
+
+NATUREZA: ${natureza}
+DATA: ${new Date().toLocaleDateString('pt-BR')}
+
+I. RELATÓRIO
+Trata-se de requerimento onde o contribuinte em epígrafe pugna pela análise da municipalidade sob a seguinte premissa e alegação:
+"${text.substring(0, 300)}${text.length > 300 ? ' [...]' : ''}"
+
+II. LETRA DA LEI E PARECER TÉCNICO
+Dispositivos Legais extraídos da Base de Dados aplicáveis à espécie: 
+${fundamentacao}
+
+${parecer}
+
+III. CONCLUSÃO
+${deferimento}
+
+À consideração superior.
+
+___________________________________________________
+Setor de Dívida Ativa / Posturas - Limeira (SP)
+Documento gerado e embasado automaticamente via Kyro Suite`;
+
+        document.getElementById('output-text').innerText = resultado;
+        document.getElementById('print-content').innerHTML = resultado.replace(/\n/g, '<br>');
+        document.getElementById('placeholder').classList.add('hidden');
+        document.getElementById('output-header').classList.remove('hidden');
+        showToast(`✅ Despacho gerado! ${leisAplicaveis.length} leis cruzadas e aplicadas.`);
     }
 
-    function saveApiKey() {
-        const key = document.getElementById('api-key-input').value.trim();
-        if(key.length > 10) {
-            localStorage.setItem('kyro_gemini_api_key', key);
-            userApiKey = key;
-            toggleConfigModal();
-            showToast("Chave API salva com sucesso", "success");
-            
-            // Auto-ativar
-            const checkbox = document.getElementById('ai-mode-toggle');
-            if(!checkbox.checked) checkbox.click();
-            document.getElementById('config-badge').classList.add('hidden');
-        }
+    // =====================================================================
+    // 4. INTERFACE E CONTROLES DE ABAS
+    // =====================================================================
+    function switchTab(tabId) {
+        ['tab-gerador', 'tab-db'].forEach(id => {
+            document.getElementById(id).classList.add('hidden');
+            document.getElementById('btn-' + id).classList.remove('tab-active');
+        });
+        document.getElementById(tabId).classList.remove('hidden');
+        document.getElementById('btn-' + tabId).classList.add('tab-active');
     }
 
-    function clearApiKey() {
-        if(confirm("Deseja remover a chave API deste navegador?")) {
-            localStorage.removeItem('kyro_gemini_api_key');
-            userApiKey = "";
-            document.getElementById('api-key-input').value = "";
-            document.getElementById('test-result').classList.add('hidden');
-            const checkbox = document.getElementById('ai-mode-toggle');
-            if(checkbox.checked) checkbox.click();
-            toggleConfigModal();
-            showToast("Credenciais removidas", "info");
-        }
+    function renderConsultas() {
+        // Renderiza o Banco de Leis Literal
+        document.getElementById('list-db').innerHTML = BaseDeLeis.map(lei => `
+            <div class="item-legal p-5 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-sm mb-4">
+                <div class="flex justify-between items-center mb-4 border-b border-zinc-100 dark:border-zinc-900 pb-2">
+                    <div>
+                        <span class="font-bold text-black dark:text-white font-sans text-sm block">${lei.diploma}</span>
+                        <span class="text-xs text-brand-600 dark:text-brand-400 font-bold">${lei.artigo}</span>
+                    </div>
+                    <span class="text-[9px] uppercase tracking-widest bg-zinc-200 dark:bg-zinc-800 px-3 py-1 text-black dark:text-white font-bold rounded-sm">${lei.categoria}</span>
+                </div>
+                <div class="bg-zinc-50 dark:bg-zinc-900/50 p-4 border-l-4 border-black dark:border-white mb-3">
+                    <p class="text-zinc-800 dark:text-zinc-200 text-sm font-serif leading-relaxed italic">"${lei.textoLiteral}"</p>
+                </div>
+                <p class="text-[10px] uppercase font-mono text-zinc-500">Gatilhos do Motor: ${lei.tags.join(', ')}</p>
+            </div>
+        `).join('');
     }
 
-    // --- UI HELPERS ---
-    function renderOutput(text) {
-        document.getElementById('output-text').innerText = text;
-        // Prepara para impressão (preserva quebras de linha)
-        document.getElementById('print-content').innerHTML = text.replace(/\n/g, '<br>');
-        setOutputState('content');
+    function filterDB() {
+        const query = document.getElementById('search-db').value.toLowerCase();
+        document.querySelectorAll('#list-db .item-legal').forEach(el => {
+            el.style.display = el.innerText.toLowerCase().includes(query) ? 'block' : 'none';
+        });
     }
 
-    function setOutputState(state, msg = "") {
-        const states = ['placeholder-state', 'loader-state', 'content-state'];
-        states.forEach(s => document.getElementById(s).classList.add('hidden'));
-
-        if (state === 'loading') {
-            document.getElementById('loader-state').classList.remove('hidden');
-            document.getElementById('loader-msg').innerText = msg;
-        } else if (state === 'content') {
-            document.getElementById('content-state').classList.remove('hidden');
-        } else {
-            document.getElementById('placeholder-state').classList.remove('hidden');
-        }
-    }
-
-    function updateBadge(text) {
-        document.getElementById('badge-mode').innerText = text;
-    }
-
-    function toggleConfigModal() { document.getElementById('config-modal').classList.toggle('hidden'); }
-    
-    function toggleTheme() { 
-        document.documentElement.classList.toggle('dark'); 
-        localStorage.setItem('kyro_theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-    }
-
-    function updateCounters(id) {
-        const text = document.getElementById(id + '-text').value;
-        const count = text.trim() === '' ? 0 : text.split(/\s+/).filter(w=>w).length;
-        document.getElementById(id + '-counter').innerText = `${count} palavras`;
-    }
-
-    function insertTemplate(v) { 
-        const templates = {
-            'deferimento': 'Defiro o pedido de parcelamento do débito em 36 parcelas mensais e sucessivas, com fundamento na Lei Complementar Municipal vigente. Encaminhe-se à Divisão de Rendas para emissão das guias.',
-            'citacao': 'Certifico que o réu encontra-se em local incerto e não sabido, esgotadas as tentativas de localização via sistemas conveniados (Bacenjud, Renajud). Requer-se, portanto, a citação via Edital, nos termos do art. 256 do CPC.',
-            'prescricao': 'Verifica-se a ocorrência da prescrição do crédito tributário, haja vista o decurso de prazo superior a 5 anos desde a constituição definitiva sem causa interruptiva, conforme art. 174 do CTN. Opina-se pela extinção da execução.'
-        };
-        if(v && templates[v]) {
-            const input = document.getElementById('input-text');
-            input.value = input.value ? input.value + "\n\n" + templates[v] : templates[v];
-            updateCounters('input');
-        }
+    function showToast(msg) {
+        const t = document.createElement('div');
+        t.className = "bg-black dark:bg-white text-white dark:text-black text-[10px] uppercase tracking-widest px-4 py-3 shadow-2xl font-bold transition-all";
+        t.innerText = msg;
+        document.getElementById('toast-container').appendChild(t);
+        setTimeout(() => t.remove(), 4000);
     }
 
     function copyToClipboard() {
-        const text = document.getElementById('output-text').innerText;
-        if(!text) return;
-        navigator.clipboard.writeText(text);
-        showToast("Copiado para a área de transferência", "success");
+        navigator.clipboard.writeText(document.getElementById('output-text').innerText);
+        showToast("📋 Texto copiado para a área de transferência");
     }
 
     function exportToWord() {
         const content = document.getElementById('output-text').innerText;
-        if(!content) { showToast("Nada para exportar", "warning"); return; }
-        
-        const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Documento</title></head><body>";
-        const footer = "</body></html>";
-        const sourceHTML = header + content.replace(/\n/g, "<br>") + footer;
-        
-        const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
+        if(!content) return;
+        const sourceHTML = "<html xmlns:w='urn:schemas-microsoft-com:office:word'><body>" + content.replace(/\n/g, "<br>") + "</body></html>";
         const fileDownload = document.createElement("a");
-        document.body.appendChild(fileDownload);
-        fileDownload.href = source;
-        fileDownload.download = 'Documento_Kyro.doc';
+        fileDownload.href = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
+        fileDownload.download = 'Despacho_Kyro_Raw_Data.doc';
         fileDownload.click();
-        document.body.removeChild(fileDownload);
-        showToast("Download iniciado", "success");
     }
 
-    // --- HISTÓRICO ---
-    function toggleHistory() {
-        const sidebar = document.getElementById('history-sidebar');
-        sidebar.classList.toggle('translate-x-full');
-        if(!sidebar.classList.contains('translate-x-full')) renderHistory();
+    function toggleTheme() {
+        document.documentElement.classList.toggle('dark');
     }
 
-    function addToHistory(type, input, output) {
-        const item = {
-            id: Date.now(),
-            date: new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}),
-            type: type,
-            inputSnippet: input.substring(0, 40) + (input.length > 40 ? '...' : ''),
-            output: output
-        };
-        history.unshift(item);
-        if (history.length > 15) history.pop();
-        localStorage.setItem('kyro_history', JSON.stringify(history));
-    }
-
-    function renderHistory() {
-        const list = document.getElementById('history-list');
-        list.innerHTML = '';
-        
-        if(history.length === 0) {
-            list.innerHTML = '<div class="flex flex-col items-center justify-center h-40 text-slate-400"><i class="fa-regular fa-folder-open text-2xl mb-2"></i><span class="text-xs">Sem histórico</span></div>';
-            return;
-        }
-
-        history.forEach(item => {
-            const el = document.createElement('div');
-            el.className = "bg-white dark:bg-slate-700/50 p-3 rounded-xl border border-slate-100 dark:border-slate-600 hover:shadow-md hover:border-brand-200 dark:hover:border-brand-800 transition-all cursor-pointer group";
-            el.onclick = () => {
-                document.getElementById('output-text').innerText = item.output;
-                document.getElementById('print-content').innerHTML = item.output.replace(/\n/g, '<br>');
-                setOutputState('content');
-                toggleHistory();
-                showToast("Histórico restaurado", "info");
-            };
-            el.innerHTML = `
-                <div class="flex justify-between items-center mb-1">
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/20 px-1.5 py-0.5 rounded">${item.type}</span>
-                    <span class="text-[10px] text-slate-400">${item.date}</span>
-                </div>
-                <div class="text-xs text-slate-600 dark:text-slate-300 font-medium truncate mb-1">"${item.inputSnippet}"</div>
-                <div class="text-[10px] text-slate-400 group-hover:text-brand-500 transition-colors text-right">Toque para restaurar <i class="fa-solid fa-arrow-right ml-1"></i></div>
-            `;
-            list.appendChild(el);
-        });
-    }
-
-    function clearHistory() {
-        history = [];
-        localStorage.removeItem('kyro_history');
-        renderHistory();
-        showToast("Histórico limpo", "info");
-    }
-
-    function toggleDictation() {
-        showToast("O navegador pode solicitar permissão de microfone.", "info");
-        // Implementação futura de Web Speech API
-    }
-
-    // Inicialização
-    window.onload = () => {
-        const savedKey = localStorage.getItem('kyro_gemini_api_key');
-        const checkbox = document.getElementById('ai-mode-toggle');
-        const label = document.getElementById('mode-label');
-        
-        if(savedKey) {
-            userApiKey = savedKey;
-            document.getElementById('api-key-input').value = savedKey;
-            checkbox.checked = true;
-            useAI = true;
-            label.textContent = "IA Online";
-            label.className = "text-xs font-bold text-brand-600 dark:text-brand-400 min-w-[60px] text-center";
-        } else {
-            document.getElementById('config-badge').classList.remove('hidden');
-        }
-        
-        if (localStorage.getItem('kyro_theme') === 'dark') document.documentElement.classList.add('dark');
-    }
-
+    window.onload = () => { renderConsultas(); };
   </script>
 </body>
 </html>
