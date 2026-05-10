@@ -5,17 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kyro - Controle Ponto</title>
     
-    <link rel="shortcut icon" href="https://placehold.co/32x32/003366/FFFFFF?text=K" type="image/x-icon">
+    <link rel="shortcut icon" href="https://placehold.co/32x32/ea580c/FFFFFF?text=K" type="image/x-icon">
     
-    <!-- Bibliotecas JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-    <!-- ExcelJS para exportação robusta -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Configuração Tailwind -->
     <script>
         (function() {
             function configurarTailwind() {
@@ -27,12 +24,11 @@
                                     sans: ['Inter', 'sans-serif'],
                                 },
                                 colors: {
-                                    'prefeitura-azul': '#003366',
-                                    'prefeitura-dourado': '#DAA520',
-                                    'prefeitura-cinza': '#F3F4F6',
-                                },
-                                boxShadow: {
-                                    'card': '0 4px 12px rgba(0, 51, 102, 0.1)',
+                                    'kyro-orange': {
+                                        500: '#f97316',
+                                        600: '#ea580c',
+                                        700: '#c2410c',
+                                    }
                                 }
                             }
                         }
@@ -48,96 +44,93 @@
         })();
     </script>
     
-    <!-- Estilos CSS -->
     <style>
         body {
-            font-family: 'Calibri', 'Inter', sans-serif;
-            background-color: #F3F4F6;
-            color: #333;
+            font-family: 'Inter', sans-serif;
+            background-color: #fafafa;
+            color: #111827;
         }
 
+        /* Estilos Minimalistas - Cabeçalho */
         .cabecalho-app {
-            background-color: #003366;
-            color: white;
+            background-color: #ffffff;
+            border-bottom: 1px solid #e5e7eb;
             padding: 0 2rem;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            height: 80px;
+            height: 64px;
         }
         
         .logo-titulo {
-            font-size: 1.5rem;
-            font-weight: 600;
-            padding: 1rem 0;
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: #111827;
             display: flex; 
             align-items: center;
             gap: 10px;
         }
 
         .btn-voltar-gestao {
-            background-color: rgba(255, 255, 255, 0.1);
-            color: #DAA520;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            font-weight: 600;
+            background-color: transparent;
+            color: #4b5563;
+            padding: 6px 12px;
+            border-radius: 2px;
+            font-size: 0.875rem;
+            font-weight: 500;
             text-decoration: none;
-            border: 1px solid rgba(218, 165, 32, 0.3);
-            transition: all 0.3s;
+            border: 1px solid #d1d5db;
+            transition: all 0.2s;
             display: inline-flex;
             align-items: center;
             gap: 6px;
         }
         .btn-voltar-gestao:hover {
-            background-color: #DAA520;
-            color: #003366;
+            background-color: #f3f4f6;
+            color: #111827;
         }
 
         .acoes-globais {
             display: flex;
-            gap: 1rem;
-            padding: 1rem 0;
+            gap: 0.75rem;
         }
 
         .botao-acao {
-            background-color: #DAA520;
-            color: #003366;
-            padding: 0.625rem 1.25rem;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            border: none;
+            background-color: #ffffff;
+            color: #374151;
+            padding: 6px 16px;
+            border-radius: 2px;
+            font-weight: 500;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+            border: 1px solid #d1d5db;
             cursor: pointer;
         }
         .botao-acao:hover {
-            background-color: #B8860B;
-            transform: translateY(-2px);
+            background-color: #f9fafb;
+            border-color: #9ca3af;
         }
-        .botao-pdf { background-color: #c00; color: white; }
-        .botao-pdf:hover { background-color: #a00; }
         
         .botao-primario {
-            background-color: #003366;
+            background-color: #ea580c;
             color: white;
-            padding: 0.625rem 1.25rem;
-            border-radius: 8px;
+            padding: 8px 20px;
+            border-radius: 2px;
             font-weight: 600;
-            transition: all 0.3s ease;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+            border: 1px solid #c2410c;
         }
         .botao-primario:hover {
-            background-color: #004488;
+            background-color: #c2410c;
         }
         
+        /* Controles Minimalistas */
         #controles-container {
-            background-color: white;
-            padding: 1.5rem;
-            margin: 1.5rem 2rem;
-            border-radius: 12px;
-            box-shadow: var(--tw-shadow-card);
+            background-color: #ffffff;
+            padding: 1.25rem 2rem;
+            border-bottom: 1px solid #e5e7eb;
             display: flex;
             gap: 1.5rem;
             align-items: center;
@@ -146,46 +139,60 @@
         
         .controles-item label {
             font-weight: 600;
-            color: #003366;
+            color: #374151;
             margin-right: 0.5rem;
+            font-size: 0.875rem;
         }
 
         .controles-item select,
         .controles-item input {
-            padding: 0.5rem 0.75rem;
-            border: 1px solid #D1D5DB;
-            border-radius: 8px;
-            background-color: #F9FAFB;
+            padding: 6px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 2px;
+            background-color: #ffffff;
+            font-size: 0.875rem;
+            outline: none;
+        }
+        .controles-item input:focus {
+            border-color: #ea580c;
         }
 
         #main-container {
-            margin: 0 2rem;
+            margin: 2rem;
         }
         
-        /* ESTILOS DA FICHA DE PONTO */
+        /* ESTILOS DA FICHA DE PONTO (Plano) */
         .container-pessoa {
-            background-color: white;
-            margin-bottom: 1.5rem;
-            border-radius: 12px;
-            box-shadow: var(--tw-shadow-card);
+            background-color: #ffffff;
+            margin-bottom: 2rem;
+            border-radius: 2px;
+            border: 1px solid #e5e7eb;
             overflow-x: auto; 
             page-break-inside: avoid;
         }
         
         .cabecalho-pessoa {
-            background-color: #003366; color: white; padding: 1.25rem 1.5rem;
-            font-size: 1.5rem; font-weight: 600;
+            background-color: #f9fafb; 
+            color: #111827; 
+            padding: 1rem 1.5rem;
+            font-size: 1.25rem; 
+            font-weight: 700;
+            border-bottom: 1px solid #e5e7eb;
         }
         .info-container {
-            padding: 1.5rem; border-bottom: 1px solid #E5E7EB; display: flex;
-            justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+            padding: 1.25rem 1.5rem; 
+            border-bottom: 1px solid #e5e7eb; 
+            display: flex;
+            justify-content: space-between; 
+            flex-wrap: wrap; 
+            gap: 1rem;
         }
-        .info-container p { color: #4B5563; font-size: 0.95rem; line-height: 1.6; }
-        .info-container strong { color: #003366; font-weight: 600; }
+        .info-container p { color: #4b5563; font-size: 0.875rem; line-height: 1.5; }
+        .info-container strong { color: #111827; font-weight: 600; }
         
-        /* GRID DE PONTO */
+        /* GRID DE PONTO Minimalista */
         .grid-container { 
-            padding: 0 1.5rem 1.5rem; 
+            padding: 1.5rem; 
             display: flex;
             justify-content: center;
         }
@@ -193,54 +200,56 @@
         .grid-ponto { 
             min-width: 560px;
             border-collapse: collapse; 
-            margin-top: 1.5rem; 
             table-layout: fixed; 
         }
         
-        /* .grid-ponto col { width: 80px; } REMOVIDO PARA USAR INLINE STYLE DINÂMICO */
-        
         .grid-ponto th, .grid-ponto td {
-            border: 1px solid #000;
-            padding: 4px;
+            border: 1px solid #d1d5db;
+            padding: 6px;
             text-align: center; 
-            font-size: 11pt; 
+            font-size: 0.8rem; 
             width: 80px;
-            height: 22px; 
+            height: 24px; 
             white-space: nowrap;
             overflow: hidden;
             box-sizing: border-box;
+            color: #374151;
         }
         
         .grid-ponto thead th {
-            background-color: #F0F0F0; 
-            color: #000; 
-            font-weight: bold;
-            border: 1px solid #000; /* Garante borda no cabeçalho */
+            background-color: #f9fafb; 
+            color: #111827; 
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
         }
         
-        .destaque-feriado { background-color: #FEF9C3; }
-        .destaque-ferias { background-color: #DBEAFE; }
-        .destaque-folga { background-color: #F3F4F6; }
+        /* Destaques Sólidos/Leves */
+        .destaque-feriado { background-color: #fef08a !important; color: #854d0e; }
+        .destaque-ferias { background-color: #bfdbfe !important; color: #1e3a8a; }
+        .destaque-folga { background-color: #f3f4f6 !important; color: #6b7280; }
         
         /* RODAPÉ TABELA */
         .footer-totals {
-            font-weight: bold;
+            font-weight: 600;
             text-align: left;
-            border: 1px solid #000 !important;
-            background-color: white;
-            padding-left: 5px !important;
+            border: 1px solid #d1d5db !important;
+            background-color: #f9fafb;
+            padding-left: 8px !important;
+            color: #111827;
         }
         
         .footer-signature {
             border: none !important;
             text-align: center;
-            font-size: 12pt; /* AUMENTADO PARA 12 */
-            font-weight: bold; /* ADICIONADO NEGRITO */
+            font-size: 0.875rem; 
+            font-weight: 600;
             padding-top: 5px;
+            color: #111827;
         }
         
         .footer-signature-line {
-            border-bottom: 1px solid #000 !important; /* Linha de assinatura */
+            border-bottom: 1px solid #111827 !important; 
             border-top: none !important; 
             border-left: none !important; 
             border-right: none !important;
@@ -252,80 +261,88 @@
         .rodape-app {
             text-align: center;
             padding: 1.5rem;
-            margin-top: 2rem;
-            color: #6B7280;
-            font-size: 0.9rem;
-            border-top: 1px solid #E5E7EB;
+            color: #6b7280;
+            font-size: 0.75rem;
+            border-top: 1px solid #e5e7eb;
+            background-color: #ffffff;
         }
         
         .aviso-sincronizacao {
-            background-color: #eff6ff;
-            border-left: 4px solid #3b82f6;
-            color: #1e40af;
-            padding: 1rem 2rem;
-            margin: 1rem 2rem 0;
-            border-radius: 4px;
+            background-color: #f0fdf4;
+            border-bottom: 1px solid #bbf7d0;
+            color: #166534;
+            padding: 0.75rem 2rem;
+            font-size: 0.875rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
+        #status-banco {
+            font-weight: 600;
+            background: #ffffff;
+            padding: 2px 8px;
+            border: 1px solid #bbf7d0;
+            border-radius: 2px;
+        }
+
         @media print {
             @page { size: A4 portrait; margin: 0.5cm; }
-            body { background-color: white; margin: 0; padding: 0; width: 100%; }
+            body { background-color: white; margin: 0; padding: 0; width: 100%; font-family: 'Arial', sans-serif;}
             .cabecalho-app, #controles-container, .aviso-sincronizacao, .rodape-app { display: none; }
             #main-container { margin: 0; }
             .container-pessoa {
-                margin: 0; padding: 0; box-shadow: none; border: none;
+                margin: 0; padding: 0; border: none;
                 width: 100%; page-break-after: always;
             }
-            .grid-ponto { width: 100%; } 
+            .grid-ponto { width: 100%; }
+            .grid-ponto th, .grid-ponto td { border-color: #000; color: #000; }
+            .grid-ponto thead th { background-color: #f0f0f0; } 
         }
     </style>
 </head>
-<body class="bg-prefeitura-cinza">
+<body>
     <header class="cabecalho-app">
         <div class="logo-titulo">
-            <span>Controle de Ponto - Fazenda</span>
+            Controle de Ponto <span class="text-gray-400 font-normal text-sm">| Fazenda</span>
         </div>
         
         <div class="flex gap-3 items-center">
             <a href="../kyro/kyro.html" class="btn-voltar-gestao">
-                &#8617; Voltar
+                &larr; Voltar
             </a>
             <a href="../portal-rh/portal-rh.html" class="btn-voltar-gestao">
-                &#9881; Gerenciar Cadastros
+                <i class="fas fa-users mr-1"></i> Gerenciar Cadastros
             </a>
         </div>
 
         <div id="acoes-globais-container" class="acoes-globais">
-            <button onclick="window.print()" class="botao-acao botao-pdf">Imprimir / PDF</button>
-            <button onclick="exportarHTMLparaExcel()" class="botao-acao" style="background-color: #107c10;">Exportar Formatado (.xlsx)</button>
+            <button onclick="window.print()" class="botao-acao">PDF / Imprimir</button>
+            <button onclick="exportarHTMLparaExcel()" class="botao-primario">Exportar Excel (.xlsx)</button>
         </div>
     </header>
 
     <div class="aviso-sincronizacao">
         <div>
-            <strong>Modo de Visualização:</strong> Os dados (Funcionários, Feriados e Férias) são sincronizados em tempo real com o Painel de Gestão.
+            Dados Sincronizados com o Painel de Gestão (V6).
         </div>
-        <div id="status-banco" class="text-sm font-bold bg-white px-2 py-1 rounded text-blue-800 border border-blue-200">
+        <div id="status-banco">
             Conectando...
         </div>
     </div>
 
     <section id="controles-container">
-        <!-- Injetado via JS -->
-    </section>
+        </section>
 
     <main id="main-container">
-        <!-- Injetado via JS -->
-    </main>
+        </main>
     
     <footer class="rodape-app">
-        Prefeitura Municipal de Limeira - Secretaria de Fazenda
+        Sistema Kyro &copy; <span id="current-year"></span>
     </footer>
 
     <script>
+    document.getElementById('current-year').textContent = new Date().getFullYear();
     // --- Configuração e Banco de Dados ---
     const DB_INTEGRADO_KEY = 'limeira_dados_integrados_v6';
     const LS_KEYS = {
@@ -408,18 +425,20 @@
         const statusDiv = document.getElementById('status-banco');
 
         if (!raw) {
-            statusDiv.textContent = "Nenhum dado encontrado";
-            statusDiv.classList.replace('text-blue-800', 'text-red-800');
+            statusDiv.textContent = "Sem Dados";
+            statusDiv.classList.replace('text-green-800', 'text-red-600');
+            statusDiv.style.borderColor = '#fca5a5';
             document.getElementById('main-container').innerHTML = `
-                <div class="text-center p-8 text-gray-500">
-                    <p>Ainda não há dados cadastrados no sistema central (v6).</p>
+                <div class="text-center p-8 text-gray-500 border border-gray-200 bg-white">
+                    <p>Ainda não há dados cadastrados no sistema central.</p>
                     <p>Acesse "Gerenciar Cadastros" para adicionar a equipe.</p>
                 </div>`;
             return;
         }
 
         const db = JSON.parse(raw);
-        statusDiv.textContent = "Dados Sincronizados (V6)";
+        statusDiv.textContent = "OK";
+        statusDiv.classList.add('text-green-700');
 
         // Mapeia Funcionários
         PESSOAS = [];
@@ -529,8 +548,6 @@
             marcacoes.classe = "destaque-ferias";
             marcacoes.total = "00:00";
         } else if (feriado) {
-            // VERIFICA SE É PONTO FACULTATIVO
-            // Verifica o campo 'tipo' (preferencial) ou se o 'nome' contem facultativo
             const tipoFeriado = feriado.tipo ? feriado.tipo.toLowerCase() : "";
             const nomeFeriado = feriado.nome ? feriado.nome.toLowerCase() : "";
             
@@ -579,11 +596,11 @@
         
         controlesContainer.innerHTML = `
             <div class="controles-item">
-                <label for="periodo-inicio">Data Início:</label>
+                <label for="periodo-inicio">Início:</label>
                 <input type="date" id="periodo-inicio" class="w-full md:w-auto">
             </div>
             <div class="controles-item">
-                <label for="periodo-fim">Data Fim:</label>
+                <label for="periodo-fim">Fim:</label>
                 <input type="date" id="periodo-fim" class="w-full md:w-auto">
             </div>
             <div class="controles-item ml-auto">
@@ -612,7 +629,7 @@
         localStorage.setItem(LS_KEYS.pontoFim, dataFim);
         
         if (!dataInicio || !dataFim) {
-            mainContainer.innerHTML = '<p class="p-4 text-center text-gray-600">Por favor, selecione a data de início e fim.</p>';
+            mainContainer.innerHTML = '<p class="p-4 text-center text-gray-500">Por favor, selecione a data de início e fim.</p>';
             return;
         }
 
@@ -632,7 +649,6 @@
         const isEstagiario = info.vinculo === 'Estagiário' || info.tipo === 'Estagiário';
         const cols = isEstagiario ? 7 : 9; 
 
-        // --- DATAS ESPECÍFICAS PARA ESTAGIÁRIOS (Ciclo 16 a 15) ---
         let dataInicioPessoa = periodo.inicio;
         let dataFimPessoa = periodo.fim;
         let labelPeriodoPessoa = periodo.label;
@@ -653,9 +669,8 @@
         const container = document.createElement('div');
         container.className = 'container-pessoa';
         container.dataset.tipo = isEstagiario ? 'estagiario' : 'funcionario';
-        container.dataset.periodoLabel = labelPeriodoPessoa; // Guardando para excel
+        container.dataset.periodoLabel = labelPeriodoPessoa;
         
-        // Cabeçalho da Tabela
         let headersHTML = '';
         if (isEstagiario) {
             headersHTML = `
@@ -683,24 +698,21 @@
 
         let colGroupHTML = '';
         for(let i=0; i<cols; i++) {
-            if (i === 1) { // Aumenta largura da coluna B (Dia da Semana) visualmente (+100px aprox)
-                colGroupHTML += '<col style="width: 100px">'; // Ajustado para 100px conforme solicitado
-            } else {
-                colGroupHTML += '<col style="width: 80px">';
-            }
+            if (i === 1) colGroupHTML += '<col style="width: 100px">'; 
+            else colGroupHTML += '<col style="width: 80px">';
         }
 
         container.innerHTML = `
             <h2 class="cabecalho-pessoa">
                 ${nome} 
-                <span style="font-size:0.8rem; float:right; background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:4px;">
+                <span class="text-xs font-normal text-gray-500 float-right mt-1 bg-gray-100 px-2 py-1 rounded-sm border border-gray-200">
                     ${info.vinculo}
                 </span>
             </h2>
             <div class="info-container">
                 <div class="info-pessoa">
                     <p><strong>Nome:</strong> ${nome} <span class="ml-4"><strong>Matrícula:</strong> ${info.matricula}</span></p>
-                    <p><strong>Secretaria:</strong> Secretaria Municipal de Fazenda</p> <!-- REMOVIDA A BORDA VISUAL NO SITE -->
+                    <p><strong>Secretaria:</strong> Fazenda</p>
                     <p><strong>Função:</strong>  <span class="ml-4"><strong>Admissão:</strong> </span></p>
                 </div>
                 <div class="info-periodo">
@@ -760,20 +772,14 @@
             rowCount++;
         }
         
-        // Linhas vazias para completar a página
-        // AJUSTADO PARA 43 PARA SUBIR 2 LINHAS
         const emptyRowsNeeded = Math.max(0, 43 - (15 + rowCount));
         for (let i = 0; i < emptyRowsNeeded; i++) {
             gridBody.innerHTML += `<tr><td colspan="${cols}" class="b-none">&nbsp;</td></tr>`;
         }
         
-        // RODAPÉ: Totais e Assinatura
         if (isEstagiario) {
              gridBody.innerHTML += `
-                <!-- Espaço Assinatura -->
                 <tr><td colspan="7" class="b-none" style="height: 30px;">&nbsp;</td></tr>
-                
-                <!-- Assinatura -->
                 <tr>
                     <td colspan="3" class="footer-signature-line">&nbsp;</td>
                     <td class="b-none"></td>
@@ -787,27 +793,20 @@
             `;
         } else {
              gridBody.innerHTML += `
-                <!-- Total Horas -->
                 <tr>
                     <td colspan="5" class="b-none"></td>
                     <td colspan="3" class="footer-totals text-center">Total de horas no período:</td>
-                    <td class="footer-totals b-none">&nbsp;</td> <!-- H47 sem borda -->
+                    <td class="footer-totals b-none">&nbsp;</td>
                 </tr>
-                <tr><td colspan="9" class="b-none">&nbsp;</td></tr> <!-- LINHA DE ESPAÇAMENTO REINSERIDA -->
-                
-                <!-- Totais Dias e Carga -->
+                <tr><td colspan="9" class="b-none">&nbsp;</td></tr>
                 <tr>
                     <td colspan="2" class="footer-totals">Total de Dias Úteis/mês:</td>
-                    <td class="footer-totals">&nbsp;</td> <!-- C49 com borda -->
+                    <td class="footer-totals">&nbsp;</td>
                     <td colspan="2" class="footer-totals">N° Horas/Dia: 08</td>
                     <td class="b-none"></td>
                     <td colspan="3" class="footer-totals">Total de horas a trabalhar:</td>
                 </tr>
-                
-                <!-- Espaço Assinatura -->
                 <tr><td colspan="9" class="b-none" style="height: 30px;">&nbsp;</td></tr>
-                
-                <!-- Assinatura -->
                 <tr>
                     <td colspan="4" class="footer-signature-line">&nbsp;</td>
                     <td class="b-none"></td>
@@ -824,7 +823,7 @@
         return container;
     }
 
-    // --- EXPORTAÇÃO EXCEL ATUALIZADA ---
+    // --- EXPORTAÇÃO EXCEL ---
     async function exportarHTMLparaExcel() {
         const dataInicioEl = document.getElementById('periodo-inicio');
         const dataFimEl = document.getElementById('periodo-fim');
@@ -852,7 +851,6 @@
             const infoPessoa = container.querySelectorAll('.info-pessoa p');
             const nomeText = infoPessoa[0] ? infoPessoa[0].textContent : '';
             const secretariaText = infoPessoa[1] ? infoPessoa[1].textContent : '';
-            const funcaoText = infoPessoa[2] ? infoPessoa[2].textContent : '';
             
             const nomeRaw = (nomeText.match(/Nome: (.*?) Matrícula:/) || [])[1]?.trim() || '';
             const matriculaRaw = (nomeText.match(/Matrícula: (.*)/) || [])[1]?.trim() || '';
@@ -863,7 +861,6 @@
             const sheetName = nomeRaw.substring(0, 30).replace(/[\\/?*\[\]]/g, '');
             const sheet = workbook.addWorksheet(sheetName);
 
-            // Função helper para converter CM para Polegadas (ExcelJS usa inches)
             const toInches = (cm) => cm / 2.54;
 
             sheet.pageSetup = {
@@ -886,25 +883,23 @@
             if (isEstagiario) {
                 sheet.columns = [
                     { width: 8.8 }, 
-                    { width: 16 }, // Aumentado (B) para aprox 100px
+                    { width: 16 }, 
                     { width: 8.8 }, 
                     { width: 8.8 }, 
                     { width: 8.8 }, 
                     { width: 8.8 }, 
                     { width: 6.2 },  
                     { width: 17.2 },
-                    { width: 0, hidden: true } // Coluna I oculta (9ª coluna)
+                    { width: 0, hidden: true }
                 ];
 
                 if (brasaoImg) {
                     const imageId = workbook.addImage({ base64: brasaoImg, extension: 'png' });
-                    // Imagem não depende da coluna (usando ext para tamanho fixo de 100x100 e tl em A1)
                     sheet.addImage(imageId, { 
                         tl: { col: 0, row: 0 }, 
-                        ext: { width: 110, height: 100 }, // Alterado para 110x100
+                        ext: { width: 110, height: 100 },
                         editAs: 'oneCell' 
                     });
-                    // Reserva espaço mesclando apenas A1:A4 (verticalmente) sem afetar largura da B
                     sheet.mergeCells('A1:A4');
                 } else {
                     sheet.mergeCells('A1:A4');
@@ -941,7 +936,6 @@
 
                 const r9 = sheet.getRow(9); r9.values = [];
                 const c9 = r9.getCell(1); c9.value = "Local: Divisão de Dívida Ativa"; 
-                // Removed border as requested
                 c9.style = infoStyle; 
                 sheet.mergeCells('A9:H9');
 
@@ -1014,9 +1008,6 @@
                     const rowObj = sheet.addRow([]); 
                     const isSpacer = tr.innerText.trim() === '';
                     
-                    // ----------------------------------------------------
-                    // LÓGICA DE FUNDO CINZA (FOLGA, FÉRIAS, PF)
-                    // ----------------------------------------------------
                     const textContent = tr.innerText.toUpperCase();
                     const shouldGray = textContent.includes('FOLGA') || textContent.includes('FÉRIAS') || textContent.includes('PF') || textContent.includes('FERIADO');
                     
@@ -1032,8 +1023,8 @@
 
                     if (isSignature || isSignatureLine) {
                         if (isSignatureLine) {
-                            sheet.addRow([]); // Subiu uma celula (removido um addRow extra)
-                            const actualRow = sheet.getRow(rowObj.number + 1); // Ajustado índice
+                            sheet.addRow([]);
+                            const actualRow = sheet.getRow(rowObj.number + 1);
                             sheet.mergeCells(actualRow.number, 1, actualRow.number, 4); 
                             sheet.mergeCells(actualRow.number, 6, actualRow.number, 8); 
                             const sLine = { border: { bottom: {style:'medium'} } };
@@ -1044,33 +1035,27 @@
                             sheet.mergeCells(rowObj.number, 6, rowObj.number, 8);
                             const cE = rowObj.getCell(1); cE.value = "Chefia Imediata"; 
                             const cD = rowObj.getCell(6); cD.value = "Secretário/Diretor";
-                            // AUMENTAR FONTE ASSINATURA (ESTAGIARIO)
                             const sText = { alignment: { horizontal: 'center' }, font: { name: 'Arial', size: 12, bold: true } };
                             cE.style = sText; cD.style = sText;
                             for(let k=1;k<=4;k++) rowObj.getCell(k).style = sText;
                             for(let k=6;k<=8;k++) rowObj.getCell(k).style = sText;
                         }
                     } else if (isTotalHoras) {
-                         // Lógica H47 (Sem borda no valor)
                         sheet.mergeCells(rowObj.number, 4, rowObj.number, 6);
                         const cellLabel = rowObj.getCell(4); cellLabel.value = "Total de horas no período:";
                         const labelStyle = { font: { name: 'Arial', size: 10, bold: true }, alignment: { horizontal: 'center', vertical: 'middle' }, border: { top:{style:'thin'}, bottom:{style:'thin'}, left:{style:'thin'}, right:{style:'thin'} } };
                         for(let k=4; k<=6; k++) rowObj.getCell(k).style = labelStyle;
                         
                         const cellVal = rowObj.getCell(7); cellVal.value = ""; 
-                        // TIRA A BORDA (H47 equivalente, aqui col 7 'Total' ou col 8 'Assinatura' dependendo do layout)
-                        // No estagiário Col 7 é Total.
-                        cellVal.style = { border: null }; // REMOVENDO BORDA
+                        cellVal.style = { border: null }; 
                     } else if (isTotalDias) {
-                         // Lógica C49 (Colocar borda na célula vazia entre totais)
                         const boxStyle = { border: { top:{style:'thin'}, bottom:{style:'thin'}, left:{style:'thin'}, right:{style:'thin'} }, font: { name: 'Arial', size: 10, bold: true }, alignment: { vertical: 'middle' } };
                         sheet.mergeCells(rowObj.number, 1, rowObj.number, 2);
                         rowObj.getCell(1).value = "Total de Dias Úteis/mês:"; 
                         for(let k=1; k<=2; k++) rowObj.getCell(k).style = boxStyle;
 
-                        // Célula do meio (C)
                         const cMiddle = rowObj.getCell(3); 
-                        cMiddle.style = boxStyle; // COLOCA BORDA EM C49
+                        cMiddle.style = boxStyle;
 
                         sheet.mergeCells(rowObj.number, 4, rowObj.number, 5);
                         const c2 = rowObj.getCell(4); c2.value = "N° Horas/Dia: 08"; 
@@ -1105,11 +1090,11 @@
                 // ==========================
                 // LÓGICA PARA FUNCIONÁRIOS
                 // ==========================
-                const totalCols = 9; // Aumentado para 9 para incluir Coluna I (Total)
+                const totalCols = 9; 
                 const columns = [];
                 for(let c=0; c<totalCols; c++) {
-                    if (c === 8) columns.push({ width: 0, hidden: true }); // Coluna I oculta (índice 8)
-                    else if (c === 1) columns.push({ width: 16 }); // AUMENTADO (B) para aprox 100px
+                    if (c === 8) columns.push({ width: 0, hidden: true });
+                    else if (c === 1) columns.push({ width: 16 });
                     else columns.push({ width: 10.1 });
                 }
                 sheet.columns = columns;
@@ -1117,18 +1102,16 @@
                 for(let r=1; r<=4; r++) sheet.getRow(r).values = [];
                 if (brasaoImg) {
                     const imageId = workbook.addImage({ base64: brasaoImg, extension: 'png' });
-                    // Imagem não depende da coluna (usando ext para tamanho fixo de 100x100 e tl em A1)
                     sheet.addImage(imageId, { 
                         tl: { col: 0, row: 0 }, 
-                        ext: { width: 110, height: 100 }, // Alterado para 110x100
+                        ext: { width: 110, height: 100 },
                         editAs: 'oneCell' 
                     });
-                    // Reserva espaço mesclando apenas A1:A4
                     sheet.mergeCells('A1:A4'); 
                 } else { sheet.mergeCells('A1:A4'); }
 
                 const headerStyle = { font: { name: 'Arial', bold: true, size: 12 }, alignment: { horizontal: 'center', vertical: 'middle' } };
-                const endColLet = 'I'; // Agora vai até a coluna I
+                const endColLet = 'I'; 
 
                 sheet.mergeCells(`C2:${endColLet}2`); sheet.getCell(`C2`).value = "PREFEITURA MUNICIPAL DE LIMEIRA"; sheet.getCell(`C2`).style = headerStyle;
                 sheet.mergeCells(`C3:${endColLet}3`); sheet.getCell(`C3`).value = "SECRETARIA MUNICIPAL DE FAZENDA"; sheet.getCell(`C3`).style = headerStyle;
@@ -1144,20 +1127,18 @@
                 sheet.getRow(7).values = [];
 
                 const infoStyle = { border: { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} }, font: { name: 'Arial', size: 10 }, alignment: { vertical: 'middle', horizontal: 'left' } };
-                const halfCols = Math.floor(totalCols / 2); // 4
+                const halfCols = Math.floor(totalCols / 2); 
 
                 const rowNome = sheet.getRow(8); rowNome.values = [];
                 const cellNome = rowNome.getCell(1); cellNome.value = `Nome: ${nomeRaw}`; cellNome.style = infoStyle;
                 const cellMat = rowNome.getCell(halfCols + 1); cellMat.value = `Matrícula: ${matriculaRaw}`; cellMat.style = infoStyle;
                 sheet.mergeCells(8, 1, 8, halfCols); sheet.mergeCells(8, halfCols + 1, 8, totalCols);
-                // Garantir borda em tudo
                 for(let k=1; k<=totalCols; k++) rowNome.getCell(k).style = infoStyle;
 
                 const rowSec = sheet.getRow(9); rowSec.values = [`Secretaria: ${secretariaRaw}`];
                 sheet.mergeCells(9, 1, 9, totalCols); 
-                // APLICAR BORDA NA MESCLAGEM SECRETARIA (A9:H9)
                 rowSec.getCell(1).style = infoStyle;
-                for(let k=1; k<=totalCols; k++) rowSec.getCell(k).style = infoStyle; // Reforço
+                for(let k=1; k<=totalCols; k++) rowSec.getCell(k).style = infoStyle;
 
                 const rowFuncao = sheet.getRow(10); rowFuncao.values = [];
                 const cellFuncao = rowFuncao.getCell(1); cellFuncao.value = `Função: `; cellFuncao.style = infoStyle;
@@ -1178,11 +1159,9 @@
                 const headerGridStyle = { font: { name: 'Arial', size: 10 }, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F2F2' } }, border: { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} }, font: { bold: true }, alignment: { horizontal: 'center', vertical: 'middle' } };
                 
                 sheet.mergeCells(14, 1, 15, 1); rowH1.getCell(1).value = 'Dia'; 
-                // Borda em A14:A15
                 rowH1.getCell(1).style = headerGridStyle; rowH2.getCell(1).style = headerGridStyle;
                 
                 sheet.mergeCells(14, 2, 15, 2); rowH1.getCell(2).value = 'Dia da Semana'; 
-                // Borda em B14:B15
                 rowH1.getCell(2).style = headerGridStyle; rowH2.getCell(2).style = headerGridStyle;
                 
                 sheet.mergeCells(14, 3, 14, 4); rowH1.getCell(3).value = '1º PERÍODO'; 
@@ -1200,7 +1179,6 @@
                 rowH2.getCell(7).value = 'Entrada'; rowH2.getCell(7).style = headerGridStyle;
                 rowH2.getCell(8).value = 'Saída'; rowH2.getCell(8).style = headerGridStyle;
 
-                // COLUNA TOTAL (OCULTA)
                 sheet.mergeCells(14, 9, 15, 9); rowH1.getCell(9).value = 'Total';
                 rowH1.getCell(9).style = headerGridStyle; rowH2.getCell(9).style = headerGridStyle;
 
@@ -1217,7 +1195,6 @@
 
                     if (isSignature) {
                         const isLine = tr.querySelector('.footer-signature-line');
-                        // AUMENTAR FONTE ASSINATURA E NEGRITO
                         const sigStyle = isLine ? { border: { bottom: {style:'medium'} } } : { alignment: { horizontal: 'center' }, font: { name: 'Arial', size: 12, bold: true } };
                         const leftVal = isLine ? '' : 'Funcionário';
                         const rightVal = isLine ? '' : 'Responsável';
@@ -1249,26 +1226,22 @@
                         const c1 = rowObj.getCell(1); c1.value = "Total de Dias Úteis/mês:"; 
                         for(let k=1; k<=2; k++) rowObj.getCell(k).style = boxStyle;
 
-                        // C49 - Célula vazia entre totais (Col 3)
                         const cMiddle = rowObj.getCell(3); 
-                        cMiddle.style = boxStyle; // COLOCA BORDA EM C49
+                        cMiddle.style = boxStyle; 
 
                         sheet.mergeCells(rowObj.number, 4, rowObj.number, 5);
                         const c2 = rowObj.getCell(4); c2.value = "N° Horas/Dia: 08"; 
                         for(let k=4; k<=5; k++) rowObj.getCell(k).style = boxStyle;
                         
-                        // Alteração: Mescla de 6 a 8 (F a H)
                         sheet.mergeCells(rowObj.number, 6, rowObj.number, 8);
                         rowObj.getCell(6).value = "Total de horas a trabalhar:"; 
                         for(let k=6; k<=8; k++) rowObj.getCell(k).style = boxStyle;
                     } else if (isTotalHoras) {
-                        // Alteração: Mescla de 6 a 8 (F a H)
                         sheet.mergeCells(rowObj.number, 6, rowObj.number, 8);
                         const cellLabel = rowObj.getCell(6); cellLabel.value = "Total de horas no período:";
                         const labelStyle = { font: { name: 'Arial', bold: true, size: 10 }, alignment: { horizontal: 'center', vertical: 'middle' }, border: { top:{style:'thin'}, bottom:{style:'thin'}, left:{style:'thin'}, right:{style:'thin'} } };
                         for(let k=6; k<=8; k++) rowObj.getCell(k).style = labelStyle;
                         
-                        // O valor vai para a coluna 9 (I) que está oculta
                         const cellVal = rowObj.getCell(9); cellVal.value = ""; 
                         cellVal.style = { border: null }; 
 
@@ -1285,10 +1258,6 @@
                             
                             const cell = rowObj.getCell(currentCellIndex); cell.value = text;
                             if (!isNone) {
-                                
-                                // ----------------------------------------------------
-                                // LÓGICA DE FUNDO CINZA (FOLGA, FÉRIAS, PF)
-                                // ----------------------------------------------------
                                 const textContent = tr.innerText.toUpperCase();
                                 const shouldGray = textContent.includes('FOLGA') || textContent.includes('FÉRIAS') || textContent.includes('PF') || textContent.includes('FERIADO');
 

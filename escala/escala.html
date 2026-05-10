@@ -4,15 +4,14 @@
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Kyro - Gestão de Escala Pro (DnD & Modelos)</title>
-    <link rel="shortcut icon" href="https://placehold.co/32x32/003366/FFFFFF?text=K" type="image/x-icon">
+    <link rel="shortcut icon" href="https://placehold.co/32x32/ea580c/FFFFFF?text=K" type="image/x-icon">
     
-    <!-- Bibliotecas Externas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
     <script>
@@ -21,8 +20,11 @@
                 extend: {
                     fontFamily: { sans: ['Inter', 'sans-serif'] },
                     colors: {
-                        brand: { 50: '#eef2ff', 100: '#e0e7ff', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 900: '#312e81' },
-                        slate: { 850: '#1e293b' }
+                        'kyro-orange': {
+                            500: '#f97316',
+                            600: '#ea580c',
+                            700: '#c2410c',
+                        }
                     }
                 }
             }
@@ -30,278 +32,240 @@
     </script>
 
     <style>
-        /* Estilos Globais */
+        /* Estilos Globais Minimalistas */
         :root {
             --table-font-size: min(1.6vh, 0.75vw); 
             --table-line-height: 1.1;
             --table-cell-padding: 0.2vh;
         }
 
-        body { background-color: #f1f5f9; color: #1e293b; font-size: 0.9rem; overflow: hidden; } 
+        body { background-color: #fafafa; color: #111827; font-size: 0.9rem; overflow: hidden; } 
         
         ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 0px; }
+        ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
 
-        /* Tabela Moderno */
+        /* Tabela Flat */
         .modern-table { 
             width: 100%; 
             height: 100%; 
-            border-collapse: separate; 
-            border-spacing: 0; 
+            border-collapse: collapse; 
             font-size: var(--table-font-size);
             line-height: var(--table-line-height);
             table-layout: fixed; 
         }
         .modern-table th { 
-            background: #f8fafc; color: #64748b; font-weight: 600; text-transform: uppercase; 
-            letter-spacing: 0.05em; padding: 2px; border-bottom: 2px solid #e2e8f0; 
+            background: #f9fafb; color: #4b5563; font-weight: 600; text-transform: uppercase; 
+            letter-spacing: 0.05em; padding: 4px 2px; border-bottom: 1px solid #d1d5db; border-right: 1px solid #e5e7eb;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
             height: 3vh; 
             user-select: none;
         }
         .modern-table td { 
-            border-bottom: 1px solid #e2e8f0; 
+            border-bottom: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;
             padding: 0 2px; 
             text-align: center; white-space: nowrap;
-            transition: all 0.1s; position: relative;
             overflow: hidden; text-overflow: ellipsis;
             height: 1px; 
             cursor: pointer;
         }
-        .modern-table tr:hover td { background-color: #f1f5f9; }
+        .modern-table tr:hover td { background-color: #f3f4f6; }
 
-        /* Estados de Célula */
-        .editable:hover { background-color: #e0e7ff !important; color: #4338ca; font-weight: 600; }
+        /* Estados de Célula Planos */
+        .editable:hover { background-color: #fff7ed !important; color: #ea580c; font-weight: 600; }
         .cursor-troca .editable { cursor: alias !important; }
-        .celula-troca-origem { background-color: #bbf7d0 !important; border: 2px dashed #166534 !important; animation: pulse 1s infinite; }
-        .celula-travada { background-color: #f0fdf4 !important; color: #15803d; font-weight: 600; border: 1px dashed #86efac; }
-        .dia-hoje { background-color: #eff6ff !important; border-left: 3px solid #3b82f6; }
+        .celula-troca-origem { background-color: #ffedd5 !important; border: 1px solid #ea580c !important; }
+        .celula-travada { background-color: #f9fafb !important; color: #6b7280; font-weight: 600; border: 1px solid #d1d5db; }
+        .dia-hoje { background-color: #f3f4f6 !important; border-left: 3px solid #ea580c; }
         
-        .bg-custom-gray { background-color: #e2e8f0 !important; } 
-        .bg-custom-gray-header { background-color: #cbd5e1 !important; color: #1e293b !important; }
-        .bg-custom-gray-group { background-color: #e2e8f0 !important; color: #475569 !important; }
+        .bg-custom-gray { background-color: #f3f4f6 !important; } 
+        .bg-custom-gray-header { background-color: #e5e7eb !important; color: #111827 !important; }
+        .bg-custom-gray-group { background-color: #e5e7eb !important; color: #374151 !important; }
 
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
-        @keyframes syncPulse { 0% { background-color: #dcfce7; } 100% { background-color: transparent; } }
+        .sync-active { background-color: #dcfce7; transition: background-color 1.5s; }
 
-        .sync-active { animation: syncPulse 1.5s ease-out; }
-
-        /* Estilos para Drag and Drop */
+        /* Drag and Drop Minimalista */
         .draggable-item { cursor: grab; }
         .draggable-item:active { cursor: grabbing; }
-        .drag-over { border: 2px dashed #6366f1 !important; background-color: #e0e7ff !important; }
-        .dragging { opacity: 0.5; border: 2px dashed #94a3b8; }
-        .drop-target-group { border: 2px solid #6366f1 !important; }
+        .drag-over { border: 1px dashed #ea580c !important; background-color: #fff7ed !important; }
+        .dragging { opacity: 0.4; border: 1px dashed #9ca3af; }
+        .drop-target-group { border: 1px solid #ea580c !important; }
 
         /* Layout Dinâmico */
         .dashboard-container {
             display: flex;
             height: calc(100vh - 50px);
             overflow: hidden;
-            gap: 10px;
-            padding: 10px;
-            transition: all 0.3s ease;
+            gap: 0px;
+            padding: 0px;
+            border-top: 1px solid #e5e7eb;
         }
 
         .sidebar-left, .sidebar-right {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: width 0.2s ease-in-out;
             overflow: hidden;
-            opacity: 1;
             flex-shrink: 0;
+            background: #ffffff;
         }
         
-        .sidebar-left { width: 300px; } /* Aumentado para caber o resumo expandido */
-        .sidebar-right { width: 280px; }
+        .sidebar-left { width: 300px; border-right: 1px solid #e5e7eb; } 
+        .sidebar-right { width: 280px; border-left: 1px solid #e5e7eb; }
         
-        .sidebar-left.collapsed { width: 0; padding: 0; margin: 0; opacity: 0; pointer-events: none; }
-        .sidebar-right.collapsed { width: 0; padding: 0; margin: 0; opacity: 0; pointer-events: none; }
+        .sidebar-left.collapsed { width: 0; border-width: 0; }
+        .sidebar-right.collapsed { width: 0; border-width: 0; }
 
         .main-panel {
             flex: 1; min-width: 0; display: flex; flex-direction: column;
-            background: white; border-radius: 8px; border: 1px solid #e2e8f0;
-            box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1); height: 100%; 
+            background: white; height: 100%; 
         }
 
-        .panel { background: white; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; overflow: hidden; height: 100%; }
-        .panel-header { padding: 4px 8px; border-bottom: 1px solid #e2e8f0; background: #fff; display: flex; justify-content: space-between; align-items: center; min-height: 36px; }
+        .panel { display: flex; flex-direction: column; overflow: hidden; height: 100%; }
+        .panel-header { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; background: #f9fafb; display: flex; justify-content: space-between; align-items: center; min-height: 40px; }
         .panel-content { padding: 0; overflow-y: auto; flex: 1; }
         
-        .btn { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 4px; font-weight: 500; transition: all 0.2s; font-size: 0.75rem; cursor: pointer; border: 1px solid transparent; }
-        .btn-sm { padding: 2px 6px; font-size: 0.7rem; }
-        .btn-primary { background: #4f46e5; color: white; border-color: #4338ca; }
-        .btn-primary:hover { background: #4338ca; }
-        .btn-secondary { background: white; color: #475569; border-color: #cbd5e1; }
-        .btn-secondary:hover { background: #f8fafc; border-color: #94a3b8; }
-        .btn-ghost { background: transparent; color: #64748b; }
-        .btn-ghost:hover { background: #f1f5f9; color: #334155; }
-        .btn-danger { background: #fee2e2; color: #ef4444; border-color: #fca5a5; }
-        .btn-active { background: #e0e7ff; color: #4338ca; border-color: #6366f1; }
+        /* Botões Flat */
+        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 2px; font-weight: 500; font-size: 0.75rem; cursor: pointer; border: 1px solid transparent; }
+        .btn-sm { padding: 4px 8px; font-size: 0.7rem; }
+        .btn-primary { background: #ea580c; color: white; border-color: #c2410c; }
+        .btn-primary:hover { background: #c2410c; }
+        .btn-secondary { background: #ffffff; color: #374151; border-color: #d1d5db; }
+        .btn-secondary:hover { background: #f9fafb; border-color: #9ca3af; }
+        .btn-ghost { background: transparent; color: #4b5563; }
+        .btn-ghost:hover { background: #f3f4f6; color: #111827; }
+        .btn-danger { background: #dc2626; color: white; border-color: #b91c1c; }
+        .btn-active { background: #fff7ed; color: #ea580c; border-color: #ea580c; }
         
-        .editor-btn { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 4px; color: #475569; cursor: pointer; transition: bg 0.2s; }
-        .editor-btn:hover { background-color: #f1f5f9; color: #1e293b; }
+        .editor-btn { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 2px; color: #4b5563; cursor: pointer; }
+        .editor-btn:hover { background-color: #e5e7eb; color: #111827; }
         
         .valign-top { justify-content: flex-start; }
         .valign-middle { justify-content: center; }
         .valign-bottom { justify-content: flex-end; }
         
-        .modal-backdrop { background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(2px); }
-        .input-std { width: 100%; padding: 4px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.75rem; }
+        .modal-backdrop { background: rgba(0, 0, 0, 0.4); }
+        .input-std { width: 100%; padding: 6px; border: 1px solid #d1d5db; border-radius: 2px; font-size: 0.75rem; background: #ffffff; outline: none; }
+        .input-std:focus { border-color: #ea580c; }
         
         .toggle-sidebar-btn {
-            width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
-            border-radius: 4px; color: #64748b; cursor: pointer; transition: all 0.2s;
+            width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+            border-radius: 2px; color: #6b7280; cursor: pointer;
         }
-        .toggle-sidebar-btn:hover { background: #e2e8f0; color: #1e293b; }
+        .toggle-sidebar-btn:hover { background: #f3f4f6; color: #111827; }
         
-        /* Estilos específicos para o Resumo Expandido */
-        .resumo-table-container {
-            overflow-x: auto;
-        }
-        .resumo-table {
-            border-collapse: collapse;
-            font-size: 9px;
-            width: auto;
-            min-width: 100%;
-        }
-        .resumo-table th, .resumo-table td {
-            padding: 4px 6px;
-            border: 1px solid #f1f5f9;
-            white-space: nowrap;
-            text-align: center;
-        }
+        /* Resumo Flat */
+        .resumo-table-container { overflow-x: auto; }
+        .resumo-table { border-collapse: collapse; font-size: 10px; width: auto; min-width: 100%; }
+        .resumo-table th, .resumo-table td { padding: 6px 8px; border-bottom: 1px solid #f3f4f6; border-right: 1px solid #f3f4f6; white-space: nowrap; text-align: center; }
         .resumo-col-nome {
-            position: sticky;
-            left: 0;
-            background: white;
-            z-index: 10;
-            border-right: 2px solid #e2e8f0;
-            text-align: left;
-            width: 100px;
-            min-width: 100px;
-            max-width: 100px;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            position: sticky; left: 0; background: white; z-index: 10;
+            border-right: 1px solid #d1d5db; text-align: left; width: 120px;
+            min-width: 120px; max-width: 120px; overflow: hidden; text-overflow: ellipsis;
         }
-        .resumo-table thead .resumo-col-nome {
-            background: #f8fafc;
-        }
+        .resumo-table thead .resumo-col-nome { background: #f9fafb; border-bottom: 1px solid #d1d5db; }
+        .resumo-table thead th { border-bottom: 1px solid #d1d5db; background: #f9fafb; }
 
         @media (max-width: 900px) {
-            #mes-select, #ano-input { font-size: 0.7rem; }
-            .btn { padding: 4px 8px; }
+            #mes-select, #ano-input { font-size: 0.75rem; }
+            .btn { padding: 6px 10px; }
         }
     </style>
 </head>
-<body class="flex flex-col h-screen overflow-hidden bg-slate-100">
+<body class="flex flex-col h-screen overflow-hidden bg-white">
 
-    <!-- Header Compacto -->
-    <header class="bg-white border-b border-slate-200 h-[50px] flex-shrink-0 z-30 px-3 flex items-center justify-between shadow-sm">
+    <header class="bg-white h-[50px] flex-shrink-0 z-30 px-4 flex items-center justify-between">
         <div class="flex items-center gap-3">
-            <div class="bg-blue-800 text-white w-7 h-7 rounded flex items-center justify-center font-bold text-sm shadow-sm">P</div>
+            <div class="bg-kyro-orange-600 text-white w-7 h-7 rounded-sm flex items-center justify-center font-bold text-sm">P</div>
             <div class="leading-tight">
                 <div class="flex items-center gap-2">
-                    <h1 class="text-sm font-bold text-slate-800">Prefeitura de Limeira</h1>
-                    <div id="sync-indicator" class="hidden items-center gap-1 bg-green-50 text-green-700 px-1.5 py-0.5 rounded border border-green-200">
-                        <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                        <span class="text-[9px] font-bold">Sincronizado</span>
+                    <h1 class="text-sm font-bold text-gray-900">Prefeitura de Limeira</h1>
+                    <div id="sync-indicator" class="hidden items-center gap-1 bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded-sm border border-gray-200">
+                        <div class="w-1.5 h-1.5 bg-gray-500 rounded-full"></div>
+                        <span class="text-[9px] font-bold uppercase tracking-wider">Sincronizado</span>
                     </div>
                 </div>
-                <p class="text-[9px] text-slate-500">Dívida Ativa</p>
+                <p class="text-[10px] text-gray-500 font-medium">Dívida Ativa</p>
             </div>
         </div>
         
-        <div class="flex items-center gap-1 bg-slate-50 p-0.5 rounded border border-slate-200">
+        <div class="flex items-center gap-1 bg-gray-50 p-1 rounded-sm border border-gray-200">
             <button onclick="toggleSidebar('left')" class="toggle-sidebar-btn" title="Alternar Painel Esquerdo" id="btn-toggle-left">
-                <i class="fas fa-columns"></i>
+                <i class="fas fa-columns text-sm"></i>
             </button>
-            <div class="h-3 w-px bg-slate-300"></div>
-            <span class="text-[9px] font-semibold text-slate-400 px-1 hidden sm:inline">VISUAL</span>
-            <div class="h-3 w-px bg-slate-300 hidden sm:block"></div>
+            <div class="h-4 w-px bg-gray-300 mx-1"></div>
             <button onclick="toggleSidebar('right')" class="toggle-sidebar-btn" title="Alternar Painel Direito" id="btn-toggle-right">
-                <i class="fas fa-cog"></i>
+                <i class="fas fa-cog text-sm"></i>
             </button>
         </div>
 
         <div class="flex items-center gap-2">
-            <button onclick="abrirModalMestre()" class="btn btn-secondary btn-sm text-[10px]">
-                <i class="fas fa-database text-slate-400"></i> <span class="hidden md:inline">Mestre</span>
+            <button onclick="abrirModalMestre()" class="btn btn-secondary btn-sm">
+                <i class="fas fa-database text-gray-500"></i> <span class="hidden md:inline font-semibold">Mestre</span>
             </button>
             
-            <button onclick="exportarBackupMestre()" class="btn btn-secondary btn-sm text-[10px]" title="Salvar Backup dos Funcionários">
-                <i class="fas fa-file-export text-slate-500"></i> <span class="hidden md:inline">Backup</span>
+            <button onclick="exportarBackupMestre()" class="btn btn-secondary btn-sm" title="Salvar Backup dos Funcionários">
+                <i class="fas fa-file-export text-gray-500"></i> <span class="hidden md:inline font-semibold">Backup</span>
             </button>
 
-            <label class="btn btn-secondary btn-sm cursor-pointer text-[10px]" title="Restaurar Backup de Funcionários">
-                <i class="fas fa-file-import text-blue-500"></i> <span class="hidden md:inline">Restaurar</span>
+            <label class="btn btn-secondary btn-sm cursor-pointer" title="Restaurar Backup de Funcionários">
+                <i class="fas fa-file-import text-gray-800"></i> <span class="hidden md:inline font-semibold">Restaurar</span>
                 <input type="file" id="input-importar" class="hidden" accept=".json">
             </label>
         </div>
     </header>
 
-    <!-- Layout Flexível -->
     <div class="dashboard-container" id="dashboard-container">
         
-        <!-- Esquerda: Resumo Detalhado -->
         <aside class="sidebar-left panel" id="sidebar-left">
-            <div class="panel-header bg-slate-50">
-                <span class="font-semibold text-slate-600 text-xs"><i class="fas fa-chart-bar text-brand-500 mr-2"></i>Resumo Detalhado</span>
-                <span class="text-[9px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full font-mono" id="total-dias-badge">0d</span>
+            <div class="panel-header">
+                <span class="font-bold text-gray-800 text-xs tracking-wide"><i class="fas fa-chart-bar text-gray-500 mr-2"></i>RESUMO</span>
+                <span class="text-[9px] bg-gray-200 text-gray-700 px-2 py-1 rounded-sm font-bold tracking-wider" id="total-dias-badge">0 DIAS</span>
             </div>
-            <div class="panel-content resumo-table-container custom-scrollbar">
+            <div class="panel-content resumo-table-container custom-scrollbar bg-white">
                 <table class="resumo-table">
-                    <thead class="bg-slate-50 text-[9px] text-slate-500 sticky top-0 z-20 shadow-sm">
+                    <thead class="text-[9px] text-gray-600 sticky top-0 z-20">
                         <tr id="resumo-header">
-                            <!-- Gerado via JS -->
-                        </tr>
+                            </tr>
                     </thead>
-                    <tbody id="lista-resumo" class="text-[9px] divide-y divide-slate-100 bg-white">
-                        <!-- Gerado via JS -->
-                    </tbody>
+                    <tbody id="lista-resumo" class="text-[10px] bg-white">
+                        </tbody>
                 </table>
             </div>
         </aside>
 
-        <!-- Centro: Tabela -->
-        <main class="main-panel relative flex flex-col" id="painel-central">
-            <!-- Toolbar Principal -->
-            <div class="panel-header flex-wrap gap-2 py-1 flex-shrink-0 border-b border-slate-200" style="min-height: 36px;">
-                <!-- Navegação Meses -->
-                <div class="flex items-center bg-slate-100 rounded p-0.5">
-                    <button id="prev-month" class="w-5 h-5 flex items-center justify-center rounded hover:bg-white hover:shadow-sm text-slate-500"><i class="fas fa-chevron-left text-[9px]"></i></button>
-                    <div class="flex flex-col items-center px-1">
-                        <select id="mes-select" class="text-[10px] font-bold bg-transparent border-none cursor-pointer text-center p-0 outline-none text-slate-700">
+        <main class="main-panel relative flex flex-col border-l border-r border-gray-200" id="painel-central">
+            <div class="panel-header flex-wrap gap-2 py-2 flex-shrink-0">
+                <div class="flex items-center bg-white border border-gray-300 rounded-sm p-0.5">
+                    <button id="prev-month" class="w-6 h-6 flex items-center justify-center hover:bg-gray-100 text-gray-600"><i class="fas fa-chevron-left text-xs"></i></button>
+                    <div class="flex flex-col items-center px-2">
+                        <select id="mes-select" class="text-xs font-bold bg-transparent border-none cursor-pointer text-center p-0 outline-none text-gray-900 uppercase">
                             <option value="0">JAN</option><option value="1">FEV</option><option value="2">MAR</option>
                             <option value="3">ABR</option><option value="4">MAI</option><option value="5">JUN</option>
                             <option value="6">JUL</option><option value="7">AGO</option><option value="8">SET</option>
                             <option value="9">OUT</option><option value="10">NOV</option><option value="11">DEZ</option>
                         </select>
-                        <input type="number" id="ano-input" class="text-[9px] text-slate-400 bg-transparent border-none w-10 text-center p-0 leading-none outline-none" value="2024">
+                        <input type="number" id="ano-input" class="text-[10px] text-gray-500 bg-transparent border-none w-10 text-center p-0 outline-none font-medium" value="2024">
                     </div>
-                    <button id="next-month" class="w-5 h-5 flex items-center justify-center rounded hover:bg-white hover:shadow-sm text-slate-500"><i class="fas fa-chevron-right text-[9px]"></i></button>
+                    <button id="next-month" class="w-6 h-6 flex items-center justify-center hover:bg-gray-100 text-gray-600"><i class="fas fa-chevron-right text-xs"></i></button>
                 </div>
 
-                <div class="h-4 w-px bg-slate-200 mx-1 hidden sm:block"></div>
+                <div class="h-6 w-px bg-gray-200 mx-2 hidden sm:block"></div>
 
-                <!-- Ações -->
-                <button id="gerar-escala-btn" class="btn btn-primary btn-sm shadow-sm"><i class="fas fa-magic"></i> <span class="hidden lg:inline">Gerar</span></button>
-                <button id="embaralhar-btn" class="btn btn-secondary btn-sm" title="Gerar Aleatório"><i class="fas fa-random text-amber-500"></i></button>
-                <button id="btn-troca-rapida" class="btn btn-secondary btn-sm" title="Modo Troca Rápida"><i class="fas fa-exchange-alt text-blue-500"></i></button>
+                <button id="gerar-escala-btn" class="btn btn-primary"><i class="fas fa-bolt"></i> <span class="hidden lg:inline">Gerar Escala</span></button>
+                <button id="embaralhar-btn" class="btn btn-secondary" title="Gerar Aleatório"><i class="fas fa-random text-gray-500"></i></button>
+                <button id="btn-troca-rapida" class="btn btn-secondary" title="Modo Troca Rápida"><i class="fas fa-exchange-alt text-gray-500"></i></button>
 
                 <div class="flex-1"></div>
 
-                <!-- Export -->
                 <div class="relative">
-                    <button id="btn-export-toggle" class="btn btn-secondary btn-sm"><i class="fas fa-download text-slate-500"></i></button>
-                    <div id="export-menu" class="absolute right-0 mt-1 w-32 bg-white border border-slate-200 rounded-lg shadow-xl hidden z-50 py-1">
-                        <button onclick="exportarExcelOriginal()" class="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 text-slate-700 flex items-center gap-2"><i class="fas fa-file-excel text-green-600"></i> Excel</button>
-                        <button onclick="exportarPDFOriginal()" class="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 text-slate-700 flex items-center gap-2"><i class="fas fa-file-pdf text-red-600"></i> PDF</button>
+                    <button id="btn-export-toggle" class="btn btn-secondary font-semibold">Exportar <i class="fas fa-chevron-down text-[10px] ml-1"></i></button>
+                    <div id="export-menu" class="absolute right-0 mt-1 w-32 bg-white border border-gray-200 rounded-sm shadow-sm hidden z-50 py-1">
+                        <button onclick="exportarExcelOriginal()" class="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-gray-800 flex items-center gap-2 font-medium"><i class="fas fa-file-excel text-gray-400"></i> Excel</button>
+                        <button onclick="exportarPDFOriginal()" class="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-gray-800 flex items-center gap-2 font-medium"><i class="fas fa-file-pdf text-gray-400"></i> PDF</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Tabela Container -->
             <div class="flex-1 overflow-hidden relative bg-white flex flex-col">
                 <table class="modern-table" id="tabela-principal">
                     <thead id="tabela-head"></thead>
@@ -309,104 +273,97 @@
                 </table>
             </div>
 
-            <!-- Editor de Observações -->
-            <div class="bg-slate-50 border-t border-slate-200 flex-shrink-0 flex flex-col" style="height: 12vh; min-height: 60px; max-height: 120px;">
-                <div class="px-2 py-0.5 flex items-center justify-between border-b border-slate-200 bg-white" style="min-height: 28px;">
-                    <div class="flex items-center gap-0.5">
-                        <button onclick="execCmd('bold')" class="editor-btn" title="Negrito"><i class="fas fa-bold text-[9px]"></i></button>
-                        <button onclick="execCmd('italic')" class="editor-btn" title="Itálico"><i class="fas fa-italic text-[9px]"></i></button>
-                        <button onclick="execCmd('underline')" class="editor-btn" title="Sublinhado"><i class="fas fa-underline text-[9px]"></i></button>
-                        <div class="h-3 w-px bg-slate-200 mx-1 hidden sm:block"></div>
-                        <button onclick="execCmd('justifyLeft')" class="editor-btn hidden sm:flex" title="Esquerda"><i class="fas fa-align-left text-[9px]"></i></button>
-                        <button onclick="execCmd('justifyCenter')" class="editor-btn hidden sm:flex" title="Centro"><i class="fas fa-align-center text-[9px]"></i></button>
-                        <button onclick="execCmd('justifyRight')" class="editor-btn hidden sm:flex" title="Direita"><i class="fas fa-align-right text-[9px]"></i></button>
-                        <div class="h-3 w-px bg-slate-200 mx-1 hidden sm:block"></div>
-                        <button onclick="setVerticalAlign('top')" class="editor-btn" title="Topo"><i class="fas fa-arrow-up text-[9px]"></i></button>
-                        <button onclick="setVerticalAlign('middle')" class="editor-btn" title="Meio"><i class="fas fa-arrows-alt-v text-[9px]"></i></button>
-                        <button onclick="setVerticalAlign('bottom')" class="editor-btn" title="Base"><i class="fas fa-arrow-down text-[9px]"></i></button>
+            <div class="bg-white border-t border-gray-200 flex-shrink-0 flex flex-col" style="height: 12vh; min-height: 60px; max-height: 120px;">
+                <div class="px-3 py-1 flex items-center justify-between border-b border-gray-100 bg-gray-50">
+                    <div class="flex items-center gap-1">
+                        <button onclick="execCmd('bold')" class="editor-btn" title="Negrito"><i class="fas fa-bold text-[10px]"></i></button>
+                        <button onclick="execCmd('italic')" class="editor-btn" title="Itálico"><i class="fas fa-italic text-[10px]"></i></button>
+                        <button onclick="execCmd('underline')" class="editor-btn" title="Sublinhado"><i class="fas fa-underline text-[10px]"></i></button>
+                        <div class="h-4 w-px bg-gray-300 mx-2 hidden sm:block"></div>
+                        <button onclick="execCmd('justifyLeft')" class="editor-btn hidden sm:flex" title="Esquerda"><i class="fas fa-align-left text-[10px]"></i></button>
+                        <button onclick="execCmd('justifyCenter')" class="editor-btn hidden sm:flex" title="Centro"><i class="fas fa-align-center text-[10px]"></i></button>
+                        <button onclick="execCmd('justifyRight')" class="editor-btn hidden sm:flex" title="Direita"><i class="fas fa-align-right text-[10px]"></i></button>
+                        <div class="h-4 w-px bg-gray-300 mx-2 hidden sm:block"></div>
+                        <button onclick="setVerticalAlign('top')" class="editor-btn" title="Topo"><i class="fas fa-arrow-up text-[10px]"></i></button>
+                        <button onclick="setVerticalAlign('middle')" class="editor-btn" title="Meio"><i class="fas fa-arrows-alt-v text-[10px]"></i></button>
+                        <button onclick="setVerticalAlign('bottom')" class="editor-btn" title="Base"><i class="fas fa-arrow-down text-[10px]"></i></button>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <input type="color" onchange="execCmd('foreColor', this.value)" class="w-3.5 h-3.5 p-0 border-0 bg-transparent cursor-pointer" title="Cor Texto">
-                        <input type="color" onchange="execCmd('hiliteColor', this.value)" value="#ffffff" class="w-3.5 h-3.5 p-0 border-0 bg-transparent cursor-pointer" title="Cor Fundo">
+                    <div class="flex items-center gap-3">
+                        <input type="color" onchange="execCmd('foreColor', this.value)" class="w-4 h-4 p-0 border-0 bg-transparent cursor-pointer" title="Cor Texto">
+                        <input type="color" onchange="execCmd('hiliteColor', this.value)" value="#ffffff" class="w-4 h-4 p-0 border-0 bg-transparent cursor-pointer" title="Cor Fundo">
                     </div>
                 </div>
                 <div id="editor-obs" 
-                     class="flex-1 p-1.5 text-[10px] text-slate-700 focus:outline-none overflow-y-auto bg-white flex flex-col" 
+                     class="flex-1 p-2 text-xs text-gray-800 focus:outline-none overflow-y-auto bg-white flex flex-col" 
                      contenteditable="true" 
                      style="font-family: 'Inter', sans-serif;">
                 </div>
             </div>
         </main>
 
-        <!-- Direita: Configurações -->
         <aside class="sidebar-right panel" id="sidebar-right">
             
-            <!-- MODELOS SALVOS -->
-            <div class="flex-shrink-0 border-b border-slate-200">
-                <div class="panel-header bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors" onclick="toggleSection('sec-modelos')">
-                    <span class="font-semibold text-slate-600 text-[10px] uppercase"><i class="fas fa-save text-blue-400 mr-1"></i>Modelos</span>
-                    <i class="fas fa-chevron-down text-slate-400 text-[10px]"></i>
+            <div class="flex-shrink-0 border-b border-gray-200">
+                <div class="panel-header cursor-pointer hover:bg-gray-100 transition-colors" onclick="toggleSection('sec-modelos')">
+                    <span class="font-bold text-gray-800 text-[10px] tracking-wide"><i class="fas fa-save text-gray-400 mr-2"></i>MODELOS</span>
+                    <i class="fas fa-chevron-down text-gray-400 text-[10px]"></i>
                 </div>
-                <div id="sec-modelos" class="p-2 bg-slate-50 space-y-2">
-                    <div class="flex gap-1">
-                        <input type="text" id="novo-modelo-nome" class="input-std bg-white flex-1" placeholder="Nome do modelo...">
-                        <button onclick="salvarModelo()" class="btn btn-primary btn-sm"><i class="fas fa-save"></i></button>
+                <div id="sec-modelos" class="p-3 bg-white space-y-3">
+                    <div class="flex gap-2">
+                        <input type="text" id="novo-modelo-nome" class="input-std flex-1" placeholder="Nome do modelo...">
+                        <button onclick="salvarModelo()" class="btn btn-secondary font-semibold border-gray-300">Salvar</button>
                     </div>
-                    <div class="pt-1 border-t border-slate-200">
+                    <div class="pt-2 border-t border-gray-100">
                         <div id="lista-modelos" class="space-y-1 max-h-24 overflow-y-auto custom-scrollbar"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Ferramentas Busca -->
-            <div class="p-2 border-b border-slate-100 bg-slate-50">
-                <div class="text-[9px] font-bold text-slate-400 uppercase mb-1">Ferramentas Rápidas</div>
-                <div class="flex items-center gap-2 mb-1">
-                    <select id="busca-func" class="input-std bg-white text-[10px] h-6"></select>
-                    <button onclick="limparDestaques()" class="btn btn-secondary btn-sm h-6 w-6 justify-center" title="Limpar"><i class="fas fa-eraser text-[10px]"></i></button>
+            <div class="p-3 border-b border-gray-200 bg-gray-50">
+                <div class="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-2">Ferramentas Rápidas</div>
+                <div class="flex items-center gap-2 mb-2">
+                    <select id="busca-func" class="input-std h-8 text-xs"></select>
+                    <button onclick="limparDestaques()" class="btn btn-secondary h-8 w-8 justify-center p-0" title="Limpar"><i class="fas fa-eraser text-gray-500"></i></button>
                 </div>
                 <div class="flex gap-2 justify-center">
-                    <button onclick="destacarCor('#fef9c3')" class="w-4 h-4 rounded bg-yellow-200 border border-yellow-300 hover:scale-110 transition-transform"></button>
-                    <button onclick="destacarCor('#dcfce7')" class="w-4 h-4 rounded bg-green-200 border border-green-300 hover:scale-110 transition-transform"></button>
-                    <button onclick="destacarCor('#fee2e2')" class="w-4 h-4 rounded bg-red-200 border border-red-300 hover:scale-110 transition-transform"></button>
+                    <button onclick="destacarCor('#fef08a')" class="w-5 h-5 rounded-sm bg-yellow-200 border border-yellow-400"></button>
+                    <button onclick="destacarCor('#bbf7d0')" class="w-5 h-5 rounded-sm bg-green-200 border border-green-400"></button>
+                    <button onclick="destacarCor('#fecaca')" class="w-5 h-5 rounded-sm bg-red-200 border border-red-400"></button>
                 </div>
             </div>
 
-            <!-- Travar -->
-            <div class="flex-shrink-0 border-b border-slate-200">
-                <div class="panel-header bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors" onclick="toggleSection('sec-travas')">
-                    <span class="font-semibold text-slate-600 text-[10px] uppercase"><i class="fas fa-lock text-slate-400 mr-1"></i>Travas</span>
-                    <i class="fas fa-chevron-down text-slate-400 text-[10px]"></i>
+            <div class="flex-shrink-0 border-b border-gray-200">
+                <div class="panel-header cursor-pointer hover:bg-gray-100 transition-colors" onclick="toggleSection('sec-travas')">
+                    <span class="font-bold text-gray-800 text-[10px] tracking-wide"><i class="fas fa-lock text-gray-400 mr-2"></i>TRAVAS</span>
+                    <i class="fas fa-chevron-down text-gray-400 text-[10px]"></i>
                 </div>
-                <div id="sec-travas" class="p-2 bg-slate-50 space-y-2 hidden">
-                    <div class="space-y-1">
-                        <select id="config-func" class="input-std bg-white text-[10px] py-1"></select>
-                        <select id="config-slot" class="input-std bg-white text-[10px] py-1"></select>
-                        <button onclick="adicionarRegraFixa()" class="w-full btn btn-secondary btn-sm justify-center text-[10px]">
-                            <i class="fas fa-plus text-slate-400 mr-1"></i> Travar
+                <div id="sec-travas" class="p-3 bg-white space-y-3 hidden">
+                    <div class="space-y-2">
+                        <select id="config-func" class="input-std text-xs"></select>
+                        <select id="config-slot" class="input-std text-xs"></select>
+                        <button onclick="adicionarRegraFixa()" class="w-full btn btn-secondary justify-center text-xs font-semibold">
+                            Travar Posição
                         </button>
                     </div>
-                    <div class="pt-1 border-t border-slate-200">
-                        <div class="flex justify-between items-center mb-1">
-                             <span class="text-[9px] font-bold text-slate-400 uppercase">Ativas</span>
-                             <button onclick="limparTodasRegras()" class="text-[9px] text-red-500 hover:text-red-700 font-bold hover:underline">Limpar</button>
+                    <div class="pt-2 border-t border-gray-100">
+                        <div class="flex justify-between items-center mb-2">
+                             <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Ativas</span>
+                             <button onclick="limparTodasRegras()" class="text-[10px] text-red-600 font-bold hover:underline">Limpar</button>
                         </div>
                         <div id="lista-regras" class="space-y-1 max-h-20 overflow-y-auto pr-1 custom-scrollbar"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Estrutura (DnD Atualizado) -->
             <div class="flex-1 overflow-hidden flex flex-col">
-                <div class="panel-header bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors" onclick="toggleSection('sec-estrutura')">
-                    <span class="font-semibold text-slate-600 text-[10px] uppercase"><i class="fas fa-columns text-slate-400 mr-1"></i>Estrutura</span>
-                    <i class="fas fa-chevron-down text-slate-400 text-[10px]"></i>
+                <div class="panel-header cursor-pointer hover:bg-gray-100 transition-colors" onclick="toggleSection('sec-estrutura')">
+                    <span class="font-bold text-gray-800 text-[10px] tracking-wide"><i class="fas fa-columns text-gray-400 mr-2"></i>ESTRUTURA</span>
+                    <i class="fas fa-chevron-down text-gray-400 text-[10px]"></i>
                 </div>
-                <div id="sec-estrutura" class="flex-1 overflow-y-auto p-2 bg-slate-50 space-y-2 custom-scrollbar">
-                    <div class="text-[9px] text-slate-400 text-center italic mb-1"><i class="fas fa-hand-rock mr-1"></i>Arraste para mover grupos ou colunas</div>
-                    <div id="editor-estrutura-lista" class="space-y-2"></div>
-                    <button onclick="adicionarGrupo()" class="w-full btn btn-secondary border-dashed border-slate-300 text-slate-500 text-[10px] justify-center hover:bg-white hover:border-slate-400 hover:text-slate-600">
-                        <i class="fas fa-folder-plus mr-1"></i> Grupo
+                <div id="sec-estrutura" class="flex-1 overflow-y-auto p-3 bg-white space-y-3 custom-scrollbar">
+                    <div id="editor-estrutura-lista" class="space-y-3"></div>
+                    <button onclick="adicionarGrupo()" class="w-full btn btn-secondary border-dashed justify-center text-gray-500 hover:text-gray-900 bg-gray-50 font-semibold text-xs py-2">
+                        + Novo Grupo
                     </button>
                 </div>
             </div>
@@ -414,46 +371,45 @@
 
     </div>
 
-    <!-- Modais (Mantidos) -->
     <div id="modal-edicao" class="fixed inset-0 modal-backdrop hidden flex items-center justify-center z-50">
-        <div class="bg-white p-6 rounded-xl shadow-2xl w-80 animate-in fade-in zoom-in duration-200">
-            <h4 class="font-bold text-slate-800 mb-2">Editar Célula</h4>
-            <select id="modal-select" class="input-std mb-4 hidden"></select>
-            <input type="text" id="modal-input" class="input-std mb-4 hidden" placeholder="Digite o novo valor...">
-            <div class="flex justify-end gap-2">
-                <button onclick="fecharModal()" class="btn btn-secondary">Cancelar</button>
-                <button onclick="salvarEdicaoManual()" class="btn btn-primary">Salvar</button>
+        <div class="bg-white p-6 border border-gray-300 shadow-sm rounded-sm w-80">
+            <h4 class="font-bold text-gray-900 mb-4">Editar Célula</h4>
+            <select id="modal-select" class="input-std mb-6 hidden text-sm py-2"></select>
+            <input type="text" id="modal-input" class="input-std mb-6 hidden text-sm py-2" placeholder="Digite o novo valor...">
+            <div class="flex justify-end gap-3">
+                <button onclick="fecharModal()" class="btn btn-secondary font-medium">Cancelar</button>
+                <button onclick="salvarEdicaoManual()" class="btn btn-primary font-medium">Salvar</button>
             </div>
         </div>
     </div>
 
     <div id="modal-mestre" class="fixed inset-0 modal-backdrop hidden flex items-center justify-center z-50">
-        <div class="bg-white rounded-xl shadow-2xl w-[900px] h-[70vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div class="p-4 border-b flex justify-between items-center bg-slate-50">
-                <h3 class="font-bold text-slate-700 flex items-center gap-2"><i class="fas fa-database text-blue-500"></i> Dados Mestre</h3>
-                <button onclick="document.getElementById('modal-mestre').classList.add('hidden')" class="text-slate-400 hover:text-red-500 w-8 h-8 rounded-full hover:bg-red-50 flex items-center justify-center transition-colors"><i class="fas fa-times"></i></button>
+        <div class="bg-white border border-gray-300 shadow-sm rounded-sm w-[900px] h-[70vh] flex flex-col overflow-hidden">
+            <div class="p-5 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                <h3 class="font-bold text-gray-900 text-lg flex items-center gap-2">Dados Mestre</h3>
+                <button onclick="document.getElementById('modal-mestre').classList.add('hidden')" class="text-gray-400 hover:text-gray-900"><i class="fas fa-times text-lg"></i></button>
             </div>
-            <div class="p-6 overflow-y-auto flex-1 space-y-6 custom-scrollbar">
+            <div class="p-6 overflow-y-auto flex-1 space-y-8 custom-scrollbar">
                 <div>
-                    <h4 class="font-bold text-slate-700 text-sm uppercase tracking-wide mb-3 border-b pb-1">Funcionários</h4>
-                    <table class="w-full text-xs text-left border-collapse border border-slate-200">
-                        <thead class="bg-slate-100 text-slate-600"><tr><th class="p-2 border font-semibold">Nome</th><th class="p-2 border font-semibold">Cargo</th><th class="p-2 border font-semibold">Almoço</th></tr></thead>
-                        <tbody id="mestre-funcs" class="text-slate-600"></tbody>
+                    <h4 class="font-bold text-gray-500 text-xs uppercase tracking-wider mb-3">Funcionários</h4>
+                    <table class="w-full text-sm text-left border-collapse">
+                        <thead class="bg-gray-100 text-gray-600 border-y border-gray-300"><tr><th class="p-2 font-semibold">Nome</th><th class="p-2 font-semibold">Cargo</th><th class="p-2 font-semibold">Almoço</th></tr></thead>
+                        <tbody id="mestre-funcs" class="text-gray-800 divide-y divide-gray-100"></tbody>
                     </table>
                 </div>
-                <div class="grid grid-cols-2 gap-6">
+                <div class="grid grid-cols-2 gap-8">
                     <div>
-                        <h4 class="font-bold text-slate-700 text-sm uppercase tracking-wide mb-3 border-b pb-1">Férias</h4>
-                        <table class="w-full text-xs text-left border-collapse border border-slate-200">
-                            <thead class="bg-slate-100 text-slate-600"><tr><th class="p-2 border font-semibold">Func</th><th class="p-2 border font-semibold">Início</th><th class="p-2 border font-semibold">Fim</th></tr></thead>
-                            <tbody id="mestre-ferias" class="text-slate-600"></tbody>
+                        <h4 class="font-bold text-gray-500 text-xs uppercase tracking-wider mb-3">Férias</h4>
+                        <table class="w-full text-sm text-left border-collapse">
+                            <thead class="bg-gray-100 text-gray-600 border-y border-gray-300"><tr><th class="p-2 font-semibold">Func</th><th class="p-2 font-semibold">Início</th><th class="p-2 font-semibold">Fim</th></tr></thead>
+                            <tbody id="mestre-ferias" class="text-gray-800 divide-y divide-gray-100"></tbody>
                         </table>
                     </div>
                     <div>
-                        <h4 class="font-bold text-slate-700 text-sm uppercase tracking-wide mb-3 border-b pb-1">Feriados</h4>
-                        <table class="w-full text-xs text-left border-collapse border border-slate-200">
-                            <thead class="bg-slate-100 text-slate-600"><tr><th class="p-2 border font-semibold">Data</th><th class="p-2 border font-semibold">Nome</th></tr></thead>
-                            <tbody id="mestre-feriados" class="text-slate-600"></tbody>
+                        <h4 class="font-bold text-gray-500 text-xs uppercase tracking-wider mb-3">Feriados</h4>
+                        <table class="w-full text-sm text-left border-collapse">
+                            <thead class="bg-gray-100 text-gray-600 border-y border-gray-300"><tr><th class="p-2 font-semibold">Data</th><th class="p-2 font-semibold">Nome</th></tr></thead>
+                            <tbody id="mestre-feriados" class="text-gray-800 divide-y divide-gray-100"></tbody>
                         </table>
                     </div>
                 </div>
@@ -561,12 +517,12 @@
             const btn = document.getElementById(`btn-toggle-${side}`);
             if (forceClose || !el.classList.contains('collapsed')) {
                 el.classList.add('collapsed');
-                btn.classList.add('bg-blue-100', 'text-blue-600');
+                btn.classList.add('bg-gray-200', 'text-gray-900');
                 if (side === 'left') appState.ui.leftPanel = false;
                 if (side === 'right') appState.ui.rightPanel = false;
             } else {
                 el.classList.remove('collapsed');
-                btn.classList.remove('bg-blue-100', 'text-blue-600');
+                btn.classList.remove('bg-gray-200', 'text-gray-900');
                 if (side === 'left') appState.ui.leftPanel = true;
                 if (side === 'right') appState.ui.rightPanel = true;
             }
@@ -589,7 +545,7 @@
             const selectFunc = document.getElementById('config-func');
             const selectBusca = document.getElementById('busca-func');
             const selFunc = selectFunc.value; const selBusca = selectBusca.value;
-            selectFunc.innerHTML = '<option value="">Funcinário...</option>';
+            selectFunc.innerHTML = '<option value="">Funcionário...</option>';
             selectBusca.innerHTML = '<option value="">Selecionar...</option>';
             getFuncionariosEscala().forEach(f => {
                 const n = f.apelido || f.nome;
@@ -632,7 +588,6 @@
                 }
             }
 
-            // Carregar Modelos Salvos
             const rawModels = localStorage.getItem(MODELS_DB_KEY);
             appState.models = rawModels ? JSON.parse(rawModels) : [];
             
@@ -679,11 +634,11 @@
             lista.innerHTML = '';
             appState.models.forEach((m, idx) => {
                 lista.innerHTML += `
-                    <div class="flex justify-between items-center bg-white border rounded p-1.5 text-[10px]">
-                        <span class="font-bold text-slate-700 truncate">${m.name}</span>
-                        <div class="flex gap-1">
-                            <button onclick="carregarModelo(${idx})" class="text-blue-500 hover:text-blue-700 font-bold" title="Carregar"><i class="fas fa-upload"></i></button>
-                            <button onclick="excluirModelo(${idx})" class="text-red-400 hover:text-red-600" title="Excluir"><i class="fas fa-trash"></i></button>
+                    <div class="flex justify-between items-center border-b border-gray-100 py-1.5 text-xs">
+                        <span class="font-medium text-gray-800 truncate">${m.name}</span>
+                        <div class="flex gap-2">
+                            <button onclick="carregarModelo(${idx})" class="text-gray-500 hover:text-gray-900" title="Carregar"><i class="fas fa-upload"></i></button>
+                            <button onclick="excluirModelo(${idx})" class="text-red-500 hover:text-red-700" title="Excluir"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>`;
             });
@@ -694,7 +649,6 @@
             const nome = nomeInput.value.trim();
             if(!nome) return alert("Digite um nome para o modelo!");
             
-            // Salva apenas a estrutura (grupos e colunas)
             const modelo = {
                 name: nome,
                 structure: JSON.parse(JSON.stringify(appState.structure))
@@ -710,7 +664,6 @@
         function carregarModelo(idx) {
             if(!confirm("Carregar este modelo substituirá a estrutura atual. Continuar?")) return;
             const modelo = appState.models[idx];
-            // Deep copy para evitar referências
             appState.structure = JSON.parse(JSON.stringify(modelo.structure));
             salvarEstado();
             atualizarUI();
@@ -723,14 +676,12 @@
             renderModelos();
         }
 
-        // --- DRAG AND DROP LOGIC ---
+        // --- DRAG AND DROP ---
         let dragSrcEl = null;
 
         function handleDragStart(e, type, gIdx, cIdx = null) {
-            dragSrcEl = e.target; // Elemento sendo arrastado
+            dragSrcEl = e.target;
             e.target.classList.add('dragging');
-            
-            // Transfere dados
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('type', type);
             e.dataTransfer.setData('gIdx', gIdx);
@@ -740,8 +691,6 @@
         function handleDragOver(e) {
             if (e.preventDefault) e.preventDefault();
             e.dataTransfer.dropEffect = 'move';
-            
-            // Visual feedback
             const target = e.target.closest('.draggable-item') || e.target.closest('.drop-target-group');
             if(target && target !== dragSrcEl) {
                 target.classList.add('drag-over');
@@ -756,44 +705,31 @@
 
         function handleDrop(e, targetType, targetGIdx, targetCIdx = null) {
             if (e.stopPropagation) e.stopPropagation();
-            
-            // Limpa estilos
             document.querySelectorAll('.dragging').forEach(el => el.classList.remove('dragging'));
             document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
 
             const srcType = e.dataTransfer.getData('type');
             const srcGIdx = parseInt(e.dataTransfer.getData('gIdx'));
             
-            // --- GRUPO -> GRUPO ---
             if(srcType === 'group' && targetType === 'group') {
                 if(srcGIdx !== targetGIdx) {
-                    // Remove e insere
                     const item = appState.structure.splice(srcGIdx, 1)[0];
                     appState.structure.splice(targetGIdx, 0, item);
                     salvarEstado(); atualizarUI();
                 }
             }
 
-            // --- COLUNA -> COLUNA (Mesmo grupo ou diferente) ---
             if(srcType === 'col' && targetType === 'col') {
                 const srcCIdx = parseInt(e.dataTransfer.getData('cIdx'));
-                // Se for a mesma coluna, ignora
                 if(srcGIdx === targetGIdx && srcCIdx === targetCIdx) return;
-
                 const item = appState.structure[srcGIdx].cols.splice(srcCIdx, 1)[0];
-                
-                // Ajuste de índice se removeu do mesmo grupo antes do alvo
-                let finalTargetCIdx = targetCIdx;
-                
-                appState.structure[targetGIdx].cols.splice(finalTargetCIdx, 0, item);
+                appState.structure[targetGIdx].cols.splice(targetCIdx, 0, item);
                 salvarEstado(); atualizarUI();
             }
 
-            // --- COLUNA -> GRUPO (Mover para final do grupo) ---
             if(srcType === 'col' && targetType === 'group') {
                 const srcCIdx = parseInt(e.dataTransfer.getData('cIdx'));
-                if(srcGIdx === targetGIdx) return; // Já está no grupo
-
+                if(srcGIdx === targetGIdx) return;
                 const item = appState.structure[srcGIdx].cols.splice(srcCIdx, 1)[0];
                 appState.structure[targetGIdx].cols.push(item);
                 salvarEstado(); atualizarUI();
@@ -808,54 +744,46 @@
 
             appState.structure.forEach((group, gIdx) => {
                 const groupEl = document.createElement('div');
-                groupEl.className = "bg-white border border-slate-200 rounded shadow-sm overflow-hidden drop-target-group";
+                groupEl.className = "bg-white border border-gray-200 rounded-sm overflow-hidden drop-target-group mb-2";
                 
-                // Config Grupo DnD
                 groupEl.setAttribute('draggable', 'true');
                 groupEl.addEventListener('dragstart', (e) => handleDragStart(e, 'group', gIdx));
                 groupEl.addEventListener('dragover', handleDragOver);
                 groupEl.addEventListener('dragleave', handleDragLeave);
                 groupEl.addEventListener('drop', (e) => {
-                     // Verifica se o drop foi direto no header do grupo (para mover coluna para grupo) ou se foi bubble de coluna
-                     if(!e.target.closest('.col-item')) {
-                         handleDrop(e, 'group', gIdx);
-                     }
+                     if(!e.target.closest('.col-item')) handleDrop(e, 'group', gIdx);
                 });
 
-                // --- HEADER DO GRUPO (Criado Explicitamente) ---
                 const headerEl = document.createElement('div');
-                headerEl.className = "bg-slate-100 p-2 flex gap-2 items-center border-b border-slate-200 cursor-grab active:cursor-grabbing";
+                headerEl.className = "bg-gray-50 p-2 flex gap-2 items-center border-b border-gray-200 cursor-grab active:cursor-grabbing";
                 headerEl.innerHTML = `
-                    <i class="fas fa-grip-vertical text-slate-300 text-xs"></i>
-                    <i class="fas fa-folder text-slate-400 text-xs"></i>
+                    <i class="fas fa-grip-vertical text-gray-300 text-xs"></i>
+                    <i class="fas fa-folder text-gray-400 text-xs"></i>
                     <input type="text" value="${group.title}" 
                         onchange="updateGroupTitle(${gIdx}, this.value)"
-                        class="bg-transparent text-xs font-bold text-slate-700 w-full focus:outline-none focus:bg-white focus:ring-1 focus:ring-blue-200 rounded px-1" placeholder="Título do Grupo">
+                        class="bg-transparent text-xs font-bold text-gray-800 w-full focus:outline-none focus:bg-white border border-transparent focus:border-gray-300 rounded-sm px-1" placeholder="Título do Grupo">
                     
                     <button onclick="toggleGroupGray(${gIdx})" 
-                        class="text-[10px] px-1.5 py-0.5 rounded border ${group.grayTitle ? 'bg-slate-500 text-white border-slate-600' : 'bg-white text-slate-300 border-slate-200 hover:border-slate-300'}"
-                        title="Pintar Título do Grupo"><i class="fas fa-fill-drip"></i></button>
+                        class="text-[10px] px-2 py-0.5 rounded-sm border ${group.grayTitle ? 'bg-gray-700 text-white border-gray-800' : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300'}"
+                        title="Pintar Título"><i class="fas fa-fill-drip"></i></button>
 
-                    <button onclick="removerGrupo(${gIdx})" class="text-slate-400 hover:text-red-500"><i class="fas fa-trash-alt text-[10px]"></i></button>
+                    <button onclick="removerGrupo(${gIdx})" class="text-gray-400 hover:text-red-600 px-1"><i class="fas fa-trash-alt text-[10px]"></i></button>
                 `;
                 groupEl.appendChild(headerEl);
 
-                // --- CORPO DO GRUPO (Container das Colunas) ---
                 const bodyEl = document.createElement('div');
-                bodyEl.className = "p-2 space-y-2 group-body";
+                bodyEl.className = "p-2 space-y-1.5";
 
-                // Container interno para colunas
                 const colsContainer = document.createElement('div');
-                colsContainer.className = "space-y-2";
+                colsContainer.className = "space-y-1.5";
                 
                 group.cols.forEach((col, cIdx) => {
                     const colEl = document.createElement('div');
-                    colEl.className = "flex gap-1 items-center draggable-item col-item";
+                    colEl.className = "flex gap-1.5 items-center draggable-item col-item";
                     
-                    // Config Coluna DnD
                     colEl.setAttribute('draggable', 'true');
                     colEl.addEventListener('dragstart', (e) => {
-                        e.stopPropagation(); // Impede arrastar o grupo junto
+                        e.stopPropagation();
                         handleDragStart(e, 'col', gIdx, cIdx);
                     });
                     colEl.addEventListener('dragover', handleDragOver);
@@ -867,40 +795,39 @@
 
                     const isFixo = col.type === 'fixo';
                     const isSystem = col.type === 'system';
-                    let btnClass = 'bg-purple-50 text-purple-600 border-purple-200';
+                    let btnClass = 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50';
                     let btnText = 'SUP';
-                    if(isFixo) { btnClass = 'bg-blue-50 text-blue-600 border-blue-200'; btnText = 'FIXO'; }
-                    if(isSystem) { btnClass = 'bg-slate-200 text-slate-600 border-slate-300 cursor-not-allowed'; btnText = 'SIS'; }
+                    if(isFixo) { btnClass = 'bg-gray-100 text-gray-800 border-gray-300 font-bold hover:bg-gray-200'; btnText = 'FIXO'; }
+                    if(isSystem) { btnClass = 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed'; btnText = 'SIS'; }
 
                     colEl.innerHTML = `
-                        <i class="fas fa-grip-vertical text-slate-300 text-[10px] cursor-grab active:cursor-grabbing"></i>
+                        <i class="fas fa-grip-vertical text-gray-300 text-[10px] cursor-grab active:cursor-grabbing"></i>
                         <input type="text" value="${col.label}" 
                             onchange="updateColLabel(${gIdx}, ${cIdx}, this.value)"
-                            class="input-sm flex-1 w-16 bg-slate-50 border border-slate-200 rounded text-slate-600 focus:bg-white text-[10px]">
+                            class="flex-1 w-16 bg-white border border-gray-200 rounded-sm text-gray-700 text-[10px] px-1.5 py-0.5 focus:border-kyro-orange-500 outline-none">
                         
                         <button onclick="toggleColHeaderGray(${gIdx}, ${cIdx})" 
-                            class="text-[10px] px-1.5 py-0.5 rounded border ${col.grayHeader ? 'bg-slate-600 text-white border-slate-700' : 'bg-white text-slate-300 border-slate-200 hover:border-slate-300'}"
-                            title="Pintar Título"><i class="fas fa-heading"></i></button>
+                            class="text-[10px] px-1.5 py-0.5 rounded-sm border ${col.grayHeader ? 'bg-gray-600 text-white border-gray-700' : 'bg-white text-gray-400 border-gray-200 hover:bg-gray-50'}"
+                            title="Pintar Header"><i class="fas fa-heading"></i></button>
 
                         <button onclick="toggleColBodyGray(${gIdx}, ${cIdx})" 
-                            class="text-[10px] px-1.5 py-0.5 rounded border ${col.grayBody ? 'bg-slate-400 text-white border-slate-500' : 'bg-white text-slate-300 border-slate-200 hover:border-slate-300'}"
+                            class="text-[10px] px-1.5 py-0.5 rounded-sm border ${col.grayBody ? 'bg-gray-400 text-white border-gray-500' : 'bg-white text-gray-400 border-gray-200 hover:bg-gray-50'}"
                             title="Pintar Coluna"><i class="fas fa-fill-drip"></i></button>
 
                         <button onclick="${isSystem ? '' : `toggleColType(${gIdx}, ${cIdx})`}" 
-                            class="text-[8px] px-1 py-0.5 rounded border min-w-[28px] ${btnClass}"
+                            class="text-[9px] px-1.5 py-0.5 rounded-sm border min-w-[32px] ${btnClass}"
                             title="Alternar Tipo">${btnText}</button>
                         
-                        <button onclick="removerColuna(${gIdx}, ${cIdx})" class="text-slate-300 hover:text-red-500 px-1"><i class="fas fa-times"></i></button>
+                        <button onclick="removerColuna(${gIdx}, ${cIdx})" class="text-gray-300 hover:text-red-500 px-1"><i class="fas fa-times"></i></button>
                     `;
                     colsContainer.appendChild(colEl);
                 });
 
                 bodyEl.appendChild(colsContainer);
 
-                // Botão Add Coluna
                 const addBtn = document.createElement('button');
-                addBtn.className = "w-full mt-1 text-[10px] text-slate-400 hover:text-brand-600 hover:bg-slate-50 py-1 rounded border border-transparent hover:border-slate-200 border-dashed transition-all";
-                addBtn.innerHTML = '<i class="fas fa-plus mr-1"></i> Adicionar Coluna';
+                addBtn.className = "w-full mt-1.5 text-[10px] text-gray-500 hover:text-gray-800 bg-gray-50 py-1 rounded-sm border border-gray-200 transition-colors";
+                addBtn.innerHTML = '+ Adicionar Coluna';
                 addBtn.onclick = () => adicionarColuna(gIdx);
                 bodyEl.appendChild(addBtn);
 
@@ -963,7 +890,7 @@
         function adicionarGrupo() { appState.structure.push({ title: "NOVO GRUPO", grayTitle: false, cols: [] }); salvarEstado(); atualizarUI(); }
         function adicionarColuna(gIdx) { const key = 'col_' + Date.now() + Math.floor(Math.random()*1000); appState.structure[gIdx].cols.push({ key: key, label: "Nova", type: 'suplente', grayHeader: false, grayBody: false }); salvarEstado(); atualizarUI(); }
         
-        // --- GERAÇÃO COM BALANCEAMENTO POR COLUNA E CHECAGEM DE FÉRIAS NAS REGRAS ---
+        // --- GERAÇÃO DE ESCALA ---
         function gerarEscala(embaralhar) {
             const mes = appState.mes; const ano = appState.ano; const diasNoMes = new Date(ano, mes + 1, 0).getDate(); 
             const feriadosStr = masterData.feriados.map(f => f.data); 
@@ -974,7 +901,6 @@
             const flatCols = getFlatColumns(); 
             const slotsKeys = flatCols.filter(c => c.type !== 'system').map(c => c.key); 
             
-            // Inicializar estatísticas (total e POR COLUNA)
             const stats = {}; 
             const colStats = {};
             
@@ -989,12 +915,8 @@
             let senhaIdx = 0; 
             const poolSenha = masterData.funcionarios.filter(f => f.tipo === 'escala' && f.categoria === 'Funcionário da Senha'); 
             
-            // Seed para aleatoriedade determinística se embaralhar for false
             let randomSeed = 12345;
-            const pseudoRandom = () => {
-                randomSeed = (randomSeed * 9301 + 49297) % 233280;
-                return randomSeed / 233280;
-            };
+            const pseudoRandom = () => { randomSeed = (randomSeed * 9301 + 49297) % 233280; return randomSeed / 233280; };
             const getRandom = () => embaralhar ? Math.random() : pseudoRandom();
 
             for(let d=1; d<=diasNoMes; d++) {
@@ -1012,13 +934,11 @@
                     senhaIdx = (senhaIdx + 1) % poolSenha.length; 
                 }
                 
-                // 1. Aplicar regras fixas com checagem de férias
                 const escaladosNoDia = new Set();
                 const slotsOcupados = new Set();
                 
                 appState.regrasFixas.forEach(r => { 
                     if(slotsKeys.includes(r.slot)) { 
-                        // Verifica se o funcionário da trava está de férias hoje
                         const funcObj = masterData.funcionarios.find(f => (f.apelido || f.nome) === r.func);
                         let emFerias = false;
                         if (funcObj) {
@@ -1029,22 +949,17 @@
                                 return dataObj >= ini && dataObj <= fim; 
                             });
                         }
-
-                        // O slot sempre fica reservado para esta trava, impedindo que outros o ocupem
                         slotsOcupados.add(r.slot);
-
-                        // Só preenche o nome se não estiver de férias. Se estiver, fica vazio.
                         if (!emFerias) {
                             linha[r.slot] = r.func; 
                             escaladosNoDia.add(r.func); 
                             atualizarStats(r.func, r.slot, stats, colStats); 
                         } else {
-                            linha[r.slot] = ''; // Mantém a célula vazia durante as férias
+                            linha[r.slot] = '';
                         }
                     } 
                 });
                 
-                // 2. Identificar slots vazios e candidatos disponíveis
                 const slotsLivres = slotsKeys.filter(s => !slotsOcupados.has(s));
                 const diaAnterior = novaEscala.length > 0 ? novaEscala[novaEscala.length - 1] : null;
                 
@@ -1060,7 +975,6 @@
                     return !emFerias; 
                 });
 
-                // 3. Gerar todas as combinações possíveis (Candidato, Slot) com Score
                 const opcoes = [];
                 
                 candidatosDisponiveis.forEach(cand => {
@@ -1068,30 +982,18 @@
                     slotsLivres.forEach(slot => {
                         const countSlot = colStats[nome][slot] || 0;
                         const countTotal = stats[nome].total || 0;
-                        
                         let penalty = 0;
-                        if (diaAnterior && diaAnterior[slot] === nome) {
-                            penalty = 100000;
-                        }
-                        
+                        if (diaAnterior && diaAnterior[slot] === nome) penalty = 100000;
                         const score = penalty + (countSlot * 1000) + countTotal;
-                        
-                        opcoes.push({
-                            nome: nome,
-                            slot: slot,
-                            score: score,
-                            rand: getRandom()
-                        });
+                        opcoes.push({ nome: nome, slot: slot, score: score, rand: getRandom() });
                     });
                 });
 
-                // 4. Ordenar opções pelo menor Score
                 opcoes.sort((a, b) => {
                     if (a.score !== b.score) return a.score - b.score;
                     return a.rand - b.rand;
                 });
 
-                // 5. Atribuir greedy (Melhor score primeiro)
                 const assignedSlots = new Set();
                 const assignedPeople = new Set();
 
@@ -1124,63 +1026,50 @@
         function atualizarUI() { renderEditorEstrutura(); renderModelos(); renderTabela(); renderResumo(); renderRegras(); carregarObservacaoAtual(); aplicarEstadoUI(); }
         
         function renderTabela() {
-            const thead = document.getElementById('tabela-head'); let h1 = `<tr>`; appState.structure.forEach(g => { if(g.cols.length > 0) { let bgClass = "bg-slate-200 text-slate-600"; if (g.title === "DADOS") bgClass = "bg-slate-100 text-slate-600"; if (g.grayTitle) bgClass = "bg-custom-gray-group"; h1 += `<th class="${bgClass} border-l border-slate-300 text-center text-xs font-bold" colspan="${g.cols.length}">${g.title}</th>`; } }); h1 += `</tr>`;
-            let h2 = `<tr class="text-xs">`; appState.structure.forEach(g => { g.cols.forEach((c, idx) => { const border = idx === 0 ? 'border-l border-slate-300' : ''; let color = 'text-slate-600'; if(c.type === 'fixo') color = 'text-blue-600'; if(c.type === 'suplente') color = 'text-purple-600'; const headerClass = c.grayHeader ? 'bg-custom-gray-header' : ''; h2 += `<th class="top-[38px] z-[9] ${border} ${color} ${headerClass}">${c.label}</th>`; }); }); h2 += `</tr>`; thead.innerHTML = h1 + h2;
-            const tbody = document.getElementById('tabela-escala'); tbody.innerHTML = ''; const dias = appState.escala.filter(l => l.data.getMonth() === appState.mes && l.data.getFullYear() === appState.ano); const hoje = new Date(); document.getElementById('total-dias-badge').innerText = `${dias.length} dias letivos`;
+            const thead = document.getElementById('tabela-head'); let h1 = `<tr>`; appState.structure.forEach(g => { if(g.cols.length > 0) { let bgClass = "bg-gray-100 text-gray-700"; if (g.grayTitle) bgClass = "bg-custom-gray-group"; h1 += `<th class="${bgClass} text-center text-[10px] font-bold" colspan="${g.cols.length}">${g.title}</th>`; } }); h1 += `</tr>`;
+            let h2 = `<tr class="text-[10px]">`; appState.structure.forEach(g => { g.cols.forEach((c, idx) => { let color = 'text-gray-600 font-medium'; if(c.type === 'fixo') color = 'text-gray-900 font-bold'; const headerClass = c.grayHeader ? 'bg-custom-gray-header' : ''; h2 += `<th class="top-[38px] z-[9] ${color} ${headerClass}">${c.label}</th>`; }); }); h2 += `</tr>`; thead.innerHTML = h1 + h2;
+            const tbody = document.getElementById('tabela-escala'); tbody.innerHTML = ''; const dias = appState.escala.filter(l => l.data.getMonth() === appState.mes && l.data.getFullYear() === appState.ano); const hoje = new Date(); document.getElementById('total-dias-badge').innerText = `${dias.length} DIAS`;
             dias.forEach((linha, idx) => {
                 const tr = document.createElement('tr'); if(linha.data.getDate() === hoje.getDate() && linha.data.getMonth() === hoje.getMonth()) tr.classList.add('dia-hoje'); let html = ``;
-                appState.structure.forEach(g => { g.cols.forEach((c, cIdx) => { let val = linha[c.key] || ''; if(c.key === 'dataLabel' && !val) val = linha.data.toLocaleDateString('pt-BR'); if(c.key === 'semLabel' && !val) val = linha.diaSemana.toLocaleDateString('pt-BR', {weekday: 'short'}).toUpperCase(); if(c.key === 'senha' && !val) val = linha.senha || '-'; const isLocked = appState.regrasFixas.some(r => r.func === val && r.slot === c.key); const bgDest = appState.destaques[val] ? `style="background-color: ${appState.destaques[val]} !important"` : ''; const lockedClass = isLocked ? 'celula-travada' : ''; const borderL = cIdx === 0 ? 'border-l border-slate-300' : ''; let extraClass = ''; if(c.type === 'system') extraClass += ' font-medium bg-slate-50 text-slate-600'; if(c.grayBody) extraClass += ' coluna-cinza'; html += `<td class="editable ${lockedClass} ${borderL} ${extraClass}" ${bgDest} data-idx="${idx}" data-key="${c.key}">${val || '<span class="text-slate-200">-</span>'}</td>`; }); });
+                appState.structure.forEach(g => { g.cols.forEach((c, cIdx) => { let val = linha[c.key] || ''; if(c.key === 'dataLabel' && !val) val = linha.data.toLocaleDateString('pt-BR'); if(c.key === 'semLabel' && !val) val = linha.diaSemana.toLocaleDateString('pt-BR', {weekday: 'short'}).toUpperCase(); if(c.key === 'senha' && !val) val = linha.senha || '-'; const isLocked = appState.regrasFixas.some(r => r.func === val && r.slot === c.key); const bgDest = appState.destaques[val] ? `style="background-color: ${appState.destaques[val]} !important"` : ''; const lockedClass = isLocked ? 'celula-travada' : ''; let extraClass = ''; if(c.type === 'system') extraClass += ' font-semibold bg-gray-50 text-gray-500'; if(c.grayBody) extraClass += ' bg-custom-gray'; html += `<td class="editable ${lockedClass} ${extraClass}" ${bgDest} data-idx="${idx}" data-key="${c.key}">${val || '<span class="text-gray-300">-</span>'}</td>`; }); });
                 tr.innerHTML = html; tbody.appendChild(tr);
             });
         }
 
         function getFlatColumns() { 
             const cols = []; 
-            if(appState.structure) {
-                appState.structure.forEach(g => { 
-                    if(g.cols) g.cols.forEach(c => cols.push(c)); 
-                }); 
-            }
+            if(appState.structure) { appState.structure.forEach(g => { if(g.cols) g.cols.forEach(c => cols.push(c)); }); }
             return cols; 
         }
 
-        // --- RESUMO ATUALIZADO (ORDEM SOLICITADA) ---
+        // --- RESUMO ---
         function renderResumo() {
             const headerRow = document.getElementById('resumo-header');
             const tbody = document.getElementById('lista-resumo');
             if(!headerRow || !tbody) return;
             
-            headerRow.innerHTML = '';
-            tbody.innerHTML = '';
+            headerRow.innerHTML = ''; tbody.innerHTML = '';
 
             const flatCols = getFlatColumns().filter(c => c.type !== 'system');
-            
-            // ORDENAÇÃO: Fixos -> Suplentes -> Outros
             const colsFixos = flatCols.filter(c => c.type === 'fixo');
             const colsSuplentes = flatCols.filter(c => c.type === 'suplente');
             const colsOutros = flatCols.filter(c => c.type !== 'fixo' && c.type !== 'suplente');
-            
             const sortedCols = [...colsFixos, ...colsSuplentes, ...colsOutros];
             
-            // Gerar Cabeçalho
-            let headerHTML = `<th class="resumo-col-nome font-semibold text-slate-600 p-1.5">Nome</th>`;
+            let headerHTML = `<th class="resumo-col-nome font-semibold text-gray-700 p-1.5">NOME</th>`;
             
             sortedCols.forEach(c => {
                 let label = c.label || '';
                 let shortLabel = label.substring(0, 3).toUpperCase();
-                let colorClass = 'text-gray-500';
-                if(c.type === 'fixo') colorClass = 'text-blue-600 bg-blue-50/50';
-                else if(c.type === 'suplente') colorClass = 'text-purple-600 bg-purple-50/50';
+                let colorClass = 'text-gray-500 bg-white';
+                if(c.type === 'fixo') colorClass = 'text-gray-900 bg-gray-100';
                 
-                headerHTML += `<th class="p-1.5 font-semibold ${colorClass} border-r border-slate-100" title="${label}">${shortLabel}</th>`;
+                headerHTML += `<th class="p-1.5 font-bold ${colorClass}" title="${label}">${shortLabel}</th>`;
             });
 
-            // Coluna Total NO FINAL
-            headerHTML += `<th class="p-1.5 font-bold text-slate-700 bg-slate-100 border-x border-slate-200">T</th>`;
-
+            headerHTML += `<th class="p-1.5 font-bold text-gray-900 bg-gray-200">T</th>`;
             headerRow.innerHTML = headerHTML;
 
-            // Calcular Stats
             const stats = {}; 
             getFuncionariosEscala().forEach(f => {
                 const nome = f.apelido || f.nome;
@@ -1199,24 +1088,20 @@
                 }); 
             });
 
-            // Ordenar por nome
             const nomesOrdenados = Object.keys(stats).sort();
 
-            // Renderizar Linhas
             nomesOrdenados.forEach(n => {
                 const s = stats[n];
-                
-                let rowHTML = `<tr class="hover:bg-slate-50 transition-colors">`;
-                rowHTML += `<td class="resumo-col-nome font-medium text-slate-700 p-1 truncate" title="${n}">${n}</td>`;
+                let rowHTML = `<tr class="hover:bg-gray-50">`;
+                rowHTML += `<td class="resumo-col-nome font-medium text-gray-800 p-1 truncate" title="${n}">${n}</td>`;
 
                 sortedCols.forEach(c => {
                     const count = s[c.key];
-                    const valClass = count > 0 ? 'text-slate-700 font-semibold' : 'text-slate-300';
-                    rowHTML += `<td class="p-1 text-center ${valClass} border-r border-slate-100">${count}</td>`;
+                    const valClass = count > 0 ? 'text-gray-900 font-semibold' : 'text-gray-300';
+                    rowHTML += `<td class="p-1 text-center ${valClass}">${count}</td>`;
                 });
 
-                rowHTML += `<td class="p-1 text-center font-bold text-slate-800 bg-slate-100 border-x border-slate-200">${s.total}</td>`;
-
+                rowHTML += `<td class="p-1 text-center font-bold text-gray-900 bg-gray-100">${s.total}</td>`;
                 rowHTML += `</tr>`;
                 tbody.innerHTML += rowHTML;
             });
@@ -1224,8 +1109,6 @@
 
         function getFuncionariosEscala() { return masterData.funcionarios.filter(f => f.tipo === 'escala' && f.categoria !== 'Funcionário da Senha').sort((a,b) => (a.apelido||a.nome).localeCompare(b.apelido||b.nome)); }
         function mudarMes(d) { let n = appState.mes + d; if(n > 11) { appState.mes = 0; appState.ano++; } else if(n < 0) { appState.mes = 11; appState.ano--; } else { appState.mes = n; } document.getElementById('mes-select').value = appState.mes; document.getElementById('ano-input').value = appState.ano; atualizarUI(); }
-        
-        // --- FUNÇÕES DE IMPORTAÇÃO E EXPORTAÇÃO ---
         
         function importarDados(e) { 
             const f = e.target.files[0]; 
@@ -1238,27 +1121,21 @@
                         localStorage.setItem(MASTER_DB_KEY, JSON.stringify(j)); 
                         masterData = j; 
                         atualizarUI(); 
-                        alert("Dados Mestre (Funcionários) Importados com Sucesso!"); 
-                    } else {
-                        alert("Arquivo inválido: Não contem lista de funcionários.");
-                    }
-                } catch(e) { 
-                    alert("Erro ao ler arquivo JSON."); 
-                }
+                        alert("Dados Importados com Sucesso!"); 
+                    } else { alert("Arquivo inválido."); }
+                } catch(e) { alert("Erro ao ler arquivo."); }
             }; 
             r.readAsText(f); 
         }
 
-        // Nova função para criar backup do Mestre
         function exportarBackupMestre() {
             const rawMaster = localStorage.getItem(MASTER_DB_KEY);
-            if (!rawMaster) return alert("Não há dados de funcionários para exportar.");
-            
+            if (!rawMaster) return alert("Não há dados para exportar.");
             const blob = new Blob([rawMaster], {type: "application/json;charset=utf-8"});
             saveAs(blob, "backup_funcionarios_limeira.json");
         }
 
-        function renderRegras() { const div = document.getElementById('lista-regras'); div.innerHTML = ''; appState.regrasFixas.forEach((r, idx) => { const col = getFlatColumns().find(c => c.key === r.slot); const colLabel = col ? col.label : r.slot; div.innerHTML += `<div class="flex justify-between items-center bg-white p-1.5 border rounded text-[10px]"><span class="truncate max-w-[140px]"><b>${r.func}</b> <i class="fas fa-arrow-right mx-1 text-slate-300"></i> ${colLabel}</span><button onclick="removerRegra(${idx})" class="text-red-400 hover:text-red-600 px-1"><i class="fas fa-times"></i></button></div>`; }); }
+        function renderRegras() { const div = document.getElementById('lista-regras'); div.innerHTML = ''; appState.regrasFixas.forEach((r, idx) => { const col = getFlatColumns().find(c => c.key === r.slot); const colLabel = col ? col.label : r.slot; div.innerHTML += `<div class="flex justify-between items-center py-1 border-b border-gray-100 text-[10px]"><span class="truncate max-w-[140px] text-gray-700"><b>${r.func}</b> <span class="text-gray-400 mx-1">/</span> ${colLabel}</span><button onclick="removerRegra(${idx})" class="text-red-500 hover:text-red-700 px-1"><i class="fas fa-times"></i></button></div>`; }); }
         function removerRegra(idx) { appState.regrasFixas.splice(idx, 1); salvarEstado(); atualizarUI(); }
         function adicionarRegraFixa() { const func = document.getElementById('config-func').value; const slot = document.getElementById('config-slot').value; if(!func || !slot) return; appState.regrasFixas = appState.regrasFixas.filter(r => !(r.func === func || r.slot === slot)); appState.regrasFixas.push({ func, slot }); salvarEstado(); atualizarUI(); }
         function limparTodasRegras() { if(confirm('Limpar todas as regras?')) { appState.regrasFixas = []; salvarEstado(); atualizarUI(); } }
@@ -1266,42 +1143,10 @@
         function limparDestaques() { appState.destaques = {}; salvarEstado(); atualizarUI(); }
         function toggleTrocaRapida() { modoTrocaRapida = !modoTrocaRapida; const btn = document.getElementById('btn-troca-rapida'); const p = document.getElementById('painel-central'); trocaOrigem = null; document.querySelectorAll('.celula-troca-origem').forEach(el => el.classList.remove('celula-troca-origem')); if(modoTrocaRapida) { btn.classList.add('btn-active'); p.classList.add('cursor-troca'); } else { btn.classList.remove('btn-active'); p.classList.remove('cursor-troca'); } }
         function handleTroca(cell) { if(!trocaOrigem) { trocaOrigem = { idx: cell.dataset.idx, key: cell.dataset.key, el: cell }; cell.classList.add('celula-troca-origem'); } else { const dest = { idx: cell.dataset.idx, key: cell.dataset.key }; const v1 = appState.escala[trocaOrigem.idx][trocaOrigem.key]; const v2 = appState.escala[dest.idx][dest.key]; appState.escala[trocaOrigem.idx][trocaOrigem.key] = v2; appState.escala[dest.idx][dest.key] = v1; trocaOrigem.el.classList.remove('celula-troca-origem'); trocaOrigem = null; toggleTrocaRapida(); salvarEstado(); atualizarUI(); } }
-        function abrirModalMestre() { const funcBody = document.getElementById('mestre-funcs'); funcBody.innerHTML = ''; masterData.funcionarios.forEach(f => { const almoco = (f.saida1 && f.entrada2) ? `${f.saida1} - ${f.entrada2}` : '-'; funcBody.innerHTML += `<tr><td class="p-1 border">${f.apelido||f.nome}</td><td class="p-1 border">${f.cargo}</td><td class="p-1 border">${almoco}</td></tr>`; }); const feriasBody = document.getElementById('mestre-ferias'); feriasBody.innerHTML = ''; masterData.ferias.forEach(f => { feriasBody.innerHTML += `<tr><td class="p-1 border">${f.funcionario}</td><td class="p-1 border">${f.inicio}</td><td class="p-1 border">${f.fim}</td></tr>`; }); const feriadosBody = document.getElementById('mestre-feriados'); feriadosBody.innerHTML = ''; masterData.feriados.forEach(f => { feriadosBody.innerHTML += `<tr><td class="p-1 border">${f.data}</td><td class="p-1 border">${f.nome}</td></tr>`; }); document.getElementById('modal-mestre').classList.remove('hidden'); }
+        function abrirModalMestre() { const funcBody = document.getElementById('mestre-funcs'); funcBody.innerHTML = ''; masterData.funcionarios.forEach(f => { const almoco = (f.saida1 && f.entrada2) ? `${f.saida1} - ${f.entrada2}` : '-'; funcBody.innerHTML += `<tr><td class="p-2 border-b border-gray-100">${f.apelido||f.nome}</td><td class="p-2 border-b border-gray-100">${f.cargo}</td><td class="p-2 border-b border-gray-100">${almoco}</td></tr>`; }); const feriasBody = document.getElementById('mestre-ferias'); feriasBody.innerHTML = ''; masterData.ferias.forEach(f => { feriasBody.innerHTML += `<tr><td class="p-2 border-b border-gray-100">${f.funcionario}</td><td class="p-2 border-b border-gray-100">${f.inicio}</td><td class="p-2 border-b border-gray-100">${f.fim}</td></tr>`; }); const feriadosBody = document.getElementById('mestre-feriados'); feriadosBody.innerHTML = ''; masterData.feriados.forEach(f => { feriadosBody.innerHTML += `<tr><td class="p-2 border-b border-gray-100">${f.data}</td><td class="p-2 border-b border-gray-100">${f.nome}</td></tr>`; }); document.getElementById('modal-mestre').classList.remove('hidden'); }
         function abrirModal(idx, key) { editando = { idx, key }; const linha = appState.escala[idx]; const modalSelect = document.getElementById('modal-select'); const modalInput = document.getElementById('modal-input'); modalSelect.classList.add('hidden'); modalInput.classList.add('hidden'); let valorAtual = linha[key]; if(key === 'dataLabel' && !valorAtual) valorAtual = linha.data.toLocaleDateString('pt-BR'); if(key === 'semLabel' && !valorAtual) valorAtual = linha.diaSemana.toLocaleDateString('pt-BR', {weekday: 'short'}).toUpperCase(); if(key === 'senha' && !valorAtual) valorAtual = linha.senha; const isSystemCol = key === 'dataLabel' || key === 'semLabel'; if (isSystemCol) { modalInput.value = valorAtual || ''; modalInput.classList.remove('hidden'); } else { modalSelect.innerHTML = '<option value="">(Vazio)</option>'; let list = []; if(key === 'senha') { list = masterData.funcionarios.map(f => (f.apelido || f.nome)); } else { list = getFuncionariosEscala().map(f => (f.apelido || f.nome)); } list.sort(); list.forEach(nome => { const opt = new Option(nome, nome); if(nome === valorAtual) opt.selected = true; modalSelect.add(opt); }); modalSelect.classList.remove('hidden'); } document.getElementById('modal-edicao').classList.remove('hidden'); }
         function salvarEdicaoManual() { if(!editando) return; const modalSelect = document.getElementById('modal-select'); const modalInput = document.getElementById('modal-input'); let novoValor = !modalSelect.classList.contains('hidden') ? modalSelect.value : modalInput.value; appState.escala[editando.idx][editando.key] = novoValor; salvarEstado(); atualizarUI(); fecharModal(); }
         function fecharModal() { document.getElementById('modal-edicao').classList.add('hidden'); editando = null; }
-        function parseHtmlToExcelRichText(rootNode) {
-            const results = [];
-            function traverse(node, style) {
-                if (node.nodeType === Node.TEXT_NODE) {
-                    const text = node.textContent;
-                    if (text) {
-                        const fontStyle = { ...style, size: 10, name: 'Calibri' };
-                        if (!fontStyle.color) delete fontStyle.color; 
-                        results.push({ text: text, font: fontStyle });
-                    }
-                } else if (node.nodeType === Node.ELEMENT_NODE) {
-                    const newStyle = { ...style };
-                    const computed = window.getComputedStyle(node);
-                    const tagName = node.tagName.toUpperCase();
-                    if (tagName === 'B' || tagName === 'STRONG' || parseInt(computed.fontWeight) >= 700) newStyle.bold = true;
-                    if (tagName === 'I' || tagName === 'EM' || computed.fontStyle === 'italic') newStyle.italic = true;
-                    if (tagName === 'U' || computed.textDecorationLine.includes('underline')) newStyle.underline = true;
-                    let color = node.style.color || computed.color;
-                    if (color && color !== 'rgb(0, 0, 0)' && color !== 'rgba(0, 0, 0, 0)') {
-                         const hex = rgbToHex(color);
-                         if (hex) newStyle.color = { argb: 'FF' + hex.replace('#', '') };
-                    }
-                    const isBlock = ['DIV', 'P', 'LI', 'BR'].includes(tagName);
-                    if (tagName === 'BR') { results.push({ text: '\n', font: { size: 10, name: 'Calibri' } }); }
-                    if (isBlock && results.length > 0 && !results[results.length-1].text.endsWith('\n') && tagName !== 'BR') { results.push({ text: '\n', font: { size: 10, name: 'Calibri' } }); }
-                    node.childNodes.forEach(child => traverse(child, newStyle));
-                }
-            }
-            traverse(rootNode, {});
-            return results;
-        }
-        function rgbToHex(rgb) { if (!rgb) return null; if (rgb.startsWith('#')) return rgb; const sep = rgb.indexOf(",") > -1 ? "," : " "; const parts = rgb.substr(4).split(")")[0].split(sep); if(parts.length < 3) return null; let r = (+parts[0]).toString(16), g = (+parts[1]).toString(16), b = (+parts[2]).toString(16); if (r.length == 1) r = "0" + r; if (g.length == 1) g = "0" + g; if (b.length == 1) b = "0" + b; return "#" + r + g + b; }
         
         async function exportarExcelOriginal() {
             if (appState.escala.length === 0) return alert("Gere a escala primeiro.");
@@ -1350,7 +1195,6 @@
                 headStyles: { fillColor: [200, 200, 200], textColor: [0, 0, 0] }
             });
 
-            // Extrair texto limpo para as observações
             const editorEl = document.getElementById('editor-obs');
             let obsText = editorEl.innerText || "";
             
