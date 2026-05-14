@@ -147,6 +147,8 @@
     <div id="loader"><div class="spinner"></div><strong style="color:var(--text-main); font-size:16px;">Processando Algoritmo Avançado...</strong></div>
     <div id="toast"><i class="fa-solid fa-circle-check" style="color: #10b981;"></i> <span id="toast-msg">Ação concluída.</span></div>
 
+    <div id="neo-injected-data" style="display:none;"></div>
+
     <aside class="sidebar">
         <div class="sidebar-header"><i class="fa-solid fa-bolt"></i> Analytics PRO</div>
         <nav class="sidebar-nav">
@@ -175,8 +177,8 @@
                     <option value="ALL">📊 Todos os Relatórios</option>
                 </select>
 
-                <button class="btn-export excel" onclick="baixarExcelAvançado()" id="btn-export-excel" style="display:none;"><i class="fa-solid fa-file-excel"></i> Baixar (Excel)</button>
-                <button class="btn-export html" onclick="baixarDashboardHTML()" id="btn-export-html" style="display:none;"><i class="fa-solid fa-code"></i> Baixar HTML</button>
+                <button class="btn-export excel" onclick="baixarExcelAvançado()" id="btn-export-excel" style="display:none;"><i class="fa-solid fa-file-excel"></i> Baixar Excel (Premium)</button>
+                <button class="btn-export html" onclick="baixarDashboardHTML()" id="btn-export-html" style="display:none;"><i class="fa-solid fa-code"></i> Baixar Dashboard HTML</button>
                 
                 <label class="btn-upload-master">
                     <i class="fa-solid fa-paperclip"></i> Anexar Excel / CSV
@@ -230,7 +232,7 @@
                 <div class="chart-box" style="padding: 0; overflow: hidden; border: 1px solid var(--border);">
                     <h3 class="chart-title" style="padding: 20px; margin: 0; background: #f8fafc;"><i class="fa-solid fa-ranking-star"></i> Ranking Detalhado de Atendentes</h3>
                     <table class="ranking-table" id="rank-atendentes">
-                        <thead><tr><th style="padding: 15px;">Atendente</th><th style="padding: 15px;">Tempo Médio (Último Lido)</th><th style="padding: 15px;">Volume Consolidado</th></tr></thead>
+                        <thead><tr><th style="padding: 15px;">Atendente</th><th style="padding: 15px;">Tempo Médio Ponderado</th><th style="padding: 15px;">Volume Consolidado</th></tr></thead>
                         <tbody></tbody>
                     </table>
                 </div>
@@ -247,7 +249,7 @@
                 <div class="chart-box" style="padding: 0; overflow: hidden; border: 1px solid var(--border);">
                     <h3 class="chart-title" style="padding: 20px; margin: 0; background: #f8fafc;"><i class="fa-solid fa-table-list"></i> Ranking Detalhado de Serviços</h3>
                     <table class="ranking-table" id="rank-servicos">
-                        <thead><tr><th style="padding: 15px;">Macro-Categoria</th><th style="padding: 15px;">Setor</th><th style="padding: 15px;">Serviço</th><th style="padding: 15px;">Tempo Médio (Último Lido)</th><th style="padding: 15px;">Volume Total</th></tr></thead>
+                        <thead><tr><th style="padding: 15px;">Macro-Categoria</th><th style="padding: 15px;">Setor</th><th style="padding: 15px;">Serviço</th><th style="padding: 15px;">Tempo Médio Ponderado</th><th style="padding: 15px;">Volume Total</th></tr></thead>
                         <tbody></tbody>
                     </table>
                 </div>
@@ -275,7 +277,13 @@
 
     <script>
         // ==========================================
-        // BANCO DE DADOS LOCAL (IndexedDB) E ESTADO
+        // REGRAS DE SLA
+        // ==========================================
+        const SLA_LIMITS = {'Certidoes':300, 'Imobiliario':600, 'Mobiliario':600, 'Divida e Acordos':1200, 'default':900};
+        const getSlaLim = (cat) => SLA_LIMITS[cat] || SLA_LIMITS['default'];
+
+        // ==========================================
+        // BANCO DE DADOS LOCAL (IndexedDB)
         // ==========================================
         let baseDados = [];
         let globalSelectedId = "ALL";
@@ -285,12 +293,12 @@
         Chart.defaults.color = '#64748b';
 
         const DB_NAME = 'AnalyticsPRO_DB';
-        const STORE_NAME = 'relatorios';
+        const STORE_NAME = 'relatorios_v2'; 
         let db;
 
         async function initDB() {
             return new Promise((resolve, reject) => {
-                let request = indexedDB.open(DB_NAME, 1);
+                let request = indexedDB.open(DB_NAME, 2);
                 request.onupgradeneeded = (e) => {
                     let database = e.target.result;
                     if (!database.objectStoreNames.contains(STORE_NAME)) {
@@ -324,16 +332,25 @@
         window.addEventListener('DOMContentLoaded', async () => {
             await initDB();
             let saved = await carregarTodosDadosDB();
-            if (saved && saved.length > 0) {
+            
+            let injStr = document.getElementById('neo-injected-data').innerText;
+            let injData = null;
+            try { if(injStr && !injStr.includes('INJECT_BD_JSON')) injData = JSON.parse(injStr); } catch(e){}
+
+            if (injData && injData.length > 0) {
+                let injMap = new Map(injData.map(i => [i.nome, i]));
+                if(saved) saved.forEach(s => { if(!injMap.has(s.nome)) injData.push(s); });
+                baseDados = injData;
+                salvarTodosDadosDB();
+                atualizarSistemaGlobal();
+                showToast("Dados carregados com Sucesso!");
+            } else if (saved && saved.length > 0) {
                 baseDados = saved;
                 atualizarSistemaGlobal();
                 showToast("Sessão anterior restaurada automaticamente.");
             }
         });
 
-        // ==========================================
-        // UTILITÁRIOS
-        // ==========================================
         function showToast(mensagem) {
             const toast = document.getElementById('toast');
             document.getElementById('toast-msg').innerText = mensagem;
@@ -355,12 +372,26 @@
         }
 
         function formatNumber(num) { return num.toLocaleString('pt-PT'); }
-        function timeToSec(t) { if(!t || typeof t !== 'string') return 0; let p = t.split(':'); if(p.length !== 3) return 0; return (+p[0]*3600) + (+p[1]*60) + (+p[2]); }
-        function secToTime(s) { if(isNaN(s) || s < 0) return "00:00:00"; s = Math.round(s); let h = Math.floor(s/3600); let m = Math.floor((s%3600)/60); let sc = s%60; return String(h).padStart(2,'0')+":"+String(m).padStart(2,'0')+":"+String(sc).padStart(2,'0'); }
+        
+        function timeToSec(t) { 
+            if(!t) return 0;
+            if(typeof t === 'number' || (typeof t === 'string' && !t.includes(':') && !isNaN(parseFloat(t)))) {
+                let num = parseFloat(t);
+                if(num < 1) return Math.round(num * 24 * 3600);
+                return 0;
+            }
+            let p = String(t).split(':'); 
+            if(p.length === 3) return (+p[0]*3600) + (+p[1]*60) + (+p[2]); 
+            if(p.length === 2) return (+p[0]*60) + (+p[1]);
+            return 0; 
+        }
+        function secToTime(s) { 
+            if(isNaN(s) || s <= 0) return "00:00:00"; 
+            s = Math.round(s); 
+            let h = Math.floor(s/3600); let m = Math.floor((s%3600)/60); let sc = s%60; 
+            return String(h).padStart(2,'0')+":"+String(m).padStart(2,'0')+":"+String(sc).padStart(2,'0'); 
+        }
 
-        // ==========================================
-        // GESTÃO DE FILTROS E DADOS ATIVOS
-        // ==========================================
         function getDadosAtivos() {
             if (globalSelectedId === "ALL") return baseDados;
             return baseDados.filter(r => r.id == globalSelectedId);
@@ -381,13 +412,10 @@
             }
             select.style.display = 'inline-block';
             let html = `<option value="ALL">📊 Todos os Relatórios</option>`;
-            baseDados.forEach(r => {
-                html += `<option value="${r.id}" ${globalSelectedId == r.id ? 'selected' : ''}>📅 ${r.nome}</option>`;
-            });
+            baseDados.forEach(r => { html += `<option value="${r.id}" ${globalSelectedId == r.id ? 'selected' : ''}>📅 ${r.nome}</option>`; });
             select.innerHTML = html;
         }
 
-        // Filtro em tempo real para as tabelas das abas (Busca)
         function filtrarTabelaInput(tableId, termo) {
             let filter = termo.toUpperCase();
             let tbody = document.getElementById(tableId).getElementsByTagName("tbody")[0];
@@ -398,8 +426,17 @@
             }
         }
 
+        function extractNumber(val) {
+            if (val === undefined || val === null) return 0;
+            if (typeof val === 'number') return val;
+            let str = String(val).trim();
+            let numStr = str.replace(/[^\d]/g, '');
+            let parsed = parseInt(numStr, 10);
+            return isNaN(parsed) ? 0 : parsed;
+        }
+
         // ==========================================
-        // EXTRAÇÃO INTELIGENTE DA ESTRUTURA
+        // EXTRAÇÃO DE DADOS 
         // ==========================================
         async function processarFicheiros(event) {
             const files = event.target.files;
@@ -408,11 +445,11 @@
 
             for (let i = 0; i < files.length; i++) { await extrairDados(files[i]); }
 
-            salvarTodosDadosDB(); // Salva no banco local
+            salvarTodosDadosDB(); 
             document.getElementById('loader').style.display = 'none';
             event.target.value = ''; 
             atualizarSistemaGlobal();
-            showToast(`${files.length} relatório(s) integrados com sucesso.`);
+            showToast(`Ficheiros processados com sucesso.`);
         }
 
         function extrairDados(file) {
@@ -424,100 +461,113 @@
                         const workbook = XLSX.read(data, { type: 'array' });
                         
                         let anoDoc = new Date().getFullYear().toString();
-
-                        let relatorio = { 
-                            id: Date.now() + Math.floor(Math.random()*1000), 
-                            nome: file.name.replace('.xlsx','').replace('.csv','').substring(0, 30),
-                            ano: anoDoc,
-                            kpis: { total: 0, finalizados: 0, aguardando: 0, evasao: 0 },
-                            categorias: {}, atendentes: {}, servicos: {} 
-                        };
+                        let nomeBase = file.name.split(' - ')[0].replace('.xlsx','').replace('.csv','').substring(0, 30);
+                        let relatorio = baseDados.find(r => r.nome === nomeBase);
+                        let isNew = false;
+                        
+                        if (!relatorio) {
+                            isNew = true;
+                            relatorio = { 
+                                id: Date.now() + Math.floor(Math.random()*1000), 
+                                nome: nomeBase, ano: anoDoc,
+                                kpis: { total: 0, finalizados: 0, aguardando: 0, evasao: 0 },
+                                categorias: {}, atendentes: {}, servicos: {} 
+                            };
+                        }
 
                         workbook.SheetNames.forEach(sheetName => {
-                            const rawData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: "" });
+                            const rawData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: "", raw: false });
+                            let modoOperacao = "NENHUM";
+                            let idxColunas = {};
                             
+                            let upperSheetName = sheetName.toUpperCase();
+                            let upperFileName = file.name.toUpperCase();
+                            let isDashboardFile = upperSheetName.includes("DASHBOARD") || upperSheetName.includes("RESUMO") || upperFileName.includes("DASHBOARD") || upperFileName.includes("RESUMO");
+
                             for(let i=0; i < rawData.length; i++) {
-                                let rowUpper = rawData[i].map(c => String(c).trim().toUpperCase());
+                                let row = rawData[i];
+                                if(!row || !Array.isArray(row)) continue;
+                                
+                                let rowUpper = row.map(c => String(c).trim().toUpperCase());
+                                let fullRowText = rowUpper.join(" ");
 
-                                // 1. DASHBOARD
-                                if (rowUpper.some(c => c.includes("TOTAL ATEND"))) {
-                                    let idxTot = rowUpper.findIndex(c => c.includes("TOTAL ATEND"));
-                                    let idxFin = rowUpper.findIndex(c => c.includes("FINALIZADO"));
-                                    let idxAgu = rowUpper.findIndex(c => c.includes("AGUARDANDO"));
-                                    let idxEva = rowUpper.findIndex(c => c.includes("EVASAO") || c.includes("COMPARECEU"));
-
-                                    if(rawData[i+1]) {
-                                        let vals = rawData[i+1];
-                                        if(idxTot > -1) relatorio.kpis.total = parseInt(vals[idxTot]) || 0;
-                                        if(idxFin > -1) relatorio.kpis.finalizados = parseInt(vals[idxFin]) || 0;
-                                        if(idxAgu > -1) relatorio.kpis.aguardando = parseInt(vals[idxAgu]) || 0;
-                                        if(idxEva > -1) relatorio.kpis.evasao = parseInt(vals[idxEva]) || 0;
-                                    }
+                                if (fullRowText.includes("TOP FUNCIONARIOS") || fullRowText.includes("TOP SERVIÇOS") || fullRowText.includes("TOP SERVICOS")) {
+                                    modoOperacao = "IGNORAR";
+                                    continue;
                                 }
 
-                                // 2. CATEGORIAS
-                                if (rowUpper.some(c => c.includes("MACRO")) && !rowUpper.some(c => c.includes("SERVICO") || c.includes("SERVIÇO"))) {
-                                    let idxCat = rowUpper.findIndex(c => c.includes("MACRO"));
-                                    let idxQtd = rowUpper.findIndex(c => c.includes("QUANTIDADE") || c.includes("TOTAL"));
+                                if (rowUpper.includes("TOTAL ATEND.") || fullRowText.includes("TOTAL ATEND")) {
+                                    modoOperacao = "DASHBOARD";
+                                    idxColunas.tot = rowUpper.findIndex(c => c.includes("TOTAL ATEND"));
+                                    if(idxColunas.tot === -1) idxColunas.tot = rowUpper.indexOf("TOTAL ATEND.");
+                                    idxColunas.fin = rowUpper.findIndex(c => c.includes("FINALIZADO"));
+                                    idxColunas.agu = rowUpper.findIndex(c => c.includes("AGUARDANDO"));
+                                    idxColunas.eva = rowUpper.findIndex(c => c.includes("EVASAO") || c.includes("COMPARECEU"));
+                                    continue;
+                                }
+                                
+                                if (!isDashboardFile && (rowUpper.includes("FUNCIONARIO") || rowUpper.includes("FUNCIONÁRIO"))) {
+                                    modoOperacao = "ATENDENTES";
+                                    idxColunas.func = rowUpper.findIndex(c => c.includes("FUNCIONARIO") || c.includes("FUNCIONÁRIO"));
+                                    idxColunas.qtd = rowUpper.findIndex(c => c.includes("QUANTIDADE") || c.includes("ATENDIMENTO"));
+                                    idxColunas.tmp = rowUpper.findIndex(c => c.includes("TEMPO"));
+                                    continue;
+                                }
+                                
+                                if (!isDashboardFile && (rowUpper.includes("SERVICO") || rowUpper.includes("SERVIÇO"))) {
+                                    modoOperacao = "SERVICOS";
+                                    idxColunas.mac = rowUpper.findIndex(c => c.includes("MACRO"));
+                                    idxColunas.set = rowUpper.findIndex(c => c === "SETOR" || c === "GRUPO");
+                                    idxColunas.srv = rowUpper.findIndex(c => c.includes("SERVICO") || c.includes("SERVIÇO"));
+                                    idxColunas.qtd = rowUpper.findIndex(c => c.includes("QUANTIDADE") || c.includes("QTD"));
+                                    idxColunas.tmp = rowUpper.findIndex(c => c.includes("TEMPO"));
+                                    continue;
+                                }
+
+                                if (modoOperacao === "DASHBOARD") {
+                                    let vFin = extractNumber(row[idxColunas.fin]);
+                                    let vTot = extractNumber(row[idxColunas.tot]);
                                     
-                                    if(idxCat > -1 && idxQtd > -1) {
-                                        for(let j=i+1; j < rawData.length; j++) {
-                                            let k = String(rawData[j][idxCat]||'').trim(); 
-                                            let v = parseInt(rawData[j][idxQtd]) || 0;
-                                            if(k && k !== "" && !k.toUpperCase().includes("MACRO")) {
-                                                relatorio.categorias[k] = (relatorio.categorias[k] || 0) + v;
-                                            }
+                                    if (vFin > 0 || vTot > 0) {
+                                        if(vTot === 0 && vFin > 0) vTot = vFin;
+                                        if(vFin === 0 && vTot > 0) vFin = vTot;
+                                        
+                                        relatorio.kpis.finalizados += vFin;
+                                        relatorio.kpis.total += vTot;
+                                        relatorio.kpis.aguardando += (idxColunas.agu > -1) ? extractNumber(row[idxColunas.agu]) : 0;
+                                        relatorio.kpis.evasao += (idxColunas.eva > -1) ? extractNumber(row[idxColunas.eva]) : 0;
+                                        modoOperacao = "NENHUM"; 
+                                    }
+                                }
+                                else if (modoOperacao === "ATENDENTES") {
+                                    let nomeFunc = String(row[idxColunas.func] || "").trim();
+                                    if (nomeFunc && !nomeFunc.toUpperCase().includes("TOTAL") && !nomeFunc.toUpperCase().includes("FUNCIONARIO")) {
+                                        let v = extractNumber(row[idxColunas.qtd]);
+                                        let tStr = idxColunas.tmp > -1 ? String(row[idxColunas.tmp]||'00:00:00').trim() : '00:00:00';
+                                        let t = timeToSec(tStr);
+                                        if (v > 0) {
+                                            nomeFunc = nomeFunc.split(' - ')[0].trim();
+                                            if(!relatorio.atendentes[nomeFunc]) relatorio.atendentes[nomeFunc] = {qtd: 0, tempoTotal: 0};
+                                            relatorio.atendentes[nomeFunc].qtd += v;
+                                            relatorio.atendentes[nomeFunc].tempoTotal += (t * v); 
                                         }
                                     }
                                 }
-
-                                // 3. ATENDENTES
-                                if (rowUpper.some(c => c.includes("FUNCIONARIO") || c.includes("NOME"))) {
-                                    let idxFunc = rowUpper.findIndex(c => c.includes("FUNCIONARIO") || c.includes("NOME"));
-                                    let idxQtd = rowUpper.findIndex(c => c.includes("QUANTIDADE") || c.includes("ATENDIMENTO"));
-                                    let idxTmp = rowUpper.findIndex(c => c.includes("TEMPO"));
-                                    
-                                    if(idxFunc > -1 && idxQtd > -1) {
-                                        for(let j=i+1; j < rawData.length; j++) {
-                                            let rawNome = String(rawData[j][idxFunc]||'').trim();
-                                            if(!rawNome || rawNome === "") break;
-                                            
-                                            let k = rawNome.split('-')[0].trim();
-                                            let v = parseInt(rawData[j][idxQtd]) || 0;
-                                            let t = idxTmp > -1 ? String(rawData[j][idxTmp]||'00:00:00') : '00:00:00';
-                                            
-                                            if(k && !k.includes("FUNCIONARIO") && !k.includes("NOME")) {
-                                                if(!relatorio.atendentes[k]) relatorio.atendentes[k] = {qtd: 0, tempo: 0};
-                                                relatorio.atendentes[k].qtd += v;
-                                                relatorio.atendentes[k].tempo = timeToSec(t); 
-                                            }
-                                        }
-                                    }
-                                }
-
-                                // 4. SERVICOS
-                                if (rowUpper.some(c => c === "SERVICO" || c === "SERVIÇO" || c.includes("SERVICO"))) {
-                                    let idxMac = rowUpper.findIndex(c => c.includes("MACRO"));
-                                    let idxSet = rowUpper.findIndex(c => c === "SETOR" || c === "GRUPO");
-                                    let idxSrv = rowUpper.findIndex(c => c.includes("SERVICO") || c.includes("SERVIÇO"));
-                                    let idxQtd = rowUpper.findIndex(c => c.includes("QUANTIDADE") || c.includes("QTD"));
-                                    let idxTmp = rowUpper.findIndex(c => c.includes("TEMPO"));
-                                    
-                                    if(idxSrv > -1 && idxQtd > -1) {
-                                        for(let j=i+1; j < rawData.length; j++) {
-                                            let srv = String(rawData[j][idxSrv]||'').trim();
-                                            if(!srv || srv === "") break;
-                                            
-                                            let v = parseInt(rawData[j][idxQtd]) || 0;
-                                            let mac = idxMac > -1 ? String(rawData[j][idxMac]||'').trim() : "Outros";
-                                            let set = idxSet > -1 ? String(rawData[j][idxSet]||'').trim() : "Geral";
-                                            let t = idxTmp > -1 ? String(rawData[j][idxTmp]||'00:00:00') : '00:00:00';
-                                            
-                                            if(srv && !srv.includes("SERVICO")) {
-                                                let chave = `${mac}|${set}|${srv}`;
-                                                if(!relatorio.servicos[chave]) relatorio.servicos[chave] = {qtd: 0, tempo: 0, mac: mac, set: set, srv: srv};
-                                                relatorio.servicos[chave].qtd += v;
-                                                relatorio.servicos[chave].tempo = timeToSec(t);
+                                else if (modoOperacao === "SERVICOS") {
+                                    let nomeSrv = String(row[idxColunas.srv] || "").trim();
+                                    if (nomeSrv && !nomeSrv.toUpperCase().includes("TOTAL") && !nomeSrv.toUpperCase().includes("SERVICO") && !nomeSrv.toUpperCase().includes("SERVIÇO")) {
+                                        let v = extractNumber(row[idxColunas.qtd]);
+                                        let mac = idxColunas.mac > -1 ? String(row[idxColunas.mac]||'').trim() : "Outros Gerais";
+                                        let set = idxColunas.set > -1 ? String(row[idxColunas.set]||'').trim() : "Geral";
+                                        let tStr = idxColunas.tmp > -1 ? String(row[idxColunas.tmp]||'00:00:00').trim() : '00:00:00';
+                                        let t = timeToSec(tStr);
+                                        if (nomeSrv && v > 0) {
+                                            let chave = `${mac}|${set}|${nomeSrv}`;
+                                            if(!relatorio.servicos[chave]) relatorio.servicos[chave] = {qtd: 0, tempoTotal: 0, mac: mac, set: set, srv: nomeSrv};
+                                            relatorio.servicos[chave].qtd += v;
+                                            relatorio.servicos[chave].tempoTotal += (t * v);
+                                            if (mac && mac !== "") {
+                                                relatorio.categorias[mac] = (relatorio.categorias[mac] || 0) + v;
                                             }
                                         }
                                     }
@@ -525,8 +575,15 @@
                             }
                         });
 
-                        if(relatorio.kpis.total === 0) relatorio.kpis.total = relatorio.kpis.finalizados + relatorio.kpis.evasao + relatorio.kpis.aguardando;
-                        baseDados.push(relatorio);
+                        if (relatorio.kpis.total === 0) {
+                            let sumSrv = Object.values(relatorio.servicos).reduce((acc, curr) => acc + curr.qtd, 0);
+                            if (sumSrv > 0) {
+                                relatorio.kpis.total = sumSrv;
+                                if(relatorio.kpis.finalizados === 0) relatorio.kpis.finalizados = sumSrv; 
+                            }
+                        }
+
+                        if (isNew && relatorio.kpis.total > 0) { baseDados.push(relatorio); }
                         resolve();
                     } catch (err) { console.error(`Erro ficheiro:`, err); resolve(); }
                 };
@@ -534,12 +591,8 @@
             });
         }
 
-        // ==========================================
-        // RENDERIZAÇÃO DE UI
-        // ==========================================
         function atualizarSistemaGlobal() {
             atualizarSelectFiltro();
-            
             if(baseDados.length === 0) {
                 document.getElementById('inicio').classList.add('active');
                 document.querySelectorAll('.nav-item')[0].classList.add('active');
@@ -547,12 +600,9 @@
                 document.getElementById('btn-export-html').style.display = 'none';
                 return;
             }
-            
             document.getElementById('btn-export-excel').style.display = 'inline-flex';
             document.getElementById('btn-export-html').style.display = 'inline-flex';
-            
             if(document.getElementById('inicio').classList.contains('active')) { document.querySelectorAll('.nav-item')[1].click(); }
-
             renderizarKPIsETabelas();
             gerarMatrizExcel();
             renderizarPastasAnos();
@@ -568,12 +618,14 @@
             ativos.forEach(r => { 
                 vol += r.kpis.total; fin += r.kpis.finalizados; agu += r.kpis.aguardando; eva += r.kpis.evasao; 
                 Object.keys(r.atendentes).forEach(k => {
-                    if(!aggFunc[k]) aggFunc[k] = {qtd:0, t:0};
-                    aggFunc[k].qtd += r.atendentes[k].qtd; aggFunc[k].t = r.atendentes[k].tempo; 
+                    if(!aggFunc[k]) aggFunc[k] = {qtd:0, tTot:0};
+                    aggFunc[k].qtd += r.atendentes[k].qtd; 
+                    aggFunc[k].tTot += r.atendentes[k].tempoTotal; 
                 });
                 Object.keys(r.servicos).forEach(k => {
-                    if(!aggServ[k]) aggServ[k] = {qtd:0, t:0, mac:r.servicos[k].mac, set:r.servicos[k].set, srv:r.servicos[k].srv};
-                    aggServ[k].qtd += r.servicos[k].qtd; aggServ[k].t = r.servicos[k].tempo;
+                    if(!aggServ[k]) aggServ[k] = {qtd:0, tTot:0, mac:r.servicos[k].mac, set:r.servicos[k].set, srv:r.servicos[k].srv};
+                    aggServ[k].qtd += r.servicos[k].qtd; 
+                    aggServ[k].tTot += r.servicos[k].tempoTotal;
                 });
             });
             
@@ -588,7 +640,7 @@
             let maxS = sArr[0] ? sArr[0][1].qtd : 1;
 
             if(fArr.length > 0) {
-                document.getElementById('kpi-top-func').innerText = fArr[0][0];
+                document.getElementById('kpi-top-func').innerText = fArr[0][0].split('-')[0];
                 document.getElementById('kpi-top-func-vol').innerText = `Volume Consolidado: ${formatNumber(fArr[0][1].qtd)}`;
             } else {
                 document.getElementById('kpi-top-func').innerText = "-";
@@ -606,21 +658,22 @@
             document.getElementById('kpi-total-servs').innerText = sArr.length;
 
             document.getElementById('rank-atendentes').querySelector('tbody').innerHTML = fArr.map(f => {
-                let pct = (f[1].qtd/maxF)*100; let tStr = secToTime(f[1].t);
-                let cor = f[1].t > 600 ? (f[1].t > 900 ? '#ef4444' : '#f59e0b') : '#10b981';
+                let pct = (f[1].qtd/maxF)*100; 
+                let tStr = secToTime(f[1].tTot / f[1].qtd);
+                let tNum = f[1].tTot / f[1].qtd;
+                let cor = tNum > 600 ? (tNum > 900 ? '#ef4444' : '#f59e0b') : '#10b981';
                 return `<tr><td style="padding:15px;">${f[0]}</td><td style="padding:15px; font-family:monospace; font-weight:bold; color:${cor};">${tStr}</td><td style="padding:15px;" class="progress-cell"><div class="progress-bg" style="width:${pct}%;"></div><span class="progress-text">${formatNumber(f[1].qtd)}</span></td></tr>`;
             }).join('');
 
             document.getElementById('rank-servicos').querySelector('tbody').innerHTML = sArr.map(s => {
-                let pct = (s[1].qtd/maxS)*100; let tStr = secToTime(s[1].t);
-                let cor = s[1].t > 600 ? (s[1].t > 900 ? '#ef4444' : '#f59e0b') : '#10b981';
+                let pct = (s[1].qtd/maxS)*100; 
+                let tStr = secToTime(s[1].tTot / s[1].qtd); 
+                let tNum = s[1].tTot / s[1].qtd;
+                let cor = tNum > 600 ? (tNum > 900 ? '#ef4444' : '#f59e0b') : '#10b981';
                 return `<tr><td style="padding:15px;"><span style="background:#e2e8f0;padding:4px 8px;border-radius:4px;font-size:11px;">${s[1].mac}</span></td><td style="padding:15px;">${s[1].set}</td><td style="padding:15px; font-weight:600;">${s[1].srv}</td><td style="padding:15px; font-family:monospace; font-weight:bold; color:${cor};">${tStr}</td><td style="padding:15px;" class="progress-cell"><div class="progress-bg" style="width:${pct}%;"></div><span class="progress-text">${formatNumber(s[1].qtd)}</span></td></tr>`;
             }).join('');
         }
 
-        // ==========================================
-        // MATRIZ CONSOLIDADA
-        // ==========================================
         function gerarMatrizExcel() {
             const table = document.getElementById('tabela-matriz');
             let ativos = getDadosAtivos();
@@ -653,7 +706,7 @@
 
             tbody += `<tr class="excel-section"><td colspan="${ativos.length + 3}">3. PRODUTIVIDADE DE ATENDENTES</td></tr>`;
             let atends = new Set(); ativos.forEach(r => Object.keys(r.atendentes).forEach(a => atends.add(a)));
-            Array.from(atends).sort().forEach(ate => { tbody += buildRow(`↳ ${ate}`, r => r.atendentes[ate]?r.atendentes[ate].qtd:0); });
+            Array.from(atends).sort().forEach(ate => { tbody += buildRow(`↳ ${ate.split('-')[0]}`, r => r.atendentes[ate]?r.atendentes[ate].qtd:0); });
 
             tbody += `<tr class="excel-section"><td colspan="${ativos.length + 3}">4. DETALHAMENTO DE SERVIÇOS</td></tr>`;
             let servsMap = new Map(); 
@@ -672,22 +725,6 @@
             table.innerHTML = thead + tbody + `</tbody>`;
         }
 
-        function filtrarMatriz() {
-            let filter = document.getElementById("searchTable").value.toUpperCase();
-            let tr = document.getElementById("tabela-matriz").getElementsByTagName("tr");
-            for (let i = 1; i < tr.length; i++) {
-                if (tr[i].classList.contains('excel-section')) continue; 
-                let td = tr[i].getElementsByTagName("td")[0]; 
-                if (td) {
-                    let text = td.textContent || td.innerText;
-                    tr[i].style.display = text.toUpperCase().indexOf(filter) > -1 ? "" : "none";
-                }
-            }
-        }
-
-        // ==========================================
-        // OUTRAS ABAS (Pastas e Ficheiros) - Mostra todos os arquivos
-        // ==========================================
         function renderizarPastasAnos() {
             const container = document.getElementById('folders-container');
             container.innerHTML = '';
@@ -729,42 +766,12 @@
                 container.appendChild(item);
             });
         }
-        function remover(id) { 
-            baseDados = baseDados.filter(r => r.id !== id); 
-            if(globalSelectedId == id) globalSelectedId = "ALL";
-            salvarTodosDadosDB();
-            atualizarSistemaGlobal(); 
-            showToast("Ficheiro excluído."); 
-        }
-        function limparTudo() { 
-            if(confirm("Apagar todos os relatórios?")) { 
-                baseDados = []; 
-                globalSelectedId = "ALL";
-                salvarTodosDadosDB();
-                atualizarSistemaGlobal(); 
-            } 
-        }
-        function renomear(id, n) { 
-            let r = baseDados.find(r => r.id === id); 
-            if(r) r.nome = n; 
-            salvarTodosDadosDB();
-            atualizarSistemaGlobal(); 
-            showToast("Nome atualizado."); 
-        }
-
-        // ==========================================
-        // GRÁFICOS (DESTRUIÇÃO SEGURA)
-        // ==========================================
-        function resetCanvas(containerId, canvasId) {
-            const container = document.getElementById(containerId);
-            if (!container) return null;
-            container.innerHTML = ''; 
-            const newCanvas = document.createElement('canvas');
-            newCanvas.id = canvasId;
-            container.appendChild(newCanvas);
-            return newCanvas.getContext('2d');
-        }
-
+        
+        function remover(id) { baseDados = baseDados.filter(r => r.id !== id); if(globalSelectedId == id) globalSelectedId = "ALL"; salvarTodosDadosDB(); atualizarSistemaGlobal(); showToast("Ficheiro excluído."); }
+        function limparTudo() { if(confirm("Apagar todos os relatórios?")) { baseDados = []; globalSelectedId = "ALL"; salvarTodosDadosDB(); atualizarSistemaGlobal(); } }
+        function renomear(id, n) { let r = baseDados.find(r => r.id === id); if(r) r.nome = n; salvarTodosDadosDB(); atualizarSistemaGlobal(); showToast("Nome atualizado."); }
+        function resetCanvas(containerId, canvasId) { const container = document.getElementById(containerId); if (!container) return null; container.innerHTML = ''; const newCanvas = document.createElement('canvas'); newCanvas.id = canvasId; container.appendChild(newCanvas); return newCanvas.getContext('2d'); }
+        
         function gerarTodosGraficos() {
             let ativos = getDadosAtivos();
             if(ativos.length === 0) return;
@@ -772,277 +779,294 @@
 
             try {
                 new Chart(resetCanvas('box-mixed-vol', 'chart-mixed-vol'), {
-                    data: { labels: labelsStr, datasets: [
-                        { type: 'bar', label: 'Volume Total', data: ativos.map(r => r.kpis.total), backgroundColor: '#0f172a', borderRadius: 4, yAxisID: 'y' },
-                        { type: 'line', label: 'Evasão', data: ativos.map(r => r.kpis.evasao), borderColor: '#dc2626', backgroundColor: '#dc2626', borderWidth: 2, tension: 0.3, yAxisID: 'y1' }
-                    ]}, options: { responsive: true, maintainAspectRatio: false, scales: { y: { type: 'linear', position: 'left' }, y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false } } } }
+                    data: { labels: labelsStr, datasets: [ { type: 'bar', label: 'Volume Total', data: ativos.map(r => r.kpis.total), backgroundColor: '#0f172a', borderRadius: 4, yAxisID: 'y' }, { type: 'line', label: 'Evasão', data: ativos.map(r => r.kpis.evasao), borderColor: '#dc2626', backgroundColor: '#dc2626', borderWidth: 2, tension: 0.3, yAxisID: 'y1' }]}, options: { responsive: true, maintainAspectRatio: false, scales: { y: { type: 'linear', position: 'left' }, y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false } } } }
                 });
-            } catch(e) {}
-
-            try {
                 new Chart(resetCanvas('box-bar-status', 'chart-bar-status'), {
-                    type: 'bar', data: { labels: labelsStr, datasets: [ 
-                        { label: 'Finalizados', data: ativos.map(r => r.kpis.finalizados), backgroundColor: '#10b981' }, 
-                        { label: 'Aguardando', data: ativos.map(r => r.kpis.aguardando), backgroundColor: '#f59e0b' },
-                        { label: 'Evasão', data: ativos.map(r => r.kpis.evasao), backgroundColor: '#dc2626' } 
-                    ]}, options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } } }
+                    type: 'bar', data: { labels: labelsStr, datasets: [ { label: 'Finalizados', data: ativos.map(r => r.kpis.finalizados), backgroundColor: '#10b981' }, { label: 'Aguardando', data: ativos.map(r => r.kpis.aguardando), backgroundColor: '#f59e0b' }, { label: 'Evasão', data: ativos.map(r => r.kpis.evasao), backgroundColor: '#dc2626' } ]}, options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } } }
                 });
-            } catch(e) {}
-
-            try {
                 let cats = new Set(); ativos.forEach(r => Object.keys(r.categorias).forEach(c => cats.add(c)));
                 let dsLinhaCat = Array.from(cats).map((cat, i) => ({ label: cat, data: ativos.map(r => r.categorias[cat] || 0), borderColor: bwColors[i % bwColors.length], tension: 0.2, borderWidth: 2 }));
                 new Chart(resetCanvas('box-line-cat', 'chart-line-cat'), { type: 'line', data: { labels: labelsStr, datasets: dsLinhaCat }, options: { maintainAspectRatio: false } });
-
-                let stackedDatasets = Array.from(cats).map((cat, i) => {
-                    let dataPct = ativos.map(r => { let t = r.kpis.total; return t > 0 ? ((r.categorias[cat]||0) / t * 100).toFixed(1) : 0; });
-                    return { label: cat, data: dataPct, backgroundColor: bwColors[i % bwColors.length] };
-                });
+                let stackedDatasets = Array.from(cats).map((cat, i) => { let dataPct = ativos.map(r => { let t = r.kpis.total; return t > 0 ? ((r.categorias[cat]||0) / t * 100).toFixed(1) : 0; }); return { label: cat, data: dataPct, backgroundColor: bwColors[i % bwColors.length] }; });
                 new Chart(resetCanvas('box-stacked-cat', 'chart-stacked-cat'), { type: 'bar', data: { labels: labelsStr, datasets: stackedDatasets }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true, max: 100 } } } });
-
                 let cTotal = {}; ativos.forEach(r => { Object.keys(r.categorias).forEach(k => cTotal[k] = (cTotal[k]||0) + r.categorias[k]); });
                 new Chart(resetCanvas('box-pie-status', 'chart-pie-status'), { type: 'pie', data: { labels: Object.keys(cTotal), datasets: [{ data: Object.values(cTotal), backgroundColor: bwColors, borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false } });
-
                 let dsRadar = ativos.map((r, i) => ({ label: r.nome, data: Array.from(cats).map(cat => r.categorias[cat] || 0), borderColor: bwColors[i % bwColors.length], backgroundColor: 'transparent', borderWidth: 2 }));
                 new Chart(resetCanvas('box-radar', 'chart-radar'), { type: 'radar', data: { labels: Array.from(cats).map(c=>c.substring(0,15)), datasets: dsRadar }, options: { responsive: true, maintainAspectRatio: false, scales: { r: { ticks: { display: false } } } } });
             } catch(e) {}
         }
 
         // ==========================================
-        // EXPORTAÇÃO EXCELJS (MANTÉM EXPORTANDO TODOS OS DADOS)
+        // EXPORTAÇÃO EXCELJS (PREMIUM E NATIVA)
         // ==========================================
         async function baixarExcelAvançado() {
             if(baseDados.length === 0) return;
-            showToast("A gerar Excel formatado (Múltiplas Abas)...");
+            showToast("A gerar Excel Executivo (Premium)...");
 
             if (typeof ExcelJS === 'undefined') {
                 await new Promise(r => { let s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js'; s.onload = r; document.head.appendChild(s); });
             }
 
             const wb = new ExcelJS.Workbook();
-            const mesesNomes = baseDados.map(r => r.nome);
-
-            function criarAbaComparativa(nomeAba, corHex, definicaoColunasFixas, listaItens, extratorValor) {
-                const ws = wb.addWorksheet(nomeAba, {properties:{tabColor:{argb:corHex}}, views:[{state:'frozen', xSplit:definicaoColunasFixas.length, ySplit:1}]});
-                
-                let cols = [...definicaoColunasFixas];
-                mesesNomes.forEach(m => cols.push({header: m.toUpperCase(), key: m, width: 16}));
-                cols.push({header: 'TOTAL GERAL', key: 'tot', width: 18});
-                ws.columns = cols;
-
-                let headerRow = ws.getRow(1);
-                headerRow.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
-                headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: corHex } };
-                headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
-                headerRow.height = 25;
-
-                listaItens.forEach(item => {
-                    let rowData = {};
-                    definicaoColunasFixas.forEach(c => rowData[c.key] = item[c.key]);
-                    
-                    let total = 0;
-                    baseDados.forEach(r => {
-                        let val = extratorValor(r, item);
-                        rowData[r.nome] = val || 0;
-                        total += (val || 0);
-                    });
-                    
-                    rowData.tot = total;
-                    let newRow = ws.addRow(rowData);
-                    newRow.font = { name: 'Arial', size: 10 };
-                });
-
-                ws.eachRow((row, rowNumber) => {
-                    if(rowNumber > 1) {
-                        row.eachCell((cell, colNumber) => {
-                            if(colNumber > definicaoColunasFixas.length) {
-                                cell.numFmt = '#,##0';
-                                cell.alignment = { horizontal: 'right' };
-                                if (colNumber === cols.length) {
-                                    cell.font = { name: 'Arial', size: 10, bold: true, color: { argb: corHex } };
-                                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
-                                }
-                            }
-                        });
-                    }
-                });
-                ws.autoFilter = { from: {row: 1, column: 1}, to: {row: 1, column: cols.length} };
-            }
-
-            let totA = baseDados.reduce((s,r)=>s+r.kpis.total,0); let finA = baseDados.reduce((s,r)=>s+r.kpis.finalizados,0); let aguA = baseDados.reduce((s,r)=>s+r.kpis.aguardando,0); let evaA = baseDados.reduce((s,r)=>s+r.kpis.evasao,0);
+            wb.creator = 'Neo Analytics PRO';
+            wb.created = new Date();
             
-            let aggF = {}; baseDados.forEach(r => Object.keys(r.atendentes).forEach(k => { if(!aggF[k]) aggF[k]={qtd:0,t:0}; aggF[k].qtd+=r.atendentes[k].qtd; aggF[k].t=r.atendentes[k].tempo; }));
-            let fTop = Object.entries(aggF).sort((a,b)=>b[1].qtd-a[1].qtd).slice(0,5);
-            
-            let aggS = {}; baseDados.forEach(r => Object.keys(r.servicos).forEach(k => { if(!aggS[k]) aggS[k]={qtd:0,t:0,mac:r.servicos[k].mac, set:r.servicos[k].set, srv:r.servicos[k].srv}; aggS[k].qtd+=r.servicos[k].qtd; aggS[k].t=r.servicos[k].tempo; }));
-            let sTop = Object.entries(aggS).sort((a,b)=>b[1].qtd-a[1].qtd).slice(0,5);
-
-            let cats = new Set(); baseDados.forEach(r => Object.keys(r.categorias).forEach(c => cats.add(c)));
-            let atends = new Set(); baseDados.forEach(r => Object.keys(r.atendentes).forEach(a => atends.add(a)));
-            let servsMap = new Map(); baseDados.forEach(r => { Object.keys(r.servicos).forEach(chave => { if(!servsMap.has(chave)) { let p = chave.split('|'); servsMap.set(chave, { chaveOriginal: chave, mac: p.length===3?p[0]:'Outros', set: p.length===3?p[1]:'Geral', srv: p.length===3?p[2]:chave }); } }); });
-
-            const wsDash = wb.addWorksheet('Dashboard', {properties:{tabColor:{argb:'FF1E293B'}}, views:[{showGridLines:false}]});
-            wsDash.columns = [{width:3},{width:25},{width:20},{width:5},{width:25},{width:20},{width:3}];
-            wsDash.mergeCells('B2:F3'); let t = wsDash.getCell('B2'); t.value = 'PAINEL EXECUTIVO - COMPARAÇÃO GERAL'; t.font = {name:'Arial', size:16, bold:true, color:{argb:'FFFFFFFF'}}; t.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FF0F172A'}}; t.alignment = {vertical:'middle', horizontal:'center'};
-            wsDash.mergeCells('B4:F4'); wsDash.getCell('B4').value = `Consolidado de ${baseDados.length} Meses Analisados`; wsDash.getCell('B4').alignment = {horizontal:'center'};
-
-            let kpis = [['TOTAL ATEND.', totA, 'FF0EA5E9', 'B'], ['FINALIZADOS', finA, 'FF10B981', 'C'], ['AGUARDANDO', aguA, 'FFF59E0B', 'E'], ['NAO COMPARECEU', evaA, 'FFEF4444', 'F']];
-            kpis.forEach(k => {
-                let c = k[3]; wsDash.getCell(c+'6').value = k[0]; wsDash.getCell(c+'6').font = {name:'Arial', size:10, bold:true, color:{argb:'FFFFFFFF'}}; wsDash.getCell(c+'6').fill = {type:'pattern', pattern:'solid', fgColor:{argb:k[2]}}; wsDash.getCell(c+'6').alignment = {horizontal:'center'};
-                wsDash.getCell(c+'7').value = k[1]; wsDash.getCell(c+'7').font = {name:'Arial', size:20, bold:true, color:{argb:'FF1E293B'}}; wsDash.getCell(c+'7').fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFF8FAFC'}}; wsDash.getCell(c+'7').alignment = {horizontal:'center'};
+            let totA = 0, finA = 0, aguA = 0, evaA = 0;
+            let aggF = {}, aggS = {};
+            getDadosAtivos().forEach(r => {
+                totA += r.kpis.total; finA += r.kpis.finalizados; aguA += r.kpis.aguardando; evaA += r.kpis.evasao;
+                Object.keys(r.atendentes).forEach(k => {
+                    if(!aggF[k]) aggF[k] = {qtd: 0, tTot: 0};
+                    aggF[k].qtd += r.atendentes[k].qtd;
+                    aggF[k].tTot += r.atendentes[k].tempoTotal;
+                });
+                Object.keys(r.servicos).forEach(k => {
+                    if(!aggS[k]) aggS[k] = {qtd: 0, tTot: 0, mac: r.servicos[k].mac, set: r.servicos[k].set, srv: r.servicos[k].srv};
+                    aggS[k].qtd += r.servicos[k].qtd;
+                    aggS[k].tTot += r.servicos[k].tempoTotal;
+                });
             });
 
-            if(fTop.length > 0) { wsDash.getCell('B10').value = 'Top Funcionarios (Soma)'; wsDash.getCell('B10').font = {bold:true}; wsDash.addTable({name:'DashFunc', ref:'B11', headerRow:true, style:{theme:'TableStyleMedium2', showRowStripes:true}, columns:[{name:'Funcionario'},{name:'Atendimentos'}], rows: fTop.map(f=>[f[0], f[1].qtd])}); }
-            if(sTop.length > 0) { wsDash.getCell('E10').value = 'Top Servicos (Soma)'; wsDash.getCell('E10').font = {bold:true}; wsDash.addTable({name:'DashServ', ref:'E11', headerRow:true, style:{theme:'TableStyleMedium4', showRowStripes:true}, columns:[{name:'Servico'},{name:'Qtd'}], rows: sTop.map(s => [s[1].srv.substring(0,35), s[1].qtd])}); }
-
-            let rH = Math.max(fTop.length, sTop.length) + 14;
-            wsDash.getCell('B'+rH).value = 'Evolucao Historica Mensal'; wsDash.getCell('B'+rH).font = {bold:true};
-            wsDash.addTable({name:'DashHist', ref:'B'+(rH+1), headerRow:true, style:{theme:'TableStyleMedium3', showRowStripes:true}, columns:[{name:'Mes'},{name:'Total'},{name:'Finalizado'},{name:'Aguardando'},{name:'Evasao'}], rows: baseDados.map(r => [r.nome, r.kpis.total, r.kpis.finalizados, r.kpis.aguardando, r.kpis.evasao])});
-
-            criarAbaComparativa('Resumo Categorias', 'FF8B5CF6', [{header: 'MACRO-CATEGORIA', key: 'desc', width: 40}], Array.from(cats).map(c => ({ desc: c })), (r, item) => r.categorias[item.desc]);
-            criarAbaComparativa('Atendentes', 'FF2563EB', [{header: 'NOME DO FUNCIONÁRIO', key: 'desc', width: 45}], Array.from(atends).map(a => ({ desc: a })), (r, item) => r.atendentes[item.desc] ? r.atendentes[item.desc].qtd : 0);
+            // ====== ABA 1: PAINEL EXECUTIVO ======
+            const wsDash = wb.addWorksheet('Painel Executivo', {views:[{showGridLines:false}], properties:{tabColor:{argb:'FFF97316'}}});
+            wsDash.columns = [{width:4}, {width:35}, {width:20}, {width:4}, {width:45}, {width:20}, {width:4}];
             
-            let servsLista = Array.from(servsMap.values()).sort((a,b) => a.mac.localeCompare(b.mac) || a.set.localeCompare(b.set));
-            criarAbaComparativa('Servicos', 'FF10B981', [{header: 'MACRO-CATEGORIA', key: 'mac', width: 25}, {header: 'SETOR', key: 'set', width: 35}, {header: 'SERVIÇO', key: 'srv', width: 45}], servsLista, (r, item) => r.servicos[item.chaveOriginal] ? r.servicos[item.chaveOriginal].qtd : 0);
+            wsDash.mergeCells('B2:F3');
+            let t = wsDash.getCell('B2'); t.value = '📊 PAINEL EXECUTIVO - DÍVIDA ATIVA'; 
+            t.font = { name: 'Segoe UI', size: 20, bold: true, color: { argb: 'FFFFFFFF' } }; 
+            t.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } }; 
+            t.alignment = { vertical: 'middle', horizontal: 'center' };
 
-            const wsMatriz = wb.addWorksheet('Matriz Consolidada', {properties:{tabColor:{argb:'FFEA580C'}}, views:[{state:'frozen',xSplit:1,ySplit:2}]});
-            let colsMat = [{header: 'DESCRIÇÃO DO ITEM / MÉTRICA', key: 'desc', width: 45}];
-            baseDados.forEach(r => colsMat.push({header: r.nome, key: r.nome, width: 20}));
-            colsMat.push({header: 'TOTAL GERAL', key: 'tot', width: 20});
-            wsMatriz.columns = colsMat;
-            wsMatriz.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } }; wsMatriz.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } };
+            wsDash.mergeCells('B4:F4');
+            let st = wsDash.getCell('B4'); st.value = `Período Analisado: ${getDadosAtivos().length} relatório(s) consolidado(s)`; 
+            st.font = { name: 'Segoe UI', size: 12, italic: true, color: { argb: 'FF475569' } }; st.alignment = { horizontal: 'center' };
+
+            let kpis = [ 
+                { title: 'TOTAL ATEND.', val: totA, corBg: 'FFF97316', col: 'B' }, 
+                { title: 'FINALIZADOS', val: finA, corBg: 'FF10B981', col: 'C' }, 
+                { title: 'AGUARDANDO', val: aguA, corBg: 'FFF59E0B', col: 'E' }, 
+                { title: 'EVASÃO', val: evaA, corBg: 'FFEF4444', col: 'F' } 
+            ];
             
-            function addMatRow(label, keyExt, isSec = false) {
-                let rD = { desc: label }; let total = 0;
-                baseDados.forEach(r => { let val = keyExt ? (keyExt(r) || 0) : ""; if(val !== "") total += val; rD[r.nome] = val; });
-                if(!isSec) { rD.tot = total; }
-                let rRow = wsMatriz.addRow(rD);
-                if(isSec) { rRow.font = { bold: true, color: { argb: 'FFFFFFFF' } }; rRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF475569' } }; }
-                else { rRow.eachCell((cell, colN) => { if(colN > 1) { cell.numFmt = '#,##0'; cell.alignment = {horizontal:'right'}; } }); }
+            let borderStyle = { style: 'medium', color: { argb: 'FFCBD5E1' } };
+
+            kpis.forEach(k => {
+                let lbl = wsDash.getCell(`${k.col}6`); lbl.value = k.title; 
+                lbl.font = { name: 'Segoe UI', size: 11, bold: true, color: { argb: 'FFFFFFFF' } }; 
+                lbl.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: k.corBg } }; 
+                lbl.alignment = { horizontal: 'center', vertical: 'middle' }; lbl.border = { top: borderStyle, left: borderStyle, right: borderStyle };
+                
+                let valCell = wsDash.getCell(`${k.col}7`); valCell.value = k.val; valCell.numFmt = '#,##0';
+                valCell.font = { name: 'Segoe UI', size: 24, bold: true, color: { argb: 'FF0F172A' } }; 
+                valCell.alignment = { horizontal: 'center', vertical: 'middle' }; valCell.border = { bottom: borderStyle, left: borderStyle, right: borderStyle };
+            });
+
+            wsDash.getCell('B10').value = 'Top Funcionários'; wsDash.getCell('B10').font = { name: 'Segoe UI', bold:true, size:14, color:{argb:'FF0F172A'} };
+            wsDash.getCell('E10').value = 'Top Serviços'; wsDash.getCell('E10').font = { name: 'Segoe UI', bold:true, size:14, color:{argb:'FF0F172A'} };
+
+            let fTop = Object.entries(aggF).sort((a,b)=>b[1].qtd-a[1].qtd).slice(0,10);
+            wsDash.addTable({
+                name: 'TopFuncionarios', ref: 'B11', headerRow: true,
+                style: { theme: 'TableStyleMedium14', showRowStripes: true }, // Laranja
+                columns: [ {name: 'Funcionário', filterButton: false}, {name: 'Atendimentos', filterButton: false} ],
+                rows: fTop.map(f => [f[0], f[1].qtd])
+            });
+
+            let sTop = Object.entries(aggS).sort((a,b)=>b[1].qtd-a[1].qtd).slice(0,10);
+            wsDash.addTable({
+                name: 'TopServicos', ref: 'E11', headerRow: true,
+                style: { theme: 'TableStyleMedium14', showRowStripes: true },
+                columns: [ {name: 'Serviço', filterButton: false}, {name: 'Quantidade', filterButton: false} ],
+                rows: sTop.map(s => [s[1].srv, s[1].qtd])
+            });
+
+            let rH = 25;
+            wsDash.getCell(`B${rH}`).value = 'Evolução Histórica (Mensal)'; wsDash.getCell(`B${rH}`).font = { name: 'Segoe UI', bold:true, size:14, color:{argb:'FF0F172A'} };
+            let historicoRows = getDadosAtivos().map(r => [r.nome, r.kpis.total, r.kpis.finalizados, r.kpis.aguardando, r.kpis.evasao]);
+            
+            if(historicoRows.length > 0) {
+                wsDash.addTable({
+                    name: 'HistoricoDashboard', ref: `B${rH+1}`, headerRow: true,
+                    style: { theme: 'TableStyleMedium2', showRowStripes: true }, // Azul
+                    columns: [ {name: 'Mês', filterButton: false}, {name: 'Total', filterButton: false}, {name: 'Finalizado', filterButton: false}, {name: 'Aguardando', filterButton: false}, {name: 'Evasão', filterButton: false} ],
+                    rows: historicoRows
+                });
             }
 
-            addMatRow("1. INDICADORES GERAIS (KPIS)", null, true); addMatRow("Total de Atendimentos", r => r.kpis.total); addMatRow("Atendimentos Finalizados", r => r.kpis.finalizados); addMatRow("Não Compareceu (Evasão)", r => r.kpis.evasao);
-            addMatRow("2. MACRO-CATEGORIAS", null, true); Array.from(cats).sort().forEach(cat => addMatRow(` ${cat}`, r => r.categorias[cat]));
-            addMatRow("3. ATENDENTES", null, true); Array.from(atends).sort().forEach(ate => addMatRow(` ${ate}`, r => r.atendentes[ate]?r.atendentes[ate].qtd:0));
-            addMatRow("4. SERVIÇOS", null, true); Array.from(servsMap.values()).sort((a,b) => a.srv.localeCompare(b.srv)).forEach(item => addMatRow(` ${item.srv}`, r => r.servicos[item.chaveOriginal]?r.servicos[item.chaveOriginal].qtd:0));
+            // Aplicar formatação numérica nas tabelas
+            wsDash.eachRow((row) => {
+                row.eachCell((cell) => { if(typeof cell.value === 'number') cell.numFmt = '#,##0'; });
+            });
 
+
+            // ====== ABA 2: RESUMO CATEGORIAS ======
+            const wsCat = wb.addWorksheet('Resumo Categorias', {views:[{showGridLines:false}], properties:{tabColor:{argb:'FF8B5CF6'}}});
+            wsCat.columns = [{width:4},{width:45},{width:15},{width:20}];
+            wsCat.mergeCells('B2:D3');
+            let catTitle = wsCat.getCell('B2'); catTitle.value = 'RESUMO DETALHADO POR MACRO-CATEGORIA'; catTitle.font = { name: 'Segoe UI', size: 16, bold: true, color: { argb: 'FFFFFFFF' } }; catTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } }; catTitle.alignment = { vertical: 'middle', horizontal: 'center' };
+            
+            let macGroups = {};
+            Object.values(aggS).forEach(s => {
+                if(!macGroups[s.mac]) macGroups[s.mac] = {qtd: 0, setores: {}};
+                macGroups[s.mac].qtd += s.qtd;
+                if(!macGroups[s.mac].setores[s.set]) macGroups[s.mac].setores[s.set] = 0;
+                macGroups[s.mac].setores[s.set] += s.qtd;
+            });
+            
+            let currRow = 5;
+            let thinBorder = { top:{style:'thin', color:{argb:'FFCBD5E1'}}, bottom:{style:'thin', color:{argb:'FFCBD5E1'}} };
+
+            Object.keys(macGroups).sort((a,b)=>macGroups[b].qtd - macGroups[a].qtd).forEach(mac => {
+                let mData = macGroups[mac]; let pct = totA > 0 ? ((mData.qtd / totA)*100).toFixed(1) : 0;
+                wsCat.mergeCells(`B${currRow}:D${currRow}`);
+                let mainHeader = wsCat.getCell(`B${currRow}`); mainHeader.value = `■ ${mac.toUpperCase()} (Total: ${mData.qtd.toLocaleString('pt-PT')} | ${pct}% do Geral)`; mainHeader.font = { name: 'Segoe UI', bold:true, color: {argb:'FFFFFFFF'}, size: 12 }; mainHeader.fill = { type: 'pattern', pattern:'solid', fgColor:{argb:'FF3B82F6'} }; mainHeader.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 }; currRow++;
+                
+                ['Setor Envolvido', 'Quantidade', 'Participação (%)'].forEach((txt, i) => { let col = ['B','C','D'][i]; let c = wsCat.getCell(`${col}${currRow}`); c.value = txt; c.font = {name: 'Segoe UI', bold:true, color:{argb:'FF334155'}}; c.border=thinBorder; c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF8FAFC'}}; }); currRow++;
+                
+                Object.keys(mData.setores).sort((a,b)=>mData.setores[b] - mData.setores[a]).forEach(set => {
+                    let sQtd = mData.setores[set]; let sPct = mData.qtd > 0 ? ((sQtd / mData.qtd)*100).toFixed(1) : 0;
+                    wsCat.getCell(`B${currRow}`).value = set; wsCat.getCell(`B${currRow}`).border=thinBorder; wsCat.getCell(`B${currRow}`).font={name:'Segoe UI'};
+                    wsCat.getCell(`C${currRow}`).value = sQtd; wsCat.getCell(`C${currRow}`).border=thinBorder; wsCat.getCell(`C${currRow}`).numFmt='#,##0'; wsCat.getCell(`C${currRow}`).font={name:'Segoe UI'};
+                    wsCat.getCell(`D${currRow}`).value = `${sPct}%`; wsCat.getCell(`D${currRow}`).border=thinBorder; wsCat.getCell(`D${currRow}`).alignment = {horizontal:'right'}; wsCat.getCell(`D${currRow}`).font={name:'Segoe UI'};
+                    currRow++;
+                });
+                currRow += 2; 
+            });
+
+
+            // ====== ABA 3: ATENDENTES ======
+            const wsAtend = wb.addWorksheet('Atendentes', {views:[{showGridLines:false, state:'frozen', ySplit:2}], properties:{tabColor:{argb:'FF2563EB'}}});
+            wsAtend.columns = [{width:4},{width:55},{width:15},{width:20}];
+            
+            wsAtend.mergeCells('B1:D1'); let aTitle = wsAtend.getCell('B1'); aTitle.value = 'BASE DE DADOS: ATENDENTES'; aTitle.font = { name: 'Segoe UI', size: 16, bold: true, color: { argb: 'FFFFFFFF' } }; aTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1D4ED8' } }; aTitle.alignment = { vertical: 'middle', horizontal: 'center' };
+            
+            let sortedAtend = Object.entries(aggF).sort((a,b)=>b[1].qtd - a[1].qtd);
+            let rowsAtend = sortedAtend.map(a => [a[0], a[1].qtd, a[1].qtd > 0 ? secToTime(a[1].tTot / a[1].qtd) : '00:00:00']);
+
+            wsAtend.addTable({
+                name: 'TabelaAtendentes', ref: 'B2', headerRow: true,
+                style: { theme: 'TableStyleMedium2', showRowStripes: true }, // Azul
+                columns: [ {name: 'Funcionário', filterButton: true}, {name: 'Quantidade', filterButton: true}, {name: 'Tempo Médio', filterButton: true} ],
+                rows: rowsAtend
+            });
+
+            wsAtend.eachRow((row) => { row.eachCell((cell) => { cell.font = {name:'Segoe UI'}; if(typeof cell.value === 'number') cell.numFmt = '#,##0'; }); });
+
+
+            // ====== ABA 4: SERVIÇOS ======
+            const wsServ = wb.addWorksheet('Servicos', {views:[{showGridLines:false, state:'frozen', ySplit:2}], properties:{tabColor:{argb:'FF10B981'}}});
+            wsServ.columns = [{width:4},{width:25},{width:35},{width:45},{width:15},{width:20}];
+            
+            wsServ.mergeCells('B1:F1'); let sTitle = wsServ.getCell('B1'); sTitle.value = 'BASE DE DADOS: SERVIÇOS'; sTitle.font = { name: 'Segoe UI', size: 16, bold: true, color: { argb: 'FFFFFFFF' } }; sTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF059669' } }; sTitle.alignment = { vertical: 'middle', horizontal: 'center' };
+            
+            let sortedServ = Object.values(aggS).sort((a,b)=>b.qtd - a.qtd);
+            let rowsServ = sortedServ.map(s => [s.mac, s.set, s.srv, s.qtd, s.qtd > 0 ? secToTime(s.tTot / s.qtd) : '00:00:00']);
+
+            wsServ.addTable({
+                name: 'TabelaServicos', ref: 'B2', headerRow: true,
+                style: { theme: 'TableStyleMedium4', showRowStripes: true }, // Verde
+                columns: [ {name: 'Macro-Categoria', filterButton: true}, {name: 'Setor', filterButton: true}, {name: 'Serviço', filterButton: true}, {name: 'Quantidade', filterButton: true}, {name: 'Tempo Médio', filterButton: true} ],
+                rows: rowsServ
+            });
+
+            wsServ.eachRow((row) => { row.eachCell((cell) => { cell.font = {name:'Segoe UI'}; if(typeof cell.value === 'number') cell.numFmt = '#,##0'; }); });
+
+            // Gerar Arquivo Final
             const buf = await wb.xlsx.writeBuffer();
             const b = new Blob([buf], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-            const l = document.createElement('a'); l.href = URL.createObjectURL(b); l.download = 'Neo_Analytics_Comparativo.xlsx'; l.click();
+            const l = document.createElement('a'); l.href = URL.createObjectURL(b); l.download = 'Relatorio_Consolidado_Executivo.xlsx'; l.click();
         }
 
         // ==========================================
-        // EXPORTAÇÃO DASHBOARD HTML
+        // EXPORTAÇÃO DASHBOARD HTML (NEO PREMIUM)
         // ==========================================
         function baixarDashboardHTML() {
-            if(baseDados.length === 0) return;
+            let ativos = getDadosAtivos();
+            if(ativos.length === 0) { showToast("Sem dados para exportar."); return; }
             
-            let tot = 0, fin = 0, agu = 0, eva = 0;
-            let aggCat = {}, aggFunc = {}, aggServ = {};
-            
-            baseDados.forEach(r => { 
-                tot += r.kpis.total; fin += r.kpis.finalizados; agu += r.kpis.aguardando; eva += r.kpis.evasao; 
-                Object.keys(r.categorias).forEach(k => aggCat[k] = (aggCat[k]||0) + r.categorias[k]);
-                Object.keys(r.atendentes).forEach(k => { if(!aggFunc[k]) aggFunc[k]={qtd:0,t:0}; aggFunc[k].qtd+=r.atendentes[k].qtd; aggFunc[k].t=r.atendentes[k].tempo; });
-                Object.keys(r.servicos).forEach(k => { if(!aggServ[k]) aggServ[k]={qtd:0,t:0,mac:r.servicos[k].mac,set:r.servicos[k].set,srv:r.servicos[k].srv}; aggServ[k].qtd+=r.servicos[k].qtd; aggServ[k].t=r.servicos[k].tempo; });
+            showToast("A gerar Dashboard Premium Inteligente...");
+
+            let tot = 0, fin = 0, aguard = 0, evasao = 0;
+            let totTempoF = 0, inSla = 0;
+            let aggFunc = {}, aggServ = {}, aggMacro = {}, aggSetor = {};
+            let hist = [];
+
+            ativos.forEach(r => {
+                tot += r.kpis.total; fin += r.kpis.finalizados; aguard += r.kpis.aguardando; evasao += r.kpis.evasao;
+                hist.push({ m: r.nome, t: r.kpis.total, f: r.kpis.finalizados, a: r.kpis.aguardando, e: r.kpis.evasao });
+
+                Object.keys(r.atendentes).forEach(k => {
+                    if(!aggFunc[k]) aggFunc[k] = {qtd: 0, tTot: 0};
+                    aggFunc[k].qtd += r.atendentes[k].qtd;
+                    aggFunc[k].tTot += r.atendentes[k].tempoTotal;
+                    totTempoF += r.atendentes[k].tempoTotal;
+                });
+
+                Object.keys(r.servicos).forEach(k => {
+                    let s = r.servicos[k];
+                    if(!aggServ[k]) aggServ[k] = {qtd: 0, tTot: 0, mac: s.mac, set: s.set, srv: s.srv};
+                    aggServ[k].qtd += s.qtd;
+                    aggServ[k].tTot += s.tempoTotal;
+
+                    if(!aggMacro[s.mac]) aggMacro[s.mac] = {t: 0, in: 0};
+                    aggMacro[s.mac].t += s.qtd;
+
+                    if(!aggSetor[s.set]) aggSetor[s.set] = {t: 0, in: 0};
+                    aggSetor[s.set].t += s.qtd;
+                    
+                    let avgTime = s.tempoTotal / s.qtd;
+                    let limit = getSlaLim(s.mac);
+                    if(avgTime <= limit) {
+                        aggMacro[s.mac].in += s.qtd;
+                        aggSetor[s.set].in += s.qtd;
+                        inSla += s.qtd;
+                    }
+                });
             });
 
-            let fArr = Object.entries(aggFunc).sort((a,b)=>b[1].qtd-a[1].qtd);
-            let sArr = Object.entries(aggServ).sort((a,b)=>b[1].qtd-a[1].qtd);
-            let headMeses = baseDados.map(r => `<th>${r.nome.substring(0,10)}</th>`).join('');
+            let txConc = tot > 0 ? ((fin/tot)*100).toFixed(1) : 0;
+            let txEva = tot > 0 ? ((evasao/tot)*100).toFixed(1) : 0;
+            let txSla = tot > 0 ? ((inSla/tot)*100).toFixed(1) : 0;
+            let mediaGlobalMin = tot > 0 ? ((totTempoF/tot)/60).toFixed(1) : 0;
 
-            let htmlStr = `<!DOCTYPE html><html lang="pt-br"><head><meta charset="UTF-8"><title>Neo Premium Comparativo</title>
-            <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"><\/script>
-            <style>
-                @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;700&display=swap');
-                :root{--bg1:#050505;--bg2:#1a1a2e;--card-bg:rgba(15,23,42,0.6);--text:#e2e8f0;--border:rgba(56,189,248,0.1);--shadow:0 10px 30px rgba(0,0,0,0.5);}
-                body{background:var(--bg1);background-image:radial-gradient(circle at 50% 0%,var(--bg2) 0%,var(--bg1) 70%);color:var(--text);font-family:'Space Grotesk',sans-serif;margin:0;padding:20px;}
-                .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;padding:20px;background:var(--card-bg);border:1px solid var(--border);border-radius:16px;}
-                .title{font-size:24px;font-weight:700;background:linear-gradient(90deg,#00f2fe,#4facfe);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:0}
-                .grid-kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;margin-bottom:20px}
-                .grid-charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;margin-bottom:20px}
-                .card{background:var(--card-bg);border:1px solid var(--border);border-radius:20px;padding:25px;position:relative;box-shadow:var(--shadow);}
-                .kpi-title{font-size:11px;text-transform:uppercase;color:#94a3b8}
-                .kpi-val{font-size:36px;font-weight:700;margin:0;line-height:1}
-                .glow-c{color:#00f2fe;text-shadow:0 0 20px rgba(0,242,254,0.3)} .glow-g{color:#10b981;text-shadow:0 0 20px rgba(16,185,129,0.3)} .glow-r{color:#ef4444;text-shadow:0 0 20px rgba(239,68,68,0.3)} 
-                .chart-wrapper{height:300px;width:100%;position:relative}
-                .chart-title{font-size:14px;color:var(--text);text-transform:uppercase;margin-bottom:15px;font-weight:700;border-bottom:1px solid var(--border);padding-bottom:10px}
-                table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
-                th,td{padding:10px;text-align:left;border-bottom:1px solid var(--border)}
-                th{color:#94a3b8;font-weight:700;text-transform:uppercase;white-space:nowrap;}
-                .table-wrapper{max-height:400px;overflow:y:auto;overflow-x:auto;position:relative}
-                tbody tr:hover{background-color:rgba(56,189,248,0.05);}
-            </style></head><body>
-            <div class="header"><div><h1 class="title">NEO ANALYTICS PREMIUM - COMPARAÇÃO GLOBAL</h1><p style="margin:5px 0 0 0;color:#64748b;font-size:14px">Consolidado: ${baseDados.length} Meses Analisados</p></div></div>
-            <div class="grid-kpi">
-                <div class="card"><div class="kpi-title">Total Atendimentos</div><div class="kpi-val glow-c">${tot}</div></div>
-                <div class="card"><div class="kpi-title">Finalizados</div><div class="kpi-val glow-g">${fin}</div></div>
-                <div class="card"><div class="kpi-title">Evasão</div><div class="kpi-val glow-r">${eva}</div></div>
-            </div>
-            
-            <div class="card" style="margin-bottom:20px; overflow-x: auto;">
-                <div class="chart-title">Matriz Comparativa (Geral)</div>
-                <table>
-                    <thead><tr><th>MÉTRICA</th>${headMeses}<th>TOTAL</th></tr></thead>
-                    <tbody>
-                        <tr><td style="font-weight:bold;color:#fff;">Volume Total</td>${baseDados.map(r=>`<td>${r.kpis.total}</td>`).join('')}<td style="font-weight:bold;color:#00f2fe">${tot}</td></tr>
-                        <tr><td style="font-weight:bold;color:#fff;">Finalizados</td>${baseDados.map(r=>`<td>${r.kpis.finalizados}</td>`).join('')}<td style="font-weight:bold;color:#10b981">${fin}</td></tr>
-                        <tr><td style="font-weight:bold;color:#fff;">Evasão</td>${baseDados.map(r=>`<td>${r.kpis.evasao}</td>`).join('')}<td style="font-weight:bold;color:#ef4444">${eva}</td></tr>
-                    </tbody>
-                </table>
-            </div>
+            let pInicial = ativos.length > 0 ? ativos[0].nome : "Início";
+            let pFinal = ativos.length > 0 ? ativos[ativos.length-1].nome : "Fim";
 
-            <div class="card" style="margin-bottom:20px"><div class="chart-title">Evolução Histórica (Volume Total)</div><div class="chart-wrapper" id="cHist"></div></div>
-            <div class="grid-charts">
-                <div class="card"><div class="chart-title">Top 10 Funcionários Globais</div><div class="chart-wrapper" id="cTopF"></div></div>
-                <div class="card"><div class="chart-title">Distribuição por Macro-Categoria</div><div class="chart-wrapper" id="cSetor"></div></div>
-            </div>
-            
-            <div class="card" style="margin-bottom:20px">
-                <div class="chart-title">Ranking de Funcionários Comparativo</div>
-                <div class="table-wrapper">
-                    <table>
-                        <thead><tr><th>Nome do Funcionário</th>${headMeses}<th>Total Geral</th></tr></thead>
-                        <tbody>`;
-            
-            fArr.forEach(f => {
-                let valCols = baseDados.map(r => `<td>${r.atendentes[f[0]]?r.atendentes[f[0]].qtd:0}</td>`).join('');
-                htmlStr += `<tr><td>${f[0]}</td>${valCols}<td style="font-weight:bold;color:#00f2fe;">${f[1].qtd}</td></tr>`;
-            });
+            let tM = '', tC = '#94a3b8';
+            if(hist.length > 1) {
+                let uT = hist[hist.length-1].t, pT = hist[hist.length-2].t;
+                if(pT > 0) { let pc = ((uT-pT)/pT)*100; tM = pc > 0 ? `+${pc.toFixed(1)}%` : `${pc.toFixed(1)}%`; tC = pc > 0 ? '#10b981' : '#ef4444'; }
+            }
 
-            htmlStr += `</tbody></table></div></div>
-            
-            <div class="card">
-                <div class="chart-title">Ranking de Serviços Comparativo</div>
-                <div class="table-wrapper">
-                    <table>
-                        <thead><tr><th>Macro-Categoria</th><th>Serviço</th>${headMeses}<th>Total Geral</th></tr></thead>
-                        <tbody>`;
-            
-            sArr.forEach(s => {
-                let p = s[0].split('|'); let mac = p.length===3?p[0]:'Outros'; let srv = p.length===3?p[2]:s[0];
-                let valCols = baseDados.map(r => `<td>${r.servicos[s[0]]?r.servicos[s[0]].qtd:0}</td>`).join('');
-                htmlStr += `<tr><td><span style="background:rgba(56,189,248,0.1);padding:2px 6px;border-radius:4px;font-size:10px">${mac}</span></td><td>${srv}</td>${valCols}<td style="font-weight:bold;color:#10b981;">${s[1].qtd}</td></tr>`;
-            });
-            
-            htmlStr += `</tbody></table></div></div><script>
-            let cL = ${JSON.stringify(baseDados.map(r=>r.nome.substring(0,15)))};
-            let ctxH = echarts.init(document.getElementById("cHist"));
-            ctxH.setOption({ tooltip: {trigger: "axis"}, xAxis: {type: "category", data: cL}, yAxis: {type: "value"}, series: [{data: ${JSON.stringify(baseDados.map(r=>r.kpis.total))}, type: "line", smooth: true, areaStyle: {color: "rgba(0, 242, 254, 0.2)"}, lineStyle: {color: "#00f2fe"}}] });
+            let cL = hist.map(h => h.m), cT = hist.map(h => h.t), cF = hist.map(h => h.f), cE = hist.map(h => h.e);
+            if(hist.length === 1) { cL = ['Início', 'Fim']; cT = [tot, tot]; cF = [fin, fin]; cE = [evasao, evasao]; }
 
-            let ctxF = echarts.init(document.getElementById("cTopF"));
-            ctxF.setOption({ tooltip: {}, xAxis: {type: "value"}, yAxis: {type: "category", data: ${JSON.stringify(fArr.slice(0,10).map(f=>f[0].split(" - ")[0]).reverse())}}, series: [{data: ${JSON.stringify(fArr.slice(0,10).map(f=>f[1].qtd).reverse())}, type: "bar", itemStyle: {color: "#00f2fe", borderRadius: [0, 5, 5, 0]}}] });
+            let mNames = Object.keys(aggMacro);
+            let mVol = mNames.map(k => aggMacro[k].t);
+            let mSla = mNames.map(k => aggMacro[k].t > 0 ? ((aggMacro[k].in/aggMacro[k].t)*100).toFixed(1) : 0);
 
-            let ctxCat = echarts.init(document.getElementById("cSetor"));
-            ctxCat.setOption({ tooltip: {trigger: "item"}, series: [{type: "pie", radius: ["40%", "70%"], data: ${JSON.stringify(Object.entries(aggCat).map(e=>({value:e[1], name:e[0]})))}, itemStyle: {borderRadius: 5, borderColor: "#1a1a2e", borderWidth: 2}}] });
-            <\/script></body></html>`;
+            let setNames = Object.keys(aggSetor).slice(0, 8);
+            let setVol = setNames.map(k => aggSetor[k].t);
+            let setSlaVol = setNames.map(k => aggSetor[k].in);
+            let setForaSla = setNames.map(k => aggSetor[k].t - aggSetor[k].in);
 
+            let fSorted = Object.entries(aggFunc).map(e => [e[0], e[1].qtd, secToTime(e[1].tTot/e[1].qtd)]).sort((a,b) => b[1] - a[1]);
+            let fNames10 = fSorted.slice(0, 10).map(f => f[0].split(' - ')[0]);
+            let fVol10 = fSorted.slice(0, 10).map(f => f[1]);
+            let fTime10 = fSorted.slice(0, 10).map(f => { let p = f[2].split(':'); return ((+p[0]*3600) + (+p[1]*60) + (+p[2])) / 60; });
+
+            let sSorted = Object.values(aggServ).map(s => [`${s.mac}|${s.set}|${s.srv}`, s.set, s.qtd, secToTime(s.tTot/s.qtd), s.mac]).sort((a,b) => b[2] - a[2]);
+            let sNames10 = sSorted.slice(0, 10).map(s => s[0].split('|').pop().trim().substring(0, 25));
+            let sVol10 = sSorted.slice(0, 10).map(s => s[2]);
+
+            let htmlStr = `<!DOCTYPE html><html lang="pt-br"><head><meta charset="UTF-8"><title>Neo Premium</title><script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script><script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script><link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"><script src="https://code.jquery.com/jquery-3.7.0.min.js"><\/script><script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"><\/script><style>@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;800&display=swap');:root { --primary: #f97316; --primary-hover: #ea580c; --bg1: #09090b; --bg2: #18181b; --card-bg: #27272a; --text: #f8fafc; --text-muted: #a1a1aa; --border: rgba(249,115,22,0.15); --radius: 12px; }body { background: var(--bg1); color: var(--text); font-family: 'Space Grotesk', sans-serif; margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; }::-webkit-scrollbar { width: 6px; height: 6px; } ::-webkit-scrollbar-track { background: var(--bg1); } ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: var(--radius); }#sidebar { width: 260px; background: linear-gradient(180deg, #1e1b18 0%, #09090b 100%); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 24px; box-sizing: border-box; box-shadow: 5px 0 15px rgba(0,0,0,0.3); z-index: 10; }#sidebar h1 { font-size: 22px; color: var(--primary); text-transform: uppercase; margin-bottom: 5px; font-weight: 800; letter-spacing: 1px; }#sidebar p { font-size: 12px; color: var(--text-muted); margin-bottom: 35px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }.nav-btn { background: transparent; border: 1px solid transparent; color: var(--text); padding: 12px 15px; margin-bottom: 8px; border-radius: var(--radius); cursor: pointer; transition: all 0.3s ease; font-family: inherit; font-weight: 600; text-align: left; display: flex; justify-content: space-between; align-items: center; }.nav-btn:hover { background: rgba(249,115,22,0.1); border-color: rgba(249,115,22,0.3); transform: translateX(5px); }.nav-btn.active { background: var(--primary); color: #fff; box-shadow: 0 4px 10px rgba(249,115,22,0.4); }.export-btns { margin-top: auto; display: flex; flex-direction: column; gap: 10px; }#main-content { flex: 1; padding: 30px; box-sizing: border-box; position: relative; display: flex; flex-direction: column; overflow: auto; background: radial-gradient(circle at top right, #1a1512 0%, var(--bg1) 100%); }.tab-content { display: none; height: 100%; flex-direction: column; gap: 25px; animation: slideUp 0.5s ease-out forwards; min-height: fit-content; }.tab-content.active { display: flex; }@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }.grid-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; flex-shrink: 0; }.grid-charts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; flex: 1; min-height: 450px; }.card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--radius); padding: 20px; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative; overflow: hidden; }.card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: var(--primary); opacity: 0.5; }.card-t::before { background: var(--primary); opacity: 1; }.card-f::before { background: #10b981; opacity: 1; }.card-s::before { background: #f59e0b; opacity: 1; }.card-e::before { background: #ef4444; opacity: 1; }.chart-wrapper { flex: 1; position: relative; min-height: 250px; width: 100%; margin-top: 10px; }.kpi-title { font-size: 12px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1.5px; font-weight: 600; }.kpi-val { font-size: 36px; font-weight: 800; line-height: 1.2; margin-top: 8px; }table { width: 100%; font-size: 13px; border-collapse: collapse; color:#fff;}th { color: var(--primary); text-transform: uppercase; text-align: left; padding: 12px; border-bottom: 2px solid rgba(249,115,22,0.3); font-weight: 800; }td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }.dataTables_wrapper { height: 100%; display: flex; flex-direction: column; }.dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dataTables_info { color: var(--text-muted) !important; font-size: 12px; margin-bottom: 15px; }input[type="search"] { background: rgba(0,0,0,0.5); border: 1px solid rgba(249,115,22,0.4); color: #fff; padding: 8px 12px; border-radius: 6px; outline: none; transition: 0.3s; }input[type="search"]:focus { border-color: var(--primary); box-shadow: 0 0 8px rgba(249,115,22,0.5); }.dataTables_paginate a { color: var(--text) !important; cursor: pointer; padding: 5px 10px; border: 1px solid rgba(255,255,255,0.1); margin: 0 3px; border-radius: 6px; background: rgba(0,0,0,0.3); }.dataTables_paginate a:hover { background: var(--primary); border-color: var(--primary); }.mini-kpi { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); padding: 10px 15px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid var(--primary); }</style></head><body><div id="sidebar"><div><h1>NEO PREMIUM</h1><p>${pInicial} - ${pFinal}</p></div><button class="nav-btn active" onclick="openTab('tab-visao')">Visão Executiva <span>➔</span></button><button class="nav-btn" onclick="openTab('tab-tempo')">Análise Temporal <span>➔</span></button><button class="nav-btn" onclick="openTab('tab-equipe')">Performance Equipe <span>➔</span></button><button class="nav-btn" onclick="openTab('tab-setor')">Serviços e Setores <span>➔</span></button><button class="nav-btn" onclick="openTab('tab-dados')">Explorador de Dados <span>➔</span></button><div class="export-btns"><button class="nav-btn" onclick="gerarPDF()" style="text-align:center;justify-content:center;border-color:rgba(239,68,68,0.5);color:#ef4444">Exportar PDF</button><button class="nav-btn" onclick="gerarJSON()" style="text-align:center;justify-content:center;border-color:rgba(16,185,129,0.5);color:#10b981">Exportar JSON</button></div></div><div id="main-content"><div id="tab-visao" class="tab-content active"><div class="grid-kpi"><div class="card card-t"><div class="kpi-title">Total Atendimentos</div><div class="kpi-val" style="color:var(--primary)">${tot}</div><div style="font-size:12px;color:${tC};margin-top:5px;font-weight:600">${tM || 'Evolução do Período'}</div></div><div class="card card-f"><div class="kpi-title">Finalizados</div><div class="kpi-val" style="color:#10b981">${fin}</div><div style="font-size:12px;color:var(--text-muted);margin-top:5px">Taxa de Sucesso: <b style="color:#fff">${txConc}%</b></div></div><div class="card card-s"><div class="kpi-title">Conformidade SLA</div><div class="kpi-val" style="color:#f59e0b">${txSla}%</div><div style="font-size:12px;color:var(--text-muted);margin-top:5px">Dentro da Meta</div></div><div class="card card-e"><div class="kpi-title">Evasão / Cancelados</div><div class="kpi-val" style="color:#ef4444">${evasao}</div><div style="font-size:12px;color:var(--text-muted);margin-top:5px">Taxa de Perda: <b style="color:#fff">${txEva}%</b></div></div></div><div class="grid-charts"><div class="card" style="grid-column: span 2;"><div class="kpi-title">Demanda Histórica Geral (Área)</div><div class="chart-wrapper"><canvas id="cHist"></canvas></div></div><div class="card"><div class="kpi-title">Status dos Atendimentos</div><div class="chart-wrapper"><canvas id="cStatus"></canvas></div></div><div class="card"><div class="kpi-title">Distribuição por Macro-Categoria</div><div class="chart-wrapper"><canvas id="cMacroVol"></canvas></div></div></div></div><div id="tab-tempo" class="tab-content"><div class="grid-charts" style="grid-template-columns: 1fr;"><div class="card"><div class="mini-kpi"><div><div class="kpi-title">Pico Histórico Mensal</div><div style="font-size:20px;font-weight:bold;color:#fff">${Math.max(...cT)} atendimentos</div></div><div><div class="kpi-title">Média Mensal</div><div style="font-size:20px;font-weight:bold;color:#fff">${(cT.reduce((a,b)=>a+b,0)/cT.length).toFixed(0)} atendimentos</div></div></div><div class="kpi-title">Evolução: Finalizados vs Evasão (Área Sobreposta)</div><div class="chart-wrapper" style="min-height:350px"><canvas id="cAreaComp"></canvas></div></div></div></div><div id="tab-equipe" class="tab-content"><div class="grid-charts"><div class="card"><div class="mini-kpi" style="border-left-color:#3b82f6"><div><div class="kpi-title">Tempo Médio Global</div><div style="font-size:20px;font-weight:bold;color:#3b82f6">${mediaGlobalMin} min</div></div></div><div class="kpi-title">Top 10 Funcionários (Volume de Atendimentos)</div><div class="chart-wrapper"><canvas id="cTopF"></canvas></div></div><div class="card"><div class="kpi-title">Radar de Competência (Volume vs Tempo) - Top 5</div><div class="chart-wrapper"><canvas id="cRadarEquipe"></canvas></div></div><div class="card" style="grid-column: span 2;"><div class="kpi-title">Média de Tempo de Atendimento (Minutos) - Top 10</div><div class="chart-wrapper" style="min-height: 200px;"><canvas id="cTempoF"></canvas></div></div></div></div><div id="tab-setor" class="tab-content"><div class="grid-charts"><div class="card" style="grid-column: span 2;"><div class="kpi-title">Composição de SLA por Setor (Barras Empilhadas)</div><div class="chart-wrapper" style="min-height: 250px;"><canvas id="cStackedSetor"></canvas></div></div><div class="card"><div class="kpi-title">Top 10 Serviços Mais Frequentes</div><div class="chart-wrapper"><canvas id="cTopSrv"></canvas></div></div><div class="card"><div class="kpi-title">Conformidade SLA (%) por Macro Categoria</div><div class="chart-wrapper"><canvas id="cMacroSla"></canvas></div></div></div></div><div id="tab-dados" class="tab-content"><div class="grid-charts" style="min-height:500px;"><div class="card" style="overflow:auto;"><div class="kpi-title" style="margin-bottom:15px;">Explorador de Equipe (Use a busca para filtrar)</div><table class="dt-table"><thead><tr><th>Nome</th><th>Qtd</th><th>Tempo</th></tr></thead><tbody>${fSorted.map(f=>`<tr><td>${f[0].split(' - ')[0]}</td><td><b>${f[1]}</b></td><td>${f[2]}</td></tr>`).join('')}</tbody></table></div><div class="card" style="overflow:auto;"><div class="kpi-title" style="margin-bottom:15px;">Explorador de Serviços (Filtre por Setor ou Macro)</div><table class="dt-table"><thead><tr><th>Setor / Macro</th><th>Serviço</th><th>Qtd</th><th>Tempo</th></tr></thead><tbody>${sSorted.map(s=>`<tr><td><span style="color:var(--primary);font-size:10px">${s[4].toUpperCase()}</span><br>${s[1]}</td><td>${s[0].split('|').pop().trim()}</td><td><b>${s[2]}</b></td><td>${s[3]}</td></tr>`).join('')}</tbody></table></div></div></div></div><script>function openTab(tabId) { document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); document.getElementById(tabId).classList.add('active'); event.currentTarget.classList.add('active'); } function gerarPDF() { html2pdf().set({ margin: 5, filename: 'Dashboard_Neo.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } }).from(document.getElementById('main-content')).save(); } function gerarJSON(){let data={periodo:{inicio:'${pInicial}',fim:'${pFinal}'},kpis:{total:${tot},finalizados:${fin},aguardando:${aguard},evasao:${evasao},taxaSla:${txSla}}};let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});let url=URL.createObjectURL(blob);let a=document.createElement('a');a.href=url;a.download='Neo_Analytics_Data.json';a.click();} Chart.defaults.color = '#a1a1aa'; Chart.defaults.font.family = "'Space Grotesk', sans-serif"; Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(0,0,0,0.8)'; Chart.defaults.plugins.tooltip.padding = 10; Chart.defaults.plugins.tooltip.cornerRadius = 8; const primColor = '#f97316'; const colors = ['#f97316', '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4', '#eab308', '#ef4444', '#14b8a6']; let ctxHist = document.getElementById('cHist').getContext('2d'); let gradHist = ctxHist.createLinearGradient(0, 0, 0, 300); gradHist.addColorStop(0, 'rgba(249, 115, 22, 0.4)'); gradHist.addColorStop(1, 'rgba(249, 115, 22, 0.0)'); new Chart(ctxHist, { type: 'line', data: { labels: ${JSON.stringify(cL)}, datasets: [{ label: 'Total', data: ${JSON.stringify(cT)}, borderColor: primColor, backgroundColor: gradHist, borderWidth: 3, tension: 0.4, fill: true, pointBackgroundColor: primColor, pointRadius: 4, pointHoverRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' } }, x: { grid: { display: false } } } } }); new Chart(document.getElementById('cAreaComp').getContext('2d'), { type: 'line', data: { labels: ${JSON.stringify(cL)}, datasets: [{ label: 'Finalizados', data: ${JSON.stringify(cF)}, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.3)', tension: 0.4, fill: true }, { label: 'Evasão', data: ${JSON.stringify(cE)}, borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.3)', tension: 0.4, fill: true }] }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, scales: { y: { stacked: false, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { grid: { display: false } } } } }); new Chart(document.getElementById('cStatus').getContext('2d'), { type: 'doughnut', data: { labels: ['Finalizados', 'Aguardando', 'Evasão'], datasets: [{ data: [${fin}, ${aguard}, ${evasao}], backgroundColor: ['#10b981', '#f59e0b', '#ef4444'], borderWidth: 0, hoverOffset: 10 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'bottom' } } } }); new Chart(document.getElementById('cMacroVol').getContext('2d'), { type: 'pie', data: { labels: ${JSON.stringify(mNames)}, datasets: [{ data: ${JSON.stringify(mVol)}, backgroundColor: colors, borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } }); new Chart(document.getElementById('cTopF').getContext('2d'), { type: 'bar', data: { labels: ${JSON.stringify(fNames10)}, datasets: [{ label: 'Volume', data: ${JSON.stringify(fVol10)}, backgroundColor: primColor, borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { grid: { color: 'rgba(255,255,255,0.05)' } }, y: { grid: { display: false } } } } }); new Chart(document.getElementById('cTempoF').getContext('2d'), { type: 'bar', data: { labels: ${JSON.stringify(fNames10)}, datasets: [{ label: 'Minutos Médios', data: ${JSON.stringify(fTime10)}, backgroundColor: '#3b82f6', borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' } }, x: { grid: { display: false } } } } }); new Chart(document.getElementById('cRadarEquipe').getContext('2d'), { type: 'radar', data: { labels: ${JSON.stringify(fNames10.slice(0,5))}, datasets: [{ label: 'Volume de Atendimentos', data: ${JSON.stringify(fVol10.slice(0,5))}, backgroundColor: 'rgba(249, 115, 22, 0.2)', borderColor: primColor, pointBackgroundColor: primColor, pointBorderColor: '#fff', pointHoverBackgroundColor: '#fff', pointHoverBorderColor: primColor }] }, options: { responsive: true, maintainAspectRatio: false, scales: { r: { angleLines: { color: 'rgba(255, 255, 255, 0.1)' }, grid: { color: 'rgba(255, 255, 255, 0.1)' }, pointLabels: { color: '#e2e8f0', font: { size: 11 } }, ticks: { display: false } } } } }); new Chart(document.getElementById('cStackedSetor').getContext('2d'), { type: 'bar', data: { labels: ${JSON.stringify(setNames)}, datasets: [{ label: 'Dentro do SLA', data: ${JSON.stringify(setSlaVol)}, backgroundColor: '#10b981', borderRadius: {topLeft:0, topRight:0, bottomLeft:6, bottomRight:6} }, { label: 'Fora do SLA', data: ${JSON.stringify(setForaSla)}, backgroundColor: '#ef4444', borderRadius: {topLeft:6, topRight:6, bottomLeft:0, bottomRight:0} }] }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, grid: { color: 'rgba(255,255,255,0.05)' } } } } }); new Chart(document.getElementById('cTopSrv').getContext('2d'), { type: 'bar', data: { labels: ${JSON.stringify(sNames10)}, datasets: [{ label:'Volume', data: ${JSON.stringify(sVol10)}, backgroundColor: '#f59e0b', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } } } }); new Chart(document.getElementById('cMacroSla').getContext('2d'), { type: 'bar', data: { labels: ${JSON.stringify(mNames)}, datasets: [{ label:'SLA Meta %', data: ${JSON.stringify(mSla)}, backgroundColor: '#8b5cf6', borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { max: 100, grid: { color: 'rgba(255,255,255,0.05)' } } } } }); $(document).ready(function() { $('.dt-table').DataTable({ "pageLength": 6, "lengthChange": false, "info": false, "language": { "search": "Filtrar Resultados:", "paginate": { "previous": "Anterior", "next": "Próximo" }, "zeroRecords": "Nenhum dado encontrado" } }); }); <\/script></body></html>`;
+            
             const blob = new Blob([htmlStr], { type: 'text/html;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a'); a.href = url;
-            a.download = `Dashboard_Premium_Comparativo.html`;
+            a.download = 'Neo_Premium_Consolidado.html';
             document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-            showToast("Dashboard HTML exportado com sucesso.");
+            showToast("Dashboard HTML Neo Premium exportado!");
         }
     </script>
 </body>
