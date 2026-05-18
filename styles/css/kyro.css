@@ -1,0 +1,7 @@
+@charset "UTF-8";
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 0px; }
+        .dark ::-webkit-scrollbar-thumb { background: #4b5563; }
+        body { transition: background-color 0.2s, color 0.2s; }

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kyro Fluxo Inteligente + Life OS</title>
+    <link rel="stylesheet" href="styles/css/kyro.css">
     <link rel="shortcut icon" href="https://placehold.co/32x32/ea580c/FFFFFF?text=K" type="image/x-icon">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -13,34 +14,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
-                    colors: {
-                        'kyro-orange': {
-                            500: '#f97316',
-                            600: '#ea580c',
-                            700: '#c2410c',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    <script src="js/tailwind.config-kyro.js"></script>
 
-    <style>
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 0px; }
-        .dark ::-webkit-scrollbar-thumb { background: #4b5563; }
-        body { transition: background-color 0.2s, color 0.2s; }
-    </style>
 </head>
 <body class="font-sans bg-white text-gray-900 antialiased dark:bg-black dark:text-gray-100">
 
@@ -103,7 +78,7 @@
                 </p>
                 
                 <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a href="../smart-planner/smart-planner.html" class="inline-block">
+                    <a href="pages/smart-planner/smart-planner.html" class="inline-block">
                         <button class="w-full sm:w-auto bg-kyro-orange-600 text-white px-8 py-3.5 font-semibold text-lg hover:bg-kyro-orange-700 transition-colors flex items-center justify-center gap-2 rounded-sm">
                             <i data-lucide="rocket" class="w-5 h-5"></i> Acessar SmartPlanner
                         </button>
@@ -177,7 +152,7 @@
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="services-grid">
                     
-                    <a href="../smart-planner/smart-planner.html" class="service-card block" data-category="produtividade">
+                    <a href="pages/smart-planner/smart-planner.html" class="service-card block" data-category="produtividade">
                         <div class="h-full bg-white dark:bg-black p-6 border border-gray-200 dark:border-gray-800 hover:border-kyro-orange-600 transition-colors rounded-sm relative">
                             <span class="absolute top-4 right-4 text-xs font-bold bg-gray-100 dark:bg-gray-800 px-2 py-1 text-gray-600 dark:text-gray-300 rounded-sm">PRO</span>
                             <i data-lucide="calendar-days" class="w-8 h-8 text-gray-900 dark:text-white mb-4"></i>
@@ -186,7 +161,7 @@
                         </div>
                     </a>
 
-                    <a href="../processo/processo_sem_ai.html" class="service-card block" data-category="automacao">
+                    <a href="pages/processo/processo_sem_ai.html" class="service-card block" data-category="automacao">
                         <div class="h-full bg-white dark:bg-black p-6 border border-gray-200 dark:border-gray-800 hover:border-kyro-orange-600 transition-colors rounded-sm">
                             <i data-lucide="file-search" class="w-8 h-8 text-gray-900 dark:text-white mb-4"></i>
                             <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Processos IA</h3>
@@ -194,7 +169,7 @@
                         </div>
                     </a>
                     
-                    <a href="../kyro-suite/kyro-suite.html" class="service-card block" data-category="ia">
+                    <a href="pages/kyro-suite/kyro-suite.html" class="service-card block" data-category="ia">
                          <div class="h-full bg-white dark:bg-black p-6 border border-gray-200 dark:border-gray-800 hover:border-kyro-orange-600 transition-colors rounded-sm">
                             <i data-lucide="sparkles" class="w-8 h-8 text-gray-900 dark:text-white mb-4"></i>
                             <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Kyro Suite</h3>
@@ -202,7 +177,7 @@
                         </div>
                     </a>
 
-                    <a href="../escala/escala.html" class="service-card block" data-category="rh">
+                    <a href="pages/escala/escala.html" class="service-card block" data-category="rh">
                         <div class="h-full bg-white dark:bg-black p-6 border border-gray-200 dark:border-gray-800 hover:border-kyro-orange-600 transition-colors rounded-sm">
                             <i data-lucide="calendar-clock" class="w-8 h-8 text-gray-900 dark:text-white mb-4"></i>
                             <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Escalas</h3>
@@ -210,7 +185,7 @@
                         </div>
                     </a>
 
-                    <a href="../ponto-digital/ponto-digital.html" class="service-card block" data-category="rh">
+                    <a href="pages/ponto-digital/ponto-digital.html" class="service-card block" data-category="rh">
                          <div class="h-full bg-white dark:bg-black p-6 border border-gray-200 dark:border-gray-800 hover:border-kyro-orange-600 transition-colors rounded-sm">
                             <i data-lucide="fingerprint" class="w-8 h-8 text-gray-900 dark:text-white mb-4"></i>
                             <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Ponto Digital</h3>
@@ -218,7 +193,7 @@
                         </div>
                     </a>
 
-                    <a href="../portal-rh/portal-rh.html" class="service-card block" data-category="rh">
+                    <a href="pages/portal-rh/portal-rh.html" class="service-card block" data-category="rh">
                         <div class="h-full bg-white dark:bg-black p-6 border border-gray-200 dark:border-gray-800 hover:border-kyro-orange-600 transition-colors rounded-sm">
                             <i data-lucide="users-2" class="w-8 h-8 text-gray-900 dark:text-white mb-4"></i>
                             <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Portal RH</h3>
@@ -226,7 +201,7 @@
                         </div>
                     </a>
                     
-                    <a href="../Analytics PRO/analytics.html" class="service-card block" data-category="dados">
+                    <a href="pages/Analytics PRO/analytics.html" class="service-card block" data-category="dados">
                         <div class="h-full bg-white dark:bg-black p-6 border border-gray-200 dark:border-gray-800 hover:border-kyro-orange-600 transition-colors rounded-sm">
                             <i data-lucide="pie-chart" class="w-8 h-8 text-gray-900 dark:text-white mb-4"></i>
                             <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Analytics PRO</h3>
@@ -234,7 +209,7 @@
                         </div>
                     </a>
 
-                    <a href="../ramais/ramais.html" class="service-card block" data-category="comunicacao">
+                    <a href="pages/ramais/ramais.html" class="service-card block" data-category="comunicacao">
                         <div class="h-full bg-white dark:bg-black p-6 border border-gray-200 dark:border-gray-800 hover:border-kyro-orange-600 transition-colors rounded-sm">
                             <i data-lucide="phone-call" class="w-8 h-8 text-gray-900 dark:text-white mb-4"></i>
                             <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Lista de Ramais</h3>
