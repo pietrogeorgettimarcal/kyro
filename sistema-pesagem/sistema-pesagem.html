@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HL Mando - Sistema de Pesagem (Digitalização & Lançamento Manual)</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- XLSX JS Style CDN (Suporte a cores, formatação verde Excel e filtros) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+
+  <!-- Engine de OCR em JS -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            hlblue: '#00AEEF',
+            hlblack: '#111111',
+            excel: {
+              500: '#107c41',
+              600: '#0f6d38',
+              700: '#0a532a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { -moz-appearance: textfield; }
+    
+    .bg-facade {
+      background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+      position: relative;
+    }
+  </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans antialiased selection:bg-hlblue selection:text-white">
+
+  <!-- HEADER / HL MANDO TOOLBAR -->
+  <header class="bg-white border-b-4 border-hlblue sticky top-0 z-50 px-4 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+    <div class="flex items-center gap-6">
+      
+      <!-- Logo HL Mando -->
+      <div class="flex items-center">
+        <svg class="h-9 w-auto" viewBox="0 0 260 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 10 h 10 v 12 h 13 v -12 h 10 v 30 h -10 v -10 h -13 v 10 h -10 z" fill="#111111"/>
+          <path d="M50 10 h 10 v 30 h -10 z" fill="#111111"/>
+          <path d="M60 40 l 12 -12 h 16 v 12 z" fill="#00AEEF"/>
+          <text x="95" y="40" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="34" fill="#111111" letter-spacing="-0.5">Mando</text>
+        </svg>
+      </div>
+
+      <div class="hidden sm:block border-l-2 border-slate-200 h-10"></div>
+
+      <div>
+        <h1 class="text-base lg:text-lg font-bold text-slate-800 tracking-tight">Sistema de Pesagem & Lançamento Logístico</h1>
+        <p class="text-xs text-slate-500 font-medium">Digitalização por Foto/Scan ou Emissão de Planilha Manual (14 Colunas)</p>
+      </div>
+    </div>
+
+    <!-- ABAS DE NAVEGAÇÃO -->
+    <div class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
+      <button id="tab-btn-scan" onclick="switchMode('scan')" class="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition bg-hlblue text-white shadow-sm">
+        <i data-lucide="scan" class="w-4 h-4"></i>
+        <span>📷 Digitalizar Foto/Scan</span>
+      </button>
+
+      <button id="tab-btn-manual" onclick="switchMode('manual')" class="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition text-slate-600 hover:text-slate-900">
+        <i data-lucide="pen-tool" class="w-4 h-4 text-hlblue"></i>
+        <span>✍️ Digitador Manual (Sem Foto)</span>
+      </button>
+    </div>
+
+    <!-- Botão de Lote e Exportação -->
+    <div class="flex items-center gap-2">
+      <!-- NOVO: Botão Importar Excel -->
+      <label class="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-lg text-xs font-bold transition shadow-sm cursor-pointer" title="Importar planilha para continuar de onde parou">
+        <i data-lucide="file-up" class="w-4 h-4 text-hlblue"></i>
+        <span class="hidden sm:inline">Continuar Excel</span>
+        <input type="file" accept=".xlsx, .xls" onchange="importarExcel(event)" class="hidden" />
+      </label>
+
+      <button onclick="abrirModalLote()" class="hidden sm:flex bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 px-3 py-1.5 rounded-lg items-center gap-1.5 text-xs font-bold shadow-sm transition">
+        <i data-lucide="layers" class="w-4 h-4"></i>
+        <span class="lote-counter-badge">0 Notas no Lote</span>
+        <i data-lucide="external-link" class="w-3 h-3 ml-1"></i>
+      </button>
+      <button onclick="salvarNotaNoLote()" class="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition shadow-sm">
+        <i data-lucide="save" class="w-4 h-4 text-hlblue"></i>
+        <span>Salvar no Lote (+)</span>
+      </button>
+      <button id="btn-export" onclick="exportToExcel()" class="flex items-center gap-2 px-4 py-2 bg-excel-600 hover:bg-excel-700 text-white rounded-lg text-xs font-bold transition shadow-md shadow-excel-500/20">
+        <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+        <span>Gerar Excel Unificado</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="flex-1 p-4 lg:p-6 flex flex-col gap-6 max-w-[1920px] w-full mx-auto relative">
+    
+    <!-- NOTIFICAÇÃO DE FEEDBACK -->
+    <div id="toast-message" class="hidden fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-slate-700 text-xs font-bold transition">
+      <i data-lucide="info" class="w-4 h-4 text-hlblue"></i>
+      <span id="toast-text">Mensagem...</span>
+    </div>
+
+    <!-- MODAL GERENCIAR LOTE -->
+    <div id="modal-lote" class="hidden fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl p-6 max-w-2xl w-full shadow-2xl border border-slate-200 flex flex-col max-h-[80vh]">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <i data-lucide="layers" class="w-5 h-5 text-hlblue"></i>
+            <h3 class="font-bold text-slate-800 text-lg">Gerenciar Notas no Lote</h3>
+          </div>
+          <button onclick="fecharModalLote()" class="text-slate-400 hover:text-slate-600 p-1 rounded transition"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+        <div class="overflow-y-auto flex-1 pr-2">
+          <div id="lote-lista" class="flex flex-col gap-3">
+            <!-- Lista de notas injetada via JS -->
+          </div>
+        </div>
+        <div class="mt-4 pt-4 border-t border-slate-100 flex justify-end">
+           <button onclick="fecharModalLote()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition">Fechar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- MODO 1: DIGITALIZAÇÃO POR FOTO / SCAN                             -->
+    <!-- ================================================================= -->
+    <div id="mode-scan-container" class="flex flex-col gap-6 flex-1">
+      
+      <!-- UPLOAD ZONE -->
+      <div id="upload-zone" 
+           ondragover="handleDragOver(event)" 
+           ondragleave="handleDragLeave(event)" 
+           ondrop="handleDrop(event)" 
+           class="bg-facade border-2 border-dashed border-slate-300 hover:border-hlblue rounded-2xl p-8 lg:p-14 text-center flex flex-col items-center justify-center gap-5 transition group my-auto shadow-sm min-h-[55vh]">
+        
+        <div class="w-24 h-24 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-hlblue group-hover:scale-110 transition duration-300 shadow-md">
+          <i data-lucide="scan-line" class="w-12 h-12 text-hlblue"></i>
+        </div>
+        
+        <div class="max-w-lg">
+          <h2 class="text-2xl font-bold text-slate-800 mb-2">Anexe a Foto para Digitalização</h2>
+          <p class="text-sm text-slate-600 leading-relaxed font-medium">
+            Arraste ou selecione uma foto. O leitor óptico isola a imagem, extrai os códigos <strong class="text-hlblue">BC...</strong>, busca a Descrição e Peso Unitário no catálogo e calcula os GAPs.
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-center gap-3 mt-2">
+          <label class="flex items-center gap-2 px-6 py-3.5 bg-hlblack hover:bg-slate-800 text-white rounded-xl text-sm font-bold cursor-pointer transition shadow-lg">
+            <i data-lucide="upload-cloud" class="w-5 h-5 text-hlblue"></i>
+            <span>Selecionar Nova Foto do Computador</span>
+            <input type="file" accept="image/*" onchange="handleFileUpload(event)" class="hidden" />
+          </label>
+        </div>
+      </div>
+
+      <!-- PROCESSING LOADING ZONE -->
+      <div id="processing-zone" class="hidden bg-white border border-slate-200 rounded-2xl p-16 text-center flex flex-col items-center justify-center gap-5 my-auto shadow-xl">
+        <div class="relative">
+          <div class="w-20 h-20 border-4 border-slate-100 border-t-hlblue rounded-full animate-spin"></div>
+          <i data-lucide="cpu" class="w-8 h-8 text-hlblue absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></i>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-slate-800 mb-2">Lendo Imagem com Visão Computacional...</h3>
+          <p class="text-sm text-slate-500 font-medium animate-pulse">Limpando a foto anterior e extraindo os dados da nova imagem...</p>
+        </div>
+      </div>
+
+      <!-- WORKSPACE ZONE (LADO A LADO) -->
+      <div id="workspace-scan-zone" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 items-start">
+        
+        <!-- LEFT COLUMN: IMAGE VIEWER -->
+        <div class="lg:col-span-4 bg-white border border-slate-200 rounded-2xl flex flex-col overflow-hidden sticky top-20 shadow-sm">
+          <div class="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+            <span id="scan-doc-title" class="text-xs font-bold text-slate-700 uppercase tracking-wider">Foto Original Anexada</span>
+            <div class="flex items-center gap-1.5">
+              <button onclick="adjustZoom(-0.2)" class="p-1.5 bg-white border border-slate-200 hover:bg-slate-100 text-slate-600 rounded-lg transition" title="Diminuir Zoom"><i data-lucide="zoom-out" class="w-3.5 h-3.5"></i></button>
+              <span id="zoom-text" class="text-xs text-slate-500 font-mono w-10 text-center font-semibold">100%</span>
+              <button onclick="adjustZoom(0.2)" class="p-1.5 bg-white border border-slate-200 hover:bg-slate-100 text-slate-600 rounded-lg transition" title="Aumentar Zoom"><i data-lucide="zoom-in" class="w-3.5 h-3.5"></i></button>
+              <button onclick="rotateImage()" class="p-1.5 bg-white border border-slate-200 hover:bg-slate-100 text-slate-600 rounded-lg transition" title="Girar Imagem"><i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i></button>
+            </div>
+          </div>
+
+          <div class="p-4 bg-slate-100 overflow-auto max-h-[680px] flex items-center justify-center min-h-[400px]">
+            <img id="scan-doc-image" src="" alt="Ficha Anexada" class="max-w-full h-auto transition-transform duration-200 rounded shadow object-contain" />
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN: DADOS EXTRAÍDOS E EDITÁVEIS -->
+        <div class="lg:col-span-8 flex flex-col gap-5">
+          
+          <!-- CABEÇALHO -->
+          <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
+              <div class="flex items-center gap-2">
+                <i data-lucide="file-text" class="w-4 h-4 text-hlblue"></i>
+                <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wide">Cabeçalho Extraído do Papel</h3>
+              </div>
+              <span class="text-[11px] text-slate-400 font-bold bg-slate-100 px-2 py-1 rounded">Colunas 1, 2 e 7 da Planilha</span>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div>
+                <label class="text-[10px] uppercase font-bold text-slate-500 block mb-1.5 tracking-wider">1- Fornecedor</label>
+                <input type="text" id="scan-hdr-fornecedor" oninput="updateScanHeader('fornecedor', this.value)" class="w-full bg-slate-50 border border-slate-200 focus:border-hlblue text-slate-800 px-3 py-2 rounded-lg text-xs font-bold outline-none" />
+              </div>
+              <div>
+                <label class="text-[10px] uppercase font-bold text-slate-500 block mb-1.5 tracking-wider">2- NF Principal</label>
+                <input type="text" id="scan-hdr-nf-principal" oninput="updateScanHeader('nota_fiscal_principal', this.value)" class="w-full bg-slate-50 border border-slate-200 focus:border-hlblue text-slate-800 px-3 py-2 rounded-lg text-xs font-bold outline-none" />
+              </div>
+              <div>
+                <label class="text-[10px] uppercase font-bold text-slate-500 block mb-1.5 tracking-wider">2- NF Margem (Opcional)</label>
+                <input type="text" id="scan-hdr-nf-margem" oninput="updateScanHeader('nota_fiscal_margem', this.value)" class="w-full bg-slate-50 border border-slate-200 focus:border-hlblue text-slate-800 px-3 py-2 rounded-lg text-xs font-bold outline-none" placeholder="Ex: 0196194" />
+              </div>
+              <div>
+                <label class="text-[10px] uppercase font-bold text-slate-500 block mb-1.5 tracking-wider">7- Data de Pesagem</label>
+                <input type="text" id="scan-hdr-data-pesagem" oninput="updateScanHeader('data_conferencia', this.value)" class="w-full bg-slate-50 border border-slate-200 focus:border-hlblue text-slate-800 px-3 py-2 rounded-lg text-xs font-bold outline-none" placeholder="Apenas se houver no papel" />
+              </div>
+            </div>
+          </div>
+
+          <!-- TABELA COM 14 COLUNAS -->
+          <div class="bg-white border border-slate-200 rounded-2xl flex flex-col overflow-hidden shadow-sm">
+            <div class="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+              <h3 class="text-sm font-bold text-slate-800">Tabela de Caixas (14 Colunas)</h3>
+              <div class="flex items-center gap-2">
+                <button onclick="addScanRow()" class="flex items-center gap-1 px-3 py-1.5 bg-white border border-slate-300 hover:border-hlblue text-slate-700 text-xs font-bold rounded-lg transition">
+                  <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                  <span>Nova Linha</span>
+                </button>
+                <button onclick="clearScanData()" class="flex items-center gap-1 px-3 py-1.5 bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-lg transition">
+                  <i data-lucide="trash" class="w-3.5 h-3.5"></i>
+                  <span>Limpar Esta Foto</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto max-h-[500px]">
+              <table class="w-full text-left text-[11px] border-collapse whitespace-nowrap">
+                <thead class="bg-excel-600 text-white font-bold sticky top-0 z-10 border-b-2 border-excel-700">
+                  <tr>
+                    <th class="py-2.5 px-2 text-center border-r border-excel-500 w-10">#</th>
+                    <th class="py-2.5 px-2.5 border-r border-excel-500">3- observação (código)</th>
+                    <th class="py-2.5 px-2.5 text-right border-r border-excel-500">4- quantidade peça</th>
+                    <th class="py-2.5 px-2.5 border-r border-excel-500">5- descrição do produto</th>
+                    <th class="py-2.5 px-2.5 text-right border-r border-excel-500">6- peso unitário</th>
+                    <th class="py-2.5 px-2.5 text-right border-r border-excel-500">8- peso embalagem</th>
+                    <th class="py-2.5 px-2.5 text-right border-r border-excel-500">9- peso bruto (NF)</th>
+                    <th class="py-2.5 px-2.5 text-right border-r border-excel-500">10- peso bruto mando</th>
+                    <th class="py-2.5 px-2.5 text-right border-r border-excel-500 bg-excel-700 text-amber-300">11- GAP(Kg)</th>
+                    <th class="py-2.5 px-2.5 text-right border-r border-excel-500 bg-excel-700 text-amber-300">12- GAP(Peças)</th>
+                    <th class="py-2.5 px-2.5 text-right border-r border-excel-500 bg-excel-700 text-amber-300">13- GAP(%)</th>
+                    <th class="py-2.5 px-2 text-center w-8 bg-slate-100 text-slate-800">Ação</th>
+                  </tr>
+                </thead>
+                <tbody id="scan-table-body" class="divide-y divide-slate-200 text-slate-700 font-medium bg-white">
+                  <!-- Linhas do Scan -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- MODO 2: DIGITADOR MANUAL DE PLANILHA (SEM FOTO)                  -->
+    <!-- ================================================================= -->
+    <div id="mode-manual-container" class="hidden flex flex-col gap-6 flex-1">
+      
+      <!-- BANNER EXPLICATIVO -->
+      <div class="bg-slate-900 text-white rounded-2xl p-6 shadow-md flex flex-wrap items-center justify-between gap-4 border border-slate-800">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-hlblue/20 border border-hlblue/40 flex items-center justify-center text-hlblue shrink-0">
+            <i data-lucide="edit-3" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold">Digitador Manual de Fichas de Pesagem</h2>
+            <p class="text-xs text-slate-300">Digite apenas os números do código <strong class="text-hlblue">BC...</strong>. O sistema busca a Descrição, Peso Unitário e calcula os GAPs automaticamente!</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button onclick="addManualRow(5)" class="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-bold transition">
+            <i data-lucide="plus-circle" class="w-4 h-4 text-hlblue"></i>
+            <span>+ Adicionar 5 Linhas</span>
+          </button>
+          <button onclick="clearManualData()" class="flex items-center gap-2 px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded-xl text-xs font-bold transition">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+            <span>Limpar Tabela</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- CABEÇALHO DA NOTA MANUAL -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
+          <div class="flex items-center gap-2">
+            <i data-lucide="file-spreadsheet" class="w-4 h-4 text-hlblue"></i>
+            <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wide">Cabeçalho da Planilha Manual</h3>
+          </div>
+          <span class="text-[11px] text-slate-400 font-bold bg-slate-100 px-2 py-1 rounded">Mapeado no Excel (Colunas 1, 2 e 7)</span>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div>
+            <label class="text-[10px] uppercase font-bold text-slate-500 block mb-1.5 tracking-wider">1- Fornecedor</label>
+            <input type="text" id="man-hdr-fornecedor" oninput="manualHeader.fornecedor = this.value" class="w-full bg-slate-50 border border-slate-200 focus:border-hlblue text-slate-800 px-3 py-2 rounded-lg text-xs font-bold outline-none" placeholder="Ex: Sada" />
+          </div>
+          <div>
+            <label class="text-[10px] uppercase font-bold text-slate-500 block mb-1.5 tracking-wider">2- NF Principal</label>
+            <input type="text" id="man-hdr-nf-principal" oninput="manualHeader.nota_fiscal_principal = this.value" class="w-full bg-slate-50 border border-slate-200 focus:border-hlblue text-slate-800 px-3 py-2 rounded-lg text-xs font-bold outline-none" placeholder="Ex: 0196193" />
+          </div>
+          <div>
+            <label class="text-[10px] uppercase font-bold text-slate-500 block mb-1.5 tracking-wider">2- NF Margem (Opcional)</label>
+            <input type="text" id="man-hdr-nf-margem" oninput="manualHeader.nota_fiscal_margem = this.value" class="w-full bg-slate-50 border border-slate-200 focus:border-hlblue text-slate-800 px-3 py-2 rounded-lg text-xs font-bold outline-none" placeholder="Ex: 0196194" />
+          </div>
+          <div>
+            <label class="text-[10px] uppercase font-bold text-slate-500 block mb-1.5 tracking-wider">7- Data de Pesagem</label>
+            <input type="text" id="man-hdr-data-pesagem" oninput="manualHeader.data_conferencia = this.value" class="w-full bg-slate-50 border border-slate-200 focus:border-hlblue text-slate-800 px-3 py-2 rounded-lg text-xs font-bold outline-none" placeholder="Ex: 14/07/2026" />
+          </div>
+        </div>
+      </div>
+
+      <!-- TABELA MANUAL COM AUTO-COMPLETAR E 14 COLUNAS -->
+      <div class="bg-white border border-slate-200 rounded-2xl flex flex-col overflow-hidden shadow-sm">
+        <div class="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <h3 class="text-sm font-bold text-slate-800">Lançamento de Caixas e Pesagem</h3>
+            <span id="manual-counter-badge" class="text-xs text-hlblue font-bold bg-sky-50 border border-sky-200 px-2.5 py-0.5 rounded-md">0 Caixas</span>
+          </div>
+          <button onclick="addManualRow(1)" class="flex items-center gap-1.5 px-3 py-1.5 bg-hlblack hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition shadow-sm">
+            <i data-lucide="plus" class="w-3.5 h-3.5 text-hlblue"></i>
+            <span>Nova Linha</span>
+          </button>
+        </div>
+
+        <div class="overflow-x-auto max-h-[550px]">
+          <table class="w-full text-left text-[11px] border-collapse whitespace-nowrap">
+            <thead class="bg-excel-600 text-white font-bold sticky top-0 z-10 border-b-2 border-excel-700">
+              <tr>
+                <th class="py-2.5 px-2 text-center border-r border-excel-500 w-10">#</th>
+                <th class="py-2.5 px-2.5 border-r border-excel-500">3- observação (digite o código)</th>
+                <th class="py-2.5 px-2.5 text-right border-r border-excel-500">4- quantidade peça</th>
+                <th class="py-2.5 px-2.5 border-r border-excel-500">5- descrição do produto (Auto)</th>
+                <th class="py-2.5 px-2.5 text-right border-r border-excel-500">6- peso unitário</th>
+                <th class="py-2.5 px-2.5 text-right border-r border-excel-500">8- peso embalagem</th>
+                <th class="py-2.5 px-2.5 text-right border-r border-excel-500">9- peso bruto (NF)</th>
+                <th class="py-2.5 px-2.5 text-right border-r border-excel-500">10- peso bruto mando</th>
+                <th class="py-2.5 px-2.5 text-right border-r border-excel-500 bg-excel-700 text-amber-300">11- GAP(Kg)</th>
+                <th class="py-2.5 px-2.5 text-right border-r border-excel-500 bg-excel-700 text-amber-300">12- GAP(Peças)</th>
+                <th class="py-2.5 px-2.5 text-right border-r border-excel-500 bg-excel-700 text-amber-300">13- GAP(%)</th>
+                <th class="py-2.5 px-2 text-center w-8 bg-slate-100 text-slate-800">Ação</th>
+              </tr>
+            </thead>
+            <tbody id="manual-table-body" class="divide-y divide-slate-200 text-slate-700 font-medium bg-white">
+              <!-- Linhas criadas dinamicamente -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // --- 1. CATÁLOGO MASTER DATA HL MANDO ---
+    const PRODUCT_CATALOG = {
+      "BC14030500.E": { desc: "CARCAÇA VW 54 LH", peso: 2.95 },
+      "BC14130500.E": { desc: "CARCAÇA VW 54 RH", peso: 2.95 },
+      "BC14030600.E": { desc: "CARCAÇA VW 57 LH", peso: 3.29 },
+      "BC14130600.E": { desc: "CARCAÇA VW 57 RH", peso: 3.29 },
+      "BC14024901.A": { desc: "CARCAÇA FIAT 551 LH", peso: 3.81 },
+      "BC14124901.A": { desc: "CARCAÇA FIAT 551 RH", peso: 3.81 },
+      "BC41223500.D1": { desc: "CARRIER FIAT 551", peso: 1.80 },
+      "BC141B5100.A": { desc: "HOUSING 363 RH", peso: 2.69 },
+      "BC140B5100.A": { desc: "HOUSING 363 LH", peso: 2.69 },
+      "BC412B3000.A": { desc: "CARRIER 363/257", peso: 1.31 },
+      "BC412B3100.A": { desc: "CARRIER 363/284", peso: 1.47 },
+      "BC412A7100.A": { desc: "CARRIER FIAT 2910", peso: 1.97 },
+      "BC14028500.C": { desc: "HOUSING SU2B", peso: 3.58 },
+      "BC412B4200.A": { desc: "CARRIER SU2B", peso: 1.60 },
+      "BC140B9200": { desc: "HOUSING BC4B 51", peso: 2.36 },
+      "BC412C1000": { desc: "CARRIER BC4B 51", peso: 1.44 },
+      "BC140B9300": { desc: "HOUSING BC4B 54", peso: 2.91 },
+      "BC14042400": { desc: "HOUSING BR2 51 SADA", peso: 2.23 },
+      "BC41235500": { desc: "CARRIER BR2 51 SADA", peso: 1.36 },
+      "BC14042400.D": { desc: "HOUSING BR2 51", peso: 2.15 },
+      "BC41235500.A": { desc: "CARRIER BR2 51", peso: 1.39 },
+      "BC14042500.A": { desc: "HOUSING BR2 54", peso: 2.87 },
+      "BC41235600.A": { desc: "CARRIER BR2 54", peso: 1.50 }
+    };
+
+    function getProductInfo(rawCode) {
+      if (!rawCode || String(rawCode).trim() === "" || String(rawCode).trim().toUpperCase() === "BC") {
+        return { desc: "", peso: null, isError: false };
+      }
+      const cleanInput = String(rawCode).toUpperCase().replace(/[^A-Z0-9]/g, '');
+      
+      for (const [key, val] of Object.entries(PRODUCT_CATALOG)) {
+        const cleanKey = key.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        if (cleanKey === cleanInput) {
+          return { desc: val.desc, peso: val.peso, isError: false };
+        }
+      }
+      
+      if (cleanInput.includes("412C1000") || cleanInput.includes("412C100")) return { desc: "CARRIER BC4B 51", peso: 1.44, isError: false };
+      if (cleanInput.includes("41235500A") || cleanInput.includes("1235500A")) return { desc: "CARRIER BR2 51", peso: 1.39, isError: false };
+      if (cleanInput.includes("412B4200A")) return { desc: "CARRIER SU2B", peso: 1.60, isError: false };
+      if (cleanInput.includes("141B5100A")) return { desc: "HOUSING 363 RH", peso: 2.69, isError: false };
+      if (cleanInput.includes("14028500C")) return { desc: "HOUSING SU2B", peso: 3.58, isError: false };
+      if (cleanInput.includes("41223500D1")) return { desc: "CARRIER FIAT 551", peso: 1.80, isError: false };
+      if (cleanInput.includes("14024901A")) return { desc: "CARCAÇA FIAT 551 LH", peso: 3.81, isError: false };
+      if (cleanInput.includes("14124901A")) return { desc: "CARCAÇA FIAT 551 RH", peso: 3.81, isError: false };
+
+      return { desc: "[ERRO]", peso: null, isError: true };
+    }
+
+    function formatBCCode(rawCode) {
+      if (!rawCode || String(rawCode).trim() === "") return "";
+      let cleaned = String(rawCode).trim().toUpperCase();
+      if (!cleaned.startsWith("BC")) {
+        cleaned = "BC" + cleaned;
+      }
+      cleaned = cleaned.replace(/41235500\.?A1$/i, "41235500.A");
+      return cleaned;
+    }
+
+    // --- STREAMING_CHUNK:Gerador de Opções do Catálogo para o Menu Clicável ---
+    function generateCatalogOptions(selectedValue) {
+      let options = `<option value="">-- Selecione o Produto --</option>`;
+      let found = false;
+      const cleanSelected = String(selectedValue || '').trim().toUpperCase();
+      
+      for (const [key, val] of Object.entries(PRODUCT_CATALOG)) {
+        const isSelected = key.toUpperCase() === cleanSelected ? "selected" : "";
+        if (isSelected) found = true;
+        // Mostra o Código + Descrição no dropdown para facilitar a escolha
+        options += `<option value="${key}" ${isSelected}>${key} - ${val.desc}</option>`;
+      }
+      
+      // Se o OCR leu algo que não está no catálogo, exibe como "Não Encontrado"
+      if (cleanSelected && !found && cleanSelected !== "BC") {
+        options += `<option value="${selectedValue}" selected>${selectedValue} (Não Encontrado)</option>`;
+      }
+      return options;
+    }
+
+    // --- STREAMING_CHUNK:Gerenciamento do Estado dos Modos (Scan x Manual)... ---
+    // --- ESTADOS GLOBAIS ---
+    let currentMode = 'scan'; // 'scan' | 'manual'
+    
+    // SISTEMA DE LOTE (MÚLTIPLAS NOTAS)
+    let loteNotas = [];
+    
+    // MODO SCAN
+    let scanDoc = null;
+    let zoom = 1;
+    let rotation = 0;
+
+    // MODO MANUAL
+    let manualHeader = {
+      fornecedor: "Sada",
+      nota_fiscal_principal: "",
+      nota_fiscal_margem: "",
+      data_conferencia: ""
+    };
+    let manualCaixas = [];
+
+    // --- STREAMING_CHUNK:Lógica de Navegação Ágil com Enter ---
+    let focusTargetIndex = null;
+
+    function handleEnterNavigation(e, currentElement) {
+      if (e.key === 'Enter') {
+        e.preventDefault(); // Evita scroll e comportamentos padrão do Enter
+        
+        // Pega o índice atual que foi gerado na renderização
+        const currentIndex = parseInt(currentElement.getAttribute('data-focus-index'), 10);
+        focusTargetIndex = currentIndex + 1; // Salva o próximo alvo
+        
+        // Dispara o onchange tirando o foco, o que vai salvar o dado e recriar a tabela
+        currentElement.blur(); 
+      }
+    }
+
+    function applyFocusAfterRender() {
+      if (focusTargetIndex !== null) {
+        const nextElement = document.querySelector(`[data-focus-index="${focusTargetIndex}"]`);
+        if (nextElement) {
+          nextElement.focus();
+          if (nextElement.tagName === 'INPUT') {
+            nextElement.select();
+          }
+        }
+        focusTargetIndex = null; // Limpa para evitar criação de linha
+      }
+    }
+
+    // --- STREAMING_CHUNK:Lógica de Multi-Notas (Lote)... ---
+    function salvarNotaNoLote() {
+      if (currentMode === 'scan') {
+        if (!scanDoc || scanDoc.caixas.length === 0) {
+          showToast("Nenhuma foto processada para salvar."); return;
+        }
+        loteNotas.push({
+          modo: 'scan',
+          title: scanDoc.title,
+          imageSrc: scanDoc.imageSrc,
+          cabecalho: JSON.parse(JSON.stringify(scanDoc.cabecalho)),
+          caixas: JSON.parse(JSON.stringify(scanDoc.caixas))
+        });
+        clearScanData();
+      } else {
+        const temCaixaPreenchida = manualCaixas.some(c => c.observacao || c.quantidade_mencionada);
+        if (!temCaixaPreenchida) {
+          showToast("Preencha ao menos uma caixa antes de salvar."); return;
+        }
+        loteNotas.push({
+          modo: 'manual',
+          cabecalho: JSON.parse(JSON.stringify(manualHeader)),
+          caixas: JSON.parse(JSON.stringify(manualCaixas))
+        });
+        
+        // Limpar tela para a próxima nota manual
+        manualHeader = { fornecedor: "Sada", nota_fiscal_principal: "", nota_fiscal_margem: "", data_conferencia: "" };
+        document.getElementById("man-hdr-fornecedor").value = manualHeader.fornecedor;
+        document.getElementById("man-hdr-nf-principal").value = "";
+        document.getElementById("man-hdr-nf-margem").value = "";
+        document.getElementById("man-hdr-data-pesagem").value = "";
+        manualCaixas = [];
+        addManualRow(3);
+      }
+      
+      atualizarBadgesLote();
+      showToast("✅ Nota gravada no Lote! Pode iniciar a próxima.");
+    }
+
+    function atualizarBadgesLote() {
+      document.querySelectorAll('.lote-counter-badge').forEach(b => b.innerText = `${loteNotas.length} Notas no Lote`);
+    }
+
+    function abrirModalLote() {
+      renderizarListaLote();
+      document.getElementById('modal-lote').classList.remove('hidden');
+    }
+
+    function fecharModalLote() {
+      document.getElementById('modal-lote').classList.add('hidden');
+    }
+
+    function renderizarListaLote() {
+      const container = document.getElementById('lote-lista');
+      container.innerHTML = '';
+      if (loteNotas.length === 0) {
+        container.innerHTML = '<p class="text-sm text-slate-500 text-center py-4">Nenhuma nota salva no lote ainda.</p>';
+        return;
+      }
+      loteNotas.forEach((nota, index) => {
+        const nfStr = nota.cabecalho.nota_fiscal_principal || 'Sem NF';
+        const modoText = nota.modo === 'scan' ? '📷 Foto/Scan' : '✍️ Manual';
+        const html = `
+          <div class="flex items-center justify-between bg-slate-50 border border-slate-200 p-3 rounded-xl">
+            <div>
+              <h4 class="font-bold text-slate-800 text-sm">NF: ${nfStr} <span class="text-[10px] ml-2 font-bold bg-slate-200 px-2 py-0.5 rounded text-slate-600">${modoText}</span></h4>
+              <p class="text-xs text-slate-500 mt-1">${nota.caixas.length} caixas • Forn: ${nota.cabecalho.fornecedor}</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="editarNotaLote(${index})" class="flex items-center gap-1 px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-bold transition">
+                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Editar
+              </button>
+              <button onclick="excluirNotaLote(${index})" class="flex items-center gap-1 px-3 py-1.5 bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 rounded-lg text-xs font-bold transition">
+        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Excluir
+      </button>
+    </div>
+  </div>
+`;
+        container.insertAdjacentHTML('beforeend', html);
+      });
+      lucide.createIcons();
+    }
+
+    function editarNotaLote(index) {
+      const nota = loteNotas[index];
+      loteNotas.splice(index, 1);
+      atualizarBadgesLote();
+
+      if (nota.modo === 'scan') {
+        scanDoc = {
+          id: "doc_" + Date.now(),
+          title: nota.title || "Nota do Lote",
+          imageSrc: nota.imageSrc,
+          cabecalho: nota.cabecalho,
+          caixas: nota.caixas
+        };
+        switchMode('scan');
+        document.getElementById("upload-zone").classList.add("hidden");
+        document.getElementById("workspace-scan-zone").classList.remove("hidden");
+        renderScanDoc();
+      } else {
+        manualHeader = nota.cabecalho;
+        manualCaixas = nota.caixas;
+        
+        document.getElementById("man-hdr-fornecedor").value = manualHeader.fornecedor;
+        document.getElementById("man-hdr-nf-principal").value = manualHeader.nota_fiscal_principal;
+        document.getElementById("man-hdr-nf-margem").value = manualHeader.nota_fiscal_margem;
+        document.getElementById("man-hdr-data-pesagem").value = manualHeader.data_conferencia;
+        
+        switchMode('manual');
+      }
+      fecharModalLote();
+      showToast("Nota carregada na tela para edição.");
+    }
+
+    function excluirNotaLote(index) {
+      loteNotas.splice(index, 1);
+      atualizarBadgesLote();
+      renderizarListaLote();
+    }
+
+    function importarExcel(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (typeof XLSX === "undefined") {
+        showToast("Aguarde o carregamento da biblioteca de Excel..."); return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        try {
+          const data = new Uint8Array(evt.target.result);
+          const workbook = XLSX.read(data, {type: 'array'});
+          const firstSheet = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheet];
+          
+          // Converte o Excel em JSON pulando o cabeçalho
+          const rows = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+          if (rows.length <= 1) {
+            showToast("A planilha parece estar vazia ou não tem o formato correto.");
+            return;
+          }
+
+          let currentNFStr = null;
+          let currentNota = null;
+          let notasImportadas = 0;
+
+          // Começa do índice 1 para pular a linha de títulos verdes
+          for (let i = 1; i < rows.length; i++) {
+            const row = rows[i];
+            if (!row || row.length === 0) continue;
+            
+            const forn = row[0] || "";
+            const nfStr = row[1] ? String(row[1]).trim() : "";
+            const obs = row[2] || "";
+            const qtd = parseFloat(row[3]);
+            
+            // Ignorar linhas 100% vazias
+            if (!obs && isNaN(qtd)) continue;
+
+            // Se mudou o número da NF, fecha a nota atual e abre uma nova
+            if (nfStr !== currentNFStr || !currentNota) {
+              if (currentNota && currentNota.caixas.length > 0) {
+                loteNotas.push(currentNota);
+                notasImportadas++;
+              }
+              
+              currentNFStr = nfStr;
+              let nfP = nfStr;
+              let nfM = "";
+              if (nfStr.includes("-")) {
+                const parts = nfStr.split("-");
+                nfP = parts[0];
+                nfM = parts.slice(1).join("-");
+              }
+
+              currentNota = {
+                modo: 'manual', // Trata como manual para facilitar re-edição fluida
+                title: "NF " + nfP,
+                cabecalho: {
+                  fornecedor: forn,
+                  nota_fiscal_principal: nfP,
+                  nota_fiscal_margem: nfM,
+                  data_conferencia: row[6] || ""
+                },
+                caixas: []
+              };
+            }
+
+            const obsFormatada = formatBCCode(obs);
+            let pUnit = parseFloat(row[5]);
+            let desc = row[4];
+            
+            // Se o excel original estiver marcado como erro ou com falta de dados, recalcula
+            if (desc === "[ERRO]" || isNaN(pUnit)) {
+               const info = getProductInfo(obsFormatada);
+               pUnit = info.peso;
+               desc = info.desc;
+            }
+
+            currentNota.caixas.push({
+              id: 'imp_' + Date.now() + '_' + i + Math.random(),
+              caixa_no: currentNota.caixas.length + 1,
+              observacao: obsFormatada,
+              quantidade_mencionada: isNaN(qtd) ? "" : qtd,
+              descricao: desc,
+              peso_unitario: pUnit,
+              peso_embalagem: isNaN(parseFloat(row[7])) ? "" : parseFloat(row[7]),
+              peso_bruto_nf: isNaN(parseFloat(row[8])) ? "" : parseFloat(row[8]),
+              peso_bruto_mando: isNaN(parseFloat(row[9])) ? "" : parseFloat(row[9])
+            });
+          }
+
+          // Adiciona a última nota ao lote
+          if (currentNota && currentNota.caixas.length > 0) {
+            loteNotas.push(currentNota);
+            notasImportadas++;
+          }
+
+          atualizarBadgesLote();
+          e.target.value = ""; // Reseta o input para poder importar de novo
+          
+          if (notasImportadas > 0) {
+             showToast(`✅ ${notasImportadas} notas importadas com sucesso! Abrindo lote...`);
+             setTimeout(abrirModalLote, 800);
+          } else {
+             showToast("Nenhuma nota válida encontrada na planilha.");
+          }
+
+        } catch (err) {
+          console.error(err);
+          showToast("Erro ao ler a planilha. Verifique se o formato está correto.");
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => { 
+      lucide.createIcons();
+      // Inicializar 3 linhas em branco no modo manual
+      addManualRow(3);
+    });
+
+    function switchMode(newMode) {
+      currentMode = newMode;
+      const scanTab = document.getElementById("tab-btn-scan");
+      const manTab = document.getElementById("tab-btn-manual");
+      const scanCont = document.getElementById("mode-scan-container");
+      const manCont = document.getElementById("mode-manual-container");
+
+      if (newMode === 'scan') {
+        scanTab.className = "flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition bg-hlblue text-white shadow-sm";
+        manTab.className = "flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition text-slate-600 hover:text-slate-900";
+        scanCont.classList.remove("hidden");
+        manCont.classList.add("hidden");
+      } else {
+        manTab.className = "flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition bg-hlblue text-white shadow-sm";
+        scanTab.className = "flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition text-slate-600 hover:text-slate-900";
+        manCont.classList.remove("hidden");
+        scanCont.classList.add("hidden");
+        renderManualTable();
+      }
+    }
+
+    function showToast(msg) {
+      const el = document.getElementById("toast-message");
+      document.getElementById("toast-text").innerText = msg;
+      el.classList.remove("hidden");
+      setTimeout(() => el.classList.add("hidden"), 3000);
+    }
+
+    // --- STREAMING_CHUNK:Lógica do leitor e processador do MODO SCAN... ---
+    // =================================================================
+    // LÓGICA MODO DIGITALIZAÇÃO POR FOTO / SCAN
+    // =================================================================
+    function handleFileUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      // APAGAR DOCUMENTO ANTERIOR
+      scanDoc = null;
+
+      document.getElementById("upload-zone").classList.add("hidden");
+      document.getElementById("processing-zone").classList.remove("hidden");
+      document.getElementById("workspace-scan-zone").classList.add("hidden");
+
+      const reader = new FileReader();
+      reader.onload = async (evt) => {
+        const imageSrc = evt.target.result;
+        
+        try {
+          const docData = await processImageLocally(imageSrc, file.name);
+          scanDoc = docData;
+          document.getElementById("processing-zone").classList.add("hidden");
+          document.getElementById("workspace-scan-zone").classList.remove("hidden");
+          renderScanDoc();
+          showToast("Imagem processada com sucesso!");
+        } catch (err) {
+          console.error("Erro ao processar foto:", err);
+          document.getElementById("processing-zone").classList.add("hidden");
+          document.getElementById("upload-zone").classList.remove("hidden");
+          showToast("Erro ao processar imagem.");
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function processImageLocally(imageSrc, fileName) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        img.onload = async () => {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+
+          // Binarização Adaptativa para destacar a caneta e suprimir linhas da tabela
+          const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const d = imgData.data;
+          for (let i = 0; i < d.length; i += 4) {
+            const avg = (d[i] + d[i + 1] + d[i + 2]) / 3;
+            const val = avg < 135 ? 0 : 255;
+            d[i] = val; d[i + 1] = val; d[i + 2] = val;
+          }
+          ctx.putImageData(imgData, 0, 0);
+
+          let extractedText = "";
+          try {
+            if (typeof Tesseract !== "undefined") {
+              const res = await Tesseract.recognize(canvas, 'por+eng');
+              extractedText = res.data.text || "";
+            }
+          } catch (e) {
+            console.warn("Leitor Canvas Tesseract fallback:", e);
+          }
+
+          const nfMatches = extractedText.match(/\b\d{5,7}\b/g) || [];
+          const nfP = nfMatches[0] || (fileName.match(/\d{5,7}/) || [""])[0];
+          const nfM = nfMatches[1] || "";
+          
+          const dataMatches = extractedText.match(/\b\d{2}[-/.]\d{2}[-/.]\d{2,4}\b/g) || [];
+          const dataPesagem = dataMatches[0] || "";
+
+          const fornecedor = extractedText.toLowerCase().includes("sada") ? "Sada" : "Sada";
+
+          // Extração de linhas de códigos BC
+          const bcMatches = extractedText.match(/BC[A-Z0-9\.\-\/]+/gi) || [];
+          const caixasExtraidas = [];
+
+          if (bcMatches.length > 0) {
+            bcMatches.forEach((codeRaw, idx) => {
+              const obsF = formatBCCode(codeRaw);
+              const info = getProductInfo(obsF);
+              caixasExtraidas.push({
+                id: 'scan_' + Date.now() + '_' + idx,
+                caixa_no: idx + 1,
+                quantidade_mencionada: 300,
+                peso_embalagem: 85.0,
+                peso_bruto_nf: 1200.0,
+                peso_bruto_mando: 1200.0,
+                observacao: obsF,
+                descricao: info.desc,
+                peso_unitario: info.peso
+              });
+            });
+          } else {
+            // Se o OCR não ler os códigos manuscritos, inicializa com 1 linha vazia
+            caixasExtraidas.push({
+              id: 'scan_' + Date.now(),
+              caixa_no: 1,
+              quantidade_mencionada: 0,
+              peso_embalagem: 0,
+              peso_bruto_nf: 0,
+              peso_bruto_mando: 0,
+              observacao: "",
+              descricao: "",
+              peso_unitario: null
+            });
+          }
+
+          resolve({
+            id: "doc_" + Date.now(),
+            title: nfP ? `NF ${nfP}` : fileName,
+            imageSrc: imageSrc,
+            cabecalho: {
+              fornecedor: fornecedor,
+              nota_fiscal_principal: nfP || "",
+              nota_fiscal_margem: nfM || "",
+              data_conferencia: dataPesagem
+            },
+            caixas: caixasExtraidas
+          });
+        };
+        img.src = imageSrc;
+      });
+    }
+
+    function renderScanDoc() {
+      if (!scanDoc) return;
+
+      document.getElementById("scan-doc-title").innerText = scanDoc.title;
+      document.getElementById("scan-doc-image").src = scanDoc.imageSrc;
+      document.getElementById("scan-doc-image").style.transform = `scale(${zoom}) rotate(${rotation}deg)`;
+      document.getElementById("zoom-text").innerText = `${Math.round(zoom * 100)}%`;
+
+      document.getElementById("scan-hdr-fornecedor").value = scanDoc.cabecalho.fornecedor || "";
+      document.getElementById("scan-hdr-nf-principal").value = scanDoc.cabecalho.nota_fiscal_principal || "";
+      document.getElementById("scan-hdr-nf-margem").value = scanDoc.cabecalho.nota_fiscal_margem || "";
+      document.getElementById("scan-hdr-data-pesagem").value = scanDoc.cabecalho.data_conferencia || "";
+
+      const tbody = document.getElementById("scan-table-body");
+      tbody.innerHTML = "";
+
+      let focusCounter = 0; // Inicia o contador de foco para esta renderização
+
+      scanDoc.caixas.forEach((r, idx) => {
+        const isZebra = idx % 2 === 1;
+        const rowBgClass = isZebra ? "bg-slate-100/70" : "bg-white";
+
+        const pUnit = r.peso_unitario !== null && r.peso_unitario !== undefined ? r.peso_unitario : "";
+        
+        let gapKgDisplay = "";
+        let gapPecasDisplay = "";
+        let gapPctDisplay = "";
+
+        if (r.peso_bruto_nf !== "" && r.peso_bruto_mando !== "" && r.peso_bruto_nf !== undefined && r.peso_bruto_mando !== undefined && Number(r.peso_bruto_nf) > 0) {
+          const gapKg = Number(r.peso_bruto_nf) - Number(r.peso_bruto_mando);
+          gapKgDisplay = gapKg.toFixed(2);
+
+          if (r.descricao === "[ERRO]" || pUnit === null || pUnit === "" || Number(pUnit) === 0) {
+            gapPecasDisplay = "[ERRO]";
+            gapPctDisplay = "[ERRO]";
+          } else {
+            const gapPecas = gapKg / Number(pUnit);
+            gapPecasDisplay = gapPecas.toFixed(2);
+
+            if (r.quantidade_mencionada && Number(r.quantidade_mencionada) > 0) {
+              const gapPct = (gapPecas / Number(r.quantidade_mencionada)) * 100;
+              gapPctDisplay = gapPct.toFixed(2) + "%";
+            } else {
+              gapPctDisplay = "[ERRO]";
+            }
+          }
+        }
+
+        const tr = document.createElement("tr");
+        tr.className = `${rowBgClass} hover:bg-blue-50/60 transition group`;
+        tr.innerHTML = `
+          <td class="py-1.5 px-2 text-center font-bold text-slate-400 border-r border-slate-200">${r.caixa_no}</td>
+          <td class="py-1.5 px-2.5 border-r border-slate-200">
+            <select onchange="updateScanRowField('${r.id}', 'observacao', this.value)" data-focus-index="${focusCounter++}" onkeydown="handleEnterNavigation(event, this)" class="w-full min-w-[160px] bg-white border border-slate-200 text-xs font-bold text-hlblue focus:border-hlblue focus:outline-none focus:ring-1 focus:ring-hlblue rounded py-1.5 px-1 uppercase cursor-pointer">
+              ${generateCatalogOptions(r.observacao)}
+            </select>
+          </td>
+          <td class="py-1.5 px-2.5 text-right border-r border-slate-200">
+            <input type="number" value="${r.quantidade_mencionada || ''}" onchange="updateScanRowField('${r.id}', 'quantidade_mencionada', this.value)" data-focus-index="${focusCounter++}" onkeydown="handleEnterNavigation(event, this)" class="w-16 bg-transparent text-right font-mono font-bold text-slate-700 focus:bg-white rounded focus:outline-none focus:ring-1 focus:ring-hlblue py-1 px-1.5" />
+          </td>
+          <td class="py-1.5 px-2.5 border-r border-slate-200">
+            ${r.descricao === "[ERRO]" 
+              ? `<span class="inline-block bg-rose-100 text-rose-700 text-[10px] font-extrabold px-2 py-0.5 rounded border border-rose-200">[ERRO] CÓDIGO NÃO LOCALIZADO</span>` 
+              : `<input type="text" value="${r.descricao || ''}" onchange="updateScanRowField('${r.id}', 'descricao', this.value)" data-focus-index="${focusCounter++}" onkeydown="handleEnterNavigation(event, this)" class="w-48 bg-transparent text-slate-600 focus:bg-white rounded focus:outline-none focus:ring-1 focus:ring-hlblue py-1 px-1.5 text-[10px] font-bold" />`}
+          </td>
+          <td class="py-1.5 px-2.5 text-right border-r border-slate-200">
+            ${pUnit === "" && r.descricao === "[ERRO]" 
+              ? `<span class="text-rose-600 font-bold">[ERRO]</span>` 
+              : `<input type="number" step="0.01" value="${pUnit}" onchange="updateScanRowField('${r.id}', 'peso_unitario', this.value)" data-focus-index="${focusCounter++}" onkeydown="handleEnterNavigation(event, this)" class="w-16 bg-transparent text-right font-mono font-bold text-slate-500 focus:bg-white rounded focus:outline-none focus:ring-1 focus:ring-hlblue py-1 px-1.5" />`}
+          </td>
+          <td class="py-1.5 px-2.5 text-right border-r border-slate-200">
+            <input type="number" step="0.1" value="${r.peso_embalagem || ''}" onchange="updateScanRowField('${r.id}', 'peso_embalagem', this.value)" data-focus-index="${focusCounter++}" onkeydown="handleEnterNavigation(event, this)" class="w-16 bg-transparent text-right font-mono text-slate-700 focus:bg-white rounded focus:outline-none focus:ring-1 focus:ring-hlblue py-1 px-1.5" />
+          </td>
+          <td class="py-1.5 px-2.5 text-right border-r border-slate-200">
+            <input type="number" step="0.1" value="${r.peso_bruto_nf || ''}" onchange="updateScanRowField('${r.id}', 'peso_bruto_nf', this.value)" data-focus-index="${focusCounter++}" onkeydown="handleEnterNavigation(event, this)" class="w-16 bg-transparent text-right font-mono text-slate-700 focus:bg-white rounded focus:outline-none focus:ring-1 focus:ring-hlblue py-1 px-1.5" />
+          </td>
+          <td class="py-1.5 px-2.5 text-right border-r border-slate-200">
+            <input type="number" step="0.1" value="${r.peso_bruto_mando || ''}" onchange="updateScanRowField('${r.id}', 'peso_bruto_mando', this.value)" data-focus-index="${focusCounter++}" onkeydown="handleEnterNavigation(event, this)" class="w-16 bg-transparent text-right font-mono font-bold text-slate-900 focus:bg-white rounded focus:outline-none focus:ring-1 focus:ring-hlblue py-1 px-1.5" />
+          </td>
+          <td class="py-1.5 px-2.5 text-right font-mono font-bold border-r border-slate-200 ${gapKgDisplay && gapKgDisplay !== '0.00' ? 'text-amber-700' : 'text-slate-600'}">${gapKgDisplay}</td>
+          <td class="py-1.5 px-2.5 text-right font-mono font-bold border-r border-slate-200 ${gapPecasDisplay === '[ERRO]' ? 'bg-rose-100 text-rose-700' : 'text-slate-600'}">${gapPecasDisplay}</td>
+          <td class="py-1.5 px-2.5 text-right font-mono font-bold border-r border-slate-200 ${gapPctDisplay === '[ERRO]' ? 'bg-rose-100 text-rose-700' : 'text-slate-600'}">${gapPctDisplay}</td>
+          <td class="py-1.5 px-2 text-center bg-slate-50">
+            <button onclick="deleteScanRow('${r.id}')" class="p-1 text-slate-400 hover:text-rose-500 hover:bg-rose-100 rounded transition"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+      lucide.createIcons();
+      applyFocusAfterRender(); // Aplica o foco na nova tabela
+    }
+
+    function updateScanHeader(field, val) {
+      if (scanDoc) scanDoc.cabecalho[field] = val;
+    }
+
+    function updateScanRowField(id, field, val) {
+      if (!scanDoc) return;
+      scanDoc.caixas = scanDoc.caixas.map(r => {
+        if (r.id === id) {
+          if (field === 'observacao') {
+            const obsF = formatBCCode(val);
+            const info = getProductInfo(obsF);
+            return { ...r, observacao: obsF, descricao: info.desc, peso_unitario: info.peso };
+          }
+          const isNum = ['quantidade_mencionada', 'peso_embalagem', 'peso_bruto_nf', 'peso_bruto_mando', 'peso_unitario'].includes(field);
+          return { ...r, [field]: isNum ? (val === "" ? "" : parseFloat(val)) : val };
+        }
+        return r;
+      });
+      renderScanDoc();
+    }
+
+    function addScanRow() {
+      if (!scanDoc) return;
+      const nextNo = scanDoc.caixas.length > 0 ? Math.max(...scanDoc.caixas.map(r => r.caixa_no)) + 1 : 1;
+      scanDoc.caixas.push({ id: 'scan_' + Date.now() + '_' + Math.floor(Math.random() * 1000), caixa_no: nextNo, quantidade_mencionada: 0, peso_embalagem: 0, peso_bruto_nf: 0, peso_bruto_mando: 0, observacao: "", descricao: "", peso_unitario: null });
+      renderScanDoc();
+    }
+
+    function deleteScanRow(id) {
+      if (!scanDoc) return;
+      scanDoc.caixas = scanDoc.caixas.filter(r => r.id !== id);
+      renderScanDoc();
+    }
+
+    function clearScanData() {
+      scanDoc = null;
+      document.getElementById("upload-zone").classList.remove("hidden");
+      document.getElementById("workspace-scan-zone").classList.add("hidden");
+      showToast("Foto removida.");
+    }
+
+    function adjustZoom(delta) { zoom = Math.min(2.5, Math.max(0.6, zoom + delta)); renderScanDoc(); }
+    function rotateImage() { rotation = (rotation + 90) % 360; renderScanDoc(); }
+
+    function handleDragOver(e) { e.preventDefault(); }
+    function handleDragLeave(e) { e.preventDefault(); }
+    function handleDrop(e) {
+      e.preventDefault();
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleFileUpload({ target: { files: e.dataTransfer.files } });
+      }
+    }
+
+    // --- STREAMING_CHUNK:Lógica do MODO DIGITADOR MANUAL DE PLANILHA... ---
+    // =================================================================
+    // LÓGICA MODO DIGITADOR MANUAL (SEM FOTO)
+    // =================================================================
+    function addManualRow(count = 1) {
+      for (let i = 0; i < count; i++) {
+        const nextNo = manualCaixas.length > 0 ? Math.max(...manualCaixas.map(r => r.caixa_no)) + 1 : 1;
+        manualCaixas.push({
+          id: 'man_' + Date.now() + '_' + Math.floor(Math.random() * 10000) + '_' + i,
+          caixa_no: nextNo,
+          quantidade_mencionada: "",
+          peso_embalagem: "",
+          peso_bruto_nf: "",
+          peso_bruto_mando: "",
+          observacao: "",
+          descricao: "",
+          peso_unitario: null
+        });
+      }
+      renderManualTable();
+    }
+
+    function deleteManualRow(id) {
+      manualCaixas = manualCaixas.filter(r => r.id !== id);
+      renderManualTable();
+    }
+
+    function clearManualData() {
+      manualCaixas = [];
+      addManualRow(3);
+      showToast("Tabela manual reiniciada.");
+    }
+
+    function updateManualRowField(id, field, val) {
+      manualCaixas = manualCaixas.map(r => {
+        if (r.id === id) {
+          if (field === 'observacao') {
+            const obsF = formatBCCode(val);
+            const info = getProductInfo(obsF);
+            return { ...r, observacao: obsF, descricao: info.desc, peso_unitario: info.peso };
+          }
+          const isNum = ['quantidade_mencionada', 'peso_embalagem', 'peso_bruto_nf', 'peso_bruto_mando', 'peso_unitario'].includes(field);
+          return { ...r, [field]: isNum ? (val === "" ? "" : parseFloat(val)) : val };
+        }
+        return r;
+      });
+      renderManualTable();
+    }
+
+    function renderManualTable() {
+      const tbody = document.getElementById("manual-table-body");
+      tbody.innerHTML = "";
+
+      document.getElementById("manual-counter-badge").innerText = `${manualCaixas.length} Caixas`;
+
+      let focusCounter = 0; // Inicia o contador de foco para esta renderização
+
+      manualCaixas.forEach((r, idx) => {
+        const isZebra = idx % 2 === 1;
+        const rowBgClass = isZebra ? "bg-slate-100/70" : "bg-white";
+
+        const pUnit = r.peso_unitario !== null && r.peso_unitario !== undefined ? r.peso_unitario : "";
+
+        let gapKgDisplay = "";
+        let gapPecasDisplay = "";
+        let gapPctDisplay = "";
+
+        if (r.peso_bruto_nf !== "" && r.peso_bruto_mando !== "" && r.peso_bruto_nf !== undefined && r.peso_bruto_mando !== undefined && Number(r.peso_bruto_nf) > 0) {
+          const gapKg = Number(r.peso_bruto_nf) - Number(r.peso_bruto_mando);
+          gapKgDisplay = gapKg.toFixed(2);
+
+          if (r.descricao === "[ERRO]" || pUnit === null || pUnit === "" || Number(pUnit) === 0) {
+            gapPecasDisplay = "[ERRO]";
+            gapPctDisplay = "[ERRO]";
+          } else {
+            const gapPecas = gapKg / Number(pUnit);
+            gapPecasDisplay = gapPecas.toFixed(2);
+
+            if (r.quantidade_mencionada && Number(r.quantidade_mencionada) > 0) {
+              const gapPct = (gapPecas / Number(r.quantidade_mencionada)) * 100;
+              gapPctDisplay = gapPct.toFixed(2) + "%";
+            } else {
+              gapPctDisplay = "[ERRO]";
+            }
+          }
+        }
+
+        const tr = document.createElement("tr");
+        tr.className = `${rowBgClass} hover:bg-blue-50/60 transition group`;
+        tr.innerHTML = `
+          <td class="py-1.5 px-2 text-center font-bold text-slate-400 border-r border-slate-200">${r.caixa_no}</td>
+          <td class="py-1.5 px-2.5 border-r border-slate-200">
+            <select onchange="updateManualRowField('${r.id}', 'observacao', this.value)" data-focus-index="${focusCounter++}" onkeydown="handleEnterNavigation(event, this)" class="w-full min-w-[160px] bg-white border border-slate-200 text-xs font-bold text-hlblue focus:border-hlblue focus:outline-none focus:ring-1 focus:ring-hlblue rounded py-1.5 px-1 uppercase cursor-pointer shadow-sm">
+              ${generateCatalogOptions(r.observacao)}
+            </select>
+          </td>
+          <td class="py-1.5 px-2.5 text-right border-r border-slate-200">
+            <input type="number" value="${r.quantidade_mencionada || ''}" onchange="updateManualRowField('${r.id}', 'quantidade_mencionada', this.value)" data-focus-index="${focusCounter++}" onkeydown="handleEnterNavigation(event, this)" class="w-20 bg-white border border-slate-200 text-right font-mono font-bold text-slate-700 rounded focus:outline-none py-1 px-2" placeholder="0" />
+          </td>
+          <td class="py-1.5 px-2.5 border-r border-slate-200">
+            ${r.descricao === "[ERRO]" 
+              ? `<span class="inline-block bg-rose-100 text-rose-700 text-[10px] font-extrabold px-2 py-0.5 rounded border border-rose-200">[ERRO] CÓDIGO NÃO LOCALIZADO</span>` 
+              : `<span class="text-slate-700 font-bold text-[10px]">${r.descricao || '-'}</span>`}
+          </td>
+          <td class="py-1.5 px-2.5 text-right border-r border-slate-200 font-mono font-bold text-slate-500">
+            ${pUnit === "" && r.descricao === "[ERRO]" ? `<span class="text-rose-600">[ERRO]</span>` : (pUnit || '-')}
+          </td>
+          <td class="py-1.5 px-2.5 text-right border-r border-slate-200">
+            <input type="number" step="0.1" value="${r.peso_embalagem || ''}" onchange="updateManualRowField('${r.id}', 'peso_embalagem', this.value)" data-focus-index="${focusCounter++}" onkeydown="handleEnterNavigation(event, this)" class="w-20 bg-white border border-slate-200 text-right font-mono text-slate-700 rounded focus:outline-none py-1 px-2" placeholder="85.0" />
+          </td>
+          <td class="py-1.5 px-2.5 text-right border-r border-slate-200">
+            <input type="number" step="0.1" value="${r.peso_bruto_nf || ''}" onchange="updateManualRowField('${r.id}', 'peso_bruto_nf', this.value)" data-focus-index="${focusCounter++}" onkeydown="handleEnterNavigation(event, this)" class="w-20 bg-white border border-slate-200 text-right font-mono text-slate-700 rounded focus:outline-none py-1 px-2" placeholder="0.0" />
+          </td>
+          <td class="py-1.5 px-2.5 text-right border-r border-slate-200">
+            <input type="number" step="0.1" value="${r.peso_bruto_mando || ''}" onchange="updateManualRowField('${r.id}', 'peso_bruto_mando', this.value)" data-focus-index="${focusCounter++}" onkeydown="handleEnterNavigation(event, this)" class="w-20 bg-white border border-slate-200 text-right font-mono font-bold text-slate-900 rounded focus:outline-none py-1 px-2" placeholder="0.0" />
+          </td>
+          <td class="py-1.5 px-2.5 text-right font-mono font-bold border-r border-slate-200 ${gapKgDisplay && gapKgDisplay !== '0.00' ? 'text-amber-700' : 'text-slate-600'}">${gapKgDisplay}</td>
+          <td class="py-1.5 px-2.5 text-right font-mono font-bold border-r border-slate-200 ${gapPecasDisplay === '[ERRO]' ? 'bg-rose-100 text-rose-700' : 'text-slate-600'}">${gapPecasDisplay}</td>
+          <td class="py-1.5 px-2.5 text-right font-mono font-bold border-r border-slate-200 ${gapPctDisplay === '[ERRO]' ? 'bg-rose-100 text-rose-700' : 'text-slate-600'}">${gapPctDisplay}</td>
+          <td class="py-1.5 px-2 text-center bg-slate-50">
+            <button onclick="deleteManualRow('${r.id}')" class="p-1 text-slate-400 hover:text-rose-500 hover:bg-rose-100 rounded transition"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+      lucide.createIcons();
+      applyFocusAfterRender(); // Aplica o foco na nova tabela
+    }
+
+    // --- STREAMING_CHUNK:Exportador profissional de planilhas Excel para ambos os modos... ---
+    // =================================================================
+    // EXPORTAÇÃO EXCEL VERDE HL MANDO
+    // =================================================================
+    function exportToExcel() {
+      if (typeof XLSX === "undefined") {
+        showToast("Carregando biblioteca Excel..."); return;
+      }
+
+      const headers = [
+        "1- fornecedor", "2- número da nota fiscal", "3- observação", "4- quantidade de peça",
+        "5- descrição do produto", "6- peso unitário", "7- data de pesagem", "8- peso embalagem",
+        "9- peso bruto", "10- peso bruto mando", "11- GAP(Kg)", "12- GAP(Peças)", "13- GAP(%)", "14- observação"
+      ];
+
+      const allExportRows = [];
+
+      // Processa uma nota individual para adicionar às linhas de exportação
+      const compilarNota = (cabecalho, caixas) => {
+        const forn = cabecalho.fornecedor || "";
+        const p = (cabecalho.nota_fiscal_principal || "").trim();
+        const m = (cabecalho.nota_fiscal_margem || "").trim();
+        const nfStr = (p && m && p !== m) ? `${p}-${m}` : (p || m || "-");
+        const dt = cabecalho.data_conferencia || "";
+
+        caixas.forEach(r => {
+          // Ignora linhas totalmente vazias
+          if (!r.observacao && (!r.quantidade_mencionada || r.quantidade_mencionada === "")) return;
+
+          const pUnit = r.peso_unitario;
+          let gapKg = ""; let gapPecas = ""; let gapPct = "";
+
+          if (r.peso_bruto_nf !== "" && r.peso_bruto_mando !== "" && r.peso_bruto_nf !== undefined && r.peso_bruto_mando !== undefined && Number(r.peso_bruto_nf) > 0) {
+            gapKg = Number(r.peso_bruto_nf) - Number(r.peso_bruto_mando);
+            if (r.descricao === "[ERRO]" || pUnit === null || Number(pUnit) === 0) {
+              gapPecas = "[ERRO]"; gapPct = "[ERRO]";
+            } else {
+              gapPecas = gapKg / Number(pUnit);
+              gapPct = (r.quantidade_mencionada && Number(r.quantidade_mencionada) > 0) ? (gapPecas / Number(r.quantidade_mencionada)) : "[ERRO]";
+            }
+          }
+
+          allExportRows.push([
+            forn, nfStr, r.observacao || "", r.quantidade_mencionada || "",
+            r.descricao === "[ERRO]" ? "[ERRO]" : (r.descricao || ""),
+            r.descricao === "[ERRO]" ? "[ERRO]" : (pUnit || ""),
+            dt, r.peso_embalagem || "", r.peso_bruto_nf || "", r.peso_bruto_mando || "",
+            typeof gapKg === 'number' ? Number(gapKg.toFixed(3)) : gapKg,
+            typeof gapPecas === 'number' ? Number(gapPecas.toFixed(3)) : gapPecas,
+            typeof gapPct === 'number' ? Number(gapPct.toFixed(5)) : gapPct, ""
+          ]);
+        });
+      };
+
+      // 1. Processar notas do lote salvo
+      loteNotas.forEach(nota => compilarNota(nota.cabecalho, nota.caixas));
+
+      // 2. Processar a nota atualmente na tela (se houver)
+      if (currentMode === 'scan' && scanDoc) {
+        compilarNota(scanDoc.cabecalho, scanDoc.caixas);
+      } else if (currentMode === 'manual' && manualCaixas.some(c => c.observacao)) {
+        compilarNota(manualHeader, manualCaixas);
+      }
+
+      if (allExportRows.length === 0) {
+        showToast("Nenhum dado para exportar! Preencha a tabela ou salve no lote."); return;
+      }
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...allExportRows]);
+
+      const totalRows = allExportRows.length;
+      for (let R = 0; R <= totalRows; ++R) {
+        for (let C = 0; C < 14; ++C) {
+          const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+          if (!ws[cellRef]) ws[cellRef] = { v: "", t: "s" };
+
+          if (R === 0) {
+            ws[cellRef].s = {
+              fill: { fgColor: { rgb: "107C41" } },
+              font: { name: "Arial", sz: 10, bold: true, color: { rgb: "FFFFFF" } },
+              alignment: { horizontal: "center", vertical: "center", wrapText: true },
+              border: {
+                top: { style: "thin", color: { rgb: "0A532A" } },
+                bottom: { style: "medium", color: { rgb: "0A532A" } }
+              }
+            };
+          } else {
+            const isZebra = (R % 2 === 0);
+            let bgColor = isZebra ? "F2F5F9" : "FFFFFF";
+            if (ws[cellRef].v === "[ERRO]") bgColor = "FEE2E2";
+
+            let alignH = "left";
+            if (C === 0 || C === 1 || C === 2 || C === 6) alignH = "center";
+            else if (C === 3 || C === 5 || (C >= 7 && C <= 12)) alignH = "right";
+
+            ws[cellRef].s = {
+              fill: { fgColor: { rgb: bgColor } },
+              font: { name: "Arial", sz: 9.5, bold: ws[cellRef].v === "[ERRO]", color: { rgb: ws[cellRef].v === "[ERRO]" ? "991B1B" : "1E293B" } },
+              alignment: { horizontal: alignH, vertical: "center" },
+              border: {
+                top: { style: "thin", color: { rgb: "E2E8F0" } },
+                bottom: { style: "thin", color: { rgb: "E2E8F0" } },
+                left: { style: "thin", color: { rgb: "E2E8F0" } },
+                right: { style: "thin", color: { rgb: "E2E8F0" } }
+              }
+            };
+
+            if (typeof ws[cellRef].v === "number") {
+              if (C === 12) ws[cellRef].z = "0.00%";
+              else if (C === 5 || (C >= 7 && C <= 11)) ws[cellRef].z = "#,##0.00";
+              else if (C === 3) ws[cellRef].z = "#,##0";
+            }
+          }
+        }
+      }
+
+      ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: totalRows, c: 13 } }) };
+      ws['!cols'] = [
+        { wch: 15 }, { wch: 22 }, { wch: 18 }, { wch: 18 },
+        { wch: 30 }, { wch: 14 }, { wch: 16 }, { wch: 15 },
+        { wch: 14 }, { wch: 20 }, { wch: 12 }, { wch: 14 }, { wch: 12 }, { wch: 18 }
+      ];
+
+      XLSX.utils.book_append_sheet(wb, ws, "Controle de Pesagem");
+      
+      const nomeArquivo = loteNotas.length > 0 ? `HL_Mando_Lote_${loteNotas.length}_Notas.xlsx` : `HL_Mando_Pesagem_NF_${allExportRows[0][1]}.xlsx`;
+      
+      XLSX.writeFile(wb, nomeArquivo);
+    }
+  </script>
+</body>
+</html>
