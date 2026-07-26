@@ -10,7 +10,6 @@
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgenjs.bundle.js"></script>
 
   <script>
     tailwind.config = {
@@ -73,7 +72,6 @@
 <body class="bg-slate-900 text-slate-100 selection:bg-hlblue selection:text-white text-sm">
 <div id="app-shell" class="flex flex-col lg:flex-row min-h-screen overflow-hidden">
 
-  <!-- SIDEBAR LATERAL -->
   <aside class="w-full lg:w-72 bg-slate-800 border-r border-slate-700 flex flex-col z-50 shadow-2xl lg:h-screen shrink-0 relative no-print">
     <div class="p-5 flex items-center justify-center border-b-4 border-hlblue bg-white">
       <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTH5gTFAOdrUUvWGuEK-HORlPypgVIYqApGipybyjIJuQ&s=10" alt="HL Mando Logo" class="w-full max-w-[160px] h-auto object-contain drop-shadow-sm">
@@ -117,11 +115,9 @@
           <i data-lucide="file-spreadsheet" class="w-5 h-5 text-excel-500"></i>Excel
         </button>
 
-        <button onclick="gerarPowerPoint()" class="icon-action-btn" title="Gerar Apresentação PowerPoint">
-          <i data-lucide="presentation" class="w-5 h-5 text-orange-400"></i>PPTX
-        </button>
+        <!-- PPTX removido conforme solicitado -->
 
-        <button onclick="exportarParaPowerBI()" class="icon-action-btn" title="Baixar Dataset para Power BI">
+        <button onclick="gerarDashboardHTML()" class="icon-action-btn" title="Gerar Dashboard BI (HTML/CSS)">
           <i data-lucide="bar-chart-4" class="w-5 h-5 text-yellow-400"></i>Power BI
         </button>
       </div>
@@ -141,7 +137,6 @@
     </div>
   </aside>
 
-  <!-- ÁREA DE TRABALHO PRINCIPAL -->
   <main class="flex-1 flex flex-col lg:h-screen overflow-y-auto bg-slate-900 relative" id="main-content">
     
     <div class="absolute top-4 right-6 z-20 flex gap-3 no-print">
@@ -195,7 +190,6 @@
           </div>
 
           <div class="xl:col-span-8 flex flex-col gap-6">
-            <!-- CABEÇALHO EXPANDIDO COM OPERADOR/TURNO -->
             <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-lg relative overflow-hidden">
               <div class="absolute left-0 top-0 w-1 h-full bg-hlblue"></div>
               <h3 class="text-sm font-bold text-white mb-3 border-b border-slate-700 pb-2 flex items-center gap-2"><i data-lucide="user-check" class="w-4 h-4 text-hlblue"></i> Ficha de Rastreabilidade</h3>
@@ -208,7 +202,6 @@
                 <div><label class="text-[10px] font-bold text-slate-400 block mb-1.5 uppercase">NF Principal</label><input type="text" id="scan-hdr-nf-principal" oninput="updateScanHeader('nota_fiscal_principal', this.value)" class="w-full bg-slate-900 border border-slate-600 focus:border-hlblue text-white px-3 py-2 rounded-lg text-xs font-bold transition shadow-inner outline-none" /></div>
                 <div><label class="text-[10px] font-bold text-slate-400 block mb-1.5 uppercase">NF Margem</label><input type="text" id="scan-hdr-nf-margem" oninput="updateScanHeader('nota_fiscal_margem', this.value)" class="w-full bg-slate-900 border border-slate-600 focus:border-hlblue text-white px-3 py-2 rounded-lg text-xs font-bold transition shadow-inner outline-none" /></div>
                 
-                <!-- NOVOS CAMPOS -->
                 <div class="lg:col-span-3 mt-2"><label class="text-[10px] font-bold text-emerald-400 block mb-1.5 uppercase"><i data-lucide="user" class="w-3 h-3 inline"></i> Operador Responsável</label><input type="text" id="scan-hdr-operador" oninput="updateScanHeader('operador', this.value)" placeholder="Nome do Analista" class="w-full bg-slate-900 border border-emerald-600/50 focus:border-emerald-500 text-white px-3 py-2 rounded-lg text-xs font-bold transition shadow-inner outline-none" /></div>
                 <div class="lg:col-span-3 mt-2"><label class="text-[10px] font-bold text-emerald-400 block mb-1.5 uppercase"><i data-lucide="clock" class="w-3 h-3 inline"></i> Turno</label>
                   <select id="scan-hdr-turno" onchange="updateScanHeader('turno', this.value)" class="w-full bg-slate-900 border border-emerald-600/50 focus:border-emerald-500 text-white px-3 py-2 rounded-lg text-xs font-bold transition shadow-inner outline-none cursor-pointer">
@@ -218,7 +211,6 @@
               </div>
             </div>
 
-            <!-- DASHBOARDS (5 QUADROS AGORA COM RADAR) -->
             <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
               <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-lg flex flex-col justify-between items-center">
                 <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider w-full text-center">Medidor Acurácia</p>
@@ -240,7 +232,6 @@
                 <div class="h-20 w-full mt-1 relative"><canvas id="scan-donutChart"></canvas></div>
               </div>
 
-              <!-- NOVO: RADAR DE DISPERSÃO -->
               <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-lg flex flex-col justify-between">
                 <div class="flex justify-between items-center mb-1">
                   <div><p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Radar de Erros</p></div>
@@ -313,7 +304,6 @@
             <div><label class="text-[10px] font-bold text-slate-400 block mb-1.5 uppercase">NF Principal</label><input type="text" id="man-hdr-nf-principal" oninput="manualHeader.nota_fiscal_principal = this.value" class="w-full bg-slate-900 border border-slate-600 focus:border-hlblue text-white px-3 py-2 rounded-lg text-xs font-bold transition shadow-inner outline-none" /></div>
             <div><label class="text-[10px] font-bold text-slate-400 block mb-1.5 uppercase">NF Margem</label><input type="text" id="man-hdr-nf-margem" oninput="manualHeader.nota_fiscal_margem = this.value" class="w-full bg-slate-900 border border-slate-600 focus:border-hlblue text-white px-3 py-2 rounded-lg text-xs font-bold transition shadow-inner outline-none" /></div>
             
-            <!-- NOVOS CAMPOS -->
             <div class="lg:col-span-3 mt-2"><label class="text-[10px] font-bold text-emerald-400 block mb-1.5 uppercase"><i data-lucide="user" class="w-3 h-3 inline"></i> Operador Responsável</label><input type="text" id="man-hdr-operador" oninput="manualHeader.operador = this.value" placeholder="Nome do Analista" class="w-full bg-slate-900 border border-emerald-600/50 focus:border-emerald-500 text-white px-3 py-2 rounded-lg text-xs font-bold transition shadow-inner outline-none" /></div>
             <div class="lg:col-span-3 mt-2"><label class="text-[10px] font-bold text-emerald-400 block mb-1.5 uppercase"><i data-lucide="clock" class="w-3 h-3 inline"></i> Turno</label>
               <select id="man-hdr-turno" onchange="manualHeader.turno = this.value" class="w-full bg-slate-900 border border-emerald-600/50 focus:border-emerald-500 text-white px-3 py-2 rounded-lg text-xs font-bold transition shadow-inner outline-none cursor-pointer">
@@ -342,7 +332,6 @@
             <div class="h-20 w-full mt-1 relative"><canvas id="man-donutChart"></canvas></div>
           </div>
           
-          <!-- NOVO: RADAR DE DISPERSÃO -->
           <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-lg flex flex-col justify-between">
             <div class="flex justify-between items-center mb-1">
               <div><p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Radar de Erros</p></div>
@@ -402,7 +391,7 @@
       </div>
 
       <!-- ================================================================= -->
-      <!-- MODO 3: DASHBOARD BI (Gerador de Dashboard) -->
+      <!-- MODO 3: DASHBOARD BI -->
       <!-- ================================================================= -->
       <div id="mode-dashboard-container" class="hidden flex flex-col gap-6 w-full">
 
@@ -415,8 +404,7 @@
           <div class="flex gap-2 no-print flex-wrap">
             <button onclick="renderGlobalDashboard()" class="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 border border-slate-600 text-white text-xs font-bold rounded-lg transition flex items-center gap-2"><i data-lucide="refresh-cw" class="w-4 h-4"></i> Atualizar</button>
             <button onclick="gerarRelatorioCompleto()" class="px-4 py-2.5 bg-hlblue hover:bg-blue-500 text-white text-xs font-bold rounded-lg transition flex items-center gap-2 shadow-md"><i data-lucide="file-text" class="w-4 h-4"></i> Relatório PDF</button>
-            <button onclick="gerarPowerPoint()" class="px-4 py-2.5 bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold rounded-lg transition flex items-center gap-2 shadow-md"><i data-lucide="presentation" class="w-4 h-4"></i> Apresentação PPTX</button>
-            <button onclick="exportarParaPowerBI()" class="px-4 py-2.5 bg-yellow-600 hover:bg-yellow-500 text-white text-xs font-bold rounded-lg transition flex items-center gap-2 shadow-md"><i data-lucide="bar-chart-4" class="w-4 h-4"></i> Dataset Power BI</button>
+            <button onclick="gerarDashboardHTML()" class="px-4 py-2.5 bg-yellow-600 hover:bg-yellow-500 text-white text-xs font-bold rounded-lg transition flex items-center gap-2 shadow-md"><i data-lucide="bar-chart-4" class="w-4 h-4"></i> Dashboard BI (Visual)</button>
           </div>
         </div>
 
@@ -460,48 +448,6 @@
             <ul id="dash-insights-atencao" class="flex flex-col gap-2 text-xs font-semibold text-slate-300"></ul>
           </div>
         </div>
-
-        <!-- Tabela resumo por nota -->
-        <div class="bg-slate-800 border border-slate-700 rounded-2xl flex flex-col overflow-hidden shadow-lg">
-          <div class="px-5 py-3 border-b border-slate-700 bg-slate-900"><h3 class="text-sm font-bold text-white uppercase">Resumo por Nota (Lote Atual)</h3></div>
-          <div class="overflow-x-auto max-h-[420px]">
-            <table class="w-full text-left whitespace-nowrap">
-              <thead class="bg-slate-900/50 text-slate-300 border-b-2 border-slate-700 sticky top-0">
-                <tr>
-                  <th class="py-2.5 px-3 font-bold text-[10px] uppercase">Fornecedor</th>
-                  <th class="py-2.5 px-3 font-bold text-[10px] uppercase">NF</th>
-                  <th class="py-2.5 px-3 font-bold text-[10px] uppercase">Data</th>
-                  <th class="py-2.5 px-3 font-bold text-[10px] uppercase">Operador</th>
-                  <th class="py-2.5 px-3 font-bold text-[10px] uppercase">Turno</th>
-                  <th class="py-2.5 px-3 text-right font-bold text-[10px] uppercase">Caixas</th>
-                  <th class="py-2.5 px-3 text-right font-bold text-[10px] uppercase">Acurácia</th>
-                  <th class="py-2.5 px-3 text-right font-bold text-[10px] uppercase">GAP (Kg)</th>
-                  <th class="py-2.5 px-3 text-right font-bold text-[10px] uppercase">Custo Est.</th>
-                </tr>
-              </thead>
-              <tbody id="dash-table-notas" class="divide-y divide-slate-700 bg-slate-800 text-xs"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Tabela top divergências -->
-        <div class="bg-slate-800 border border-slate-700 rounded-2xl flex flex-col overflow-hidden shadow-lg">
-          <div class="px-5 py-3 border-b border-slate-700 bg-slate-900"><h3 class="text-sm font-bold text-white uppercase">Top 10 Itens com Maior Divergência</h3></div>
-          <div class="overflow-x-auto max-h-[360px]">
-            <table class="w-full text-left whitespace-nowrap">
-              <thead class="bg-slate-900/50 text-slate-300 border-b-2 border-slate-700 sticky top-0">
-                <tr>
-                  <th class="py-2.5 px-3 font-bold text-[10px] uppercase">Código</th>
-                  <th class="py-2.5 px-3 font-bold text-[10px] uppercase">Descrição</th>
-                  <th class="py-2.5 px-3 font-bold text-[10px] uppercase">Fornecedor</th>
-                  <th class="py-2.5 px-3 font-bold text-[10px] uppercase">NF</th>
-                  <th class="py-2.5 px-3 text-right font-bold text-[10px] uppercase">GAP (Kg)</th>
-                </tr>
-              </thead>
-              <tbody id="dash-table-divergencias" class="divide-y divide-slate-700 bg-slate-800 text-xs"></tbody>
-            </table>
-          </div>
-        </div>
       </div>
     </div>
   </main>
@@ -526,7 +472,6 @@
   <!-- CONTAINER DO RELATÓRIO PDF COMPLETO (só aparece durante impressão) -->
   <div id="print-report-container"></div>
 
-  <!-- LÓGICA JAVASCRIPT MASTER & EXCEL V7 (7 ABAS, 22 COLUNAS) -->
   <script>
     function toggleFullscreen() {
       const el = document.documentElement;
@@ -540,7 +485,6 @@
     }
     setInterval(updateClock, 1000); updateClock();
 
-    // Log de auditoria mantido internamente (console) — a caixa visual foi removida da interface a pedido.
     function logAction(msg, type='info') {
       const time = new Date().toLocaleTimeString('pt-BR', { hour12: false });
       console.log(`[${time}] (${type}) ${msg}`);
@@ -615,7 +559,8 @@
     }
 
     let currentMode = 'scan'; let loteNotas = []; let scanDoc = null; let zoom = 1; let rotation = 0;
-    // UPDATED HEADER TO INCLUDE OPERADOR AND TURNO
+    let editingLoteIndex = null; 
+    const LOTE_STORAGE_KEY = 'hlmando_lote_notas_v1';
     let manualHeader = { fornecedor: "Sada", nota_fiscal_principal: "", nota_fiscal_margem: "", data_conferencia: "", operador: "", turno: "Manhã" };
     let manualCaixas = []; let focusTargetIndex = null;
     
@@ -681,7 +626,6 @@
       let chartData = Object.keys(gapMap).map(k => ({ label: k, value: gapMap[k] }));
       chartData.sort((a, b) => Math.abs(b.value) - Math.abs(a.value)); chartData = chartData.slice(0, 5);
       
-      // 1. CHART BARRAS
       const barCtx = document.getElementById(`${modePrefix}-barChart`).getContext('2d');
       if (modePrefix === 'scan' && scanBarChart) scanBarChart.destroy(); if (modePrefix === 'man' && manBarChart) manBarChart.destroy();
       const newBar = new Chart(barCtx, {
@@ -691,7 +635,6 @@
       });
       if (modePrefix === 'scan') scanBarChart = newBar; else manBarChart = newBar;
 
-      // 2. CHART ROSCA
       const donutCtx = document.getElementById(`${modePrefix}-donutChart`).getContext('2d');
       if (modePrefix === 'scan' && scanDonutChart) scanDonutChart.destroy(); if (modePrefix === 'man' && manDonutChart) manDonutChart.destroy();
       const newDonut = new Chart(donutCtx, {
@@ -701,7 +644,6 @@
       });
       if (modePrefix === 'scan') scanDonutChart = newDonut; else manDonutChart = newDonut;
 
-      // 3. CHART LINHAS
       const lineCtx = document.getElementById(`${modePrefix}-lineChart`).getContext('2d');
       if (modePrefix === 'scan' && scanLineChart) scanLineChart.destroy(); if (modePrefix === 'man' && manLineChart) manLineChart.destroy();
       const newLine = new Chart(lineCtx, {
@@ -711,7 +653,6 @@
       });
       if (modePrefix === 'scan') scanLineChart = newLine; else manLineChart = newLine;
 
-      // 4. CHART GAUGE
       const gaugeCtx = document.getElementById(`${modePrefix}-gaugeChart`).getContext('2d');
       if (modePrefix === 'scan' && scanGaugeChart) scanGaugeChart.destroy(); if (modePrefix === 'man' && manGaugeChart) manGaugeChart.destroy();
       let gaugeColor = '#10b981'; if(acc < 100) gaugeColor = '#fbbf24'; if(acc < 80) gaugeColor = '#ef4444';
@@ -723,7 +664,6 @@
       });
       if (modePrefix === 'scan') scanGaugeChart = newGauge; else manGaugeChart = newGauge;
 
-      // 5. CHART RADAR (NOVO)
       const radarCtx = document.getElementById(`${modePrefix}-radarChart`).getContext('2d');
       if (modePrefix === 'scan' && scanRadarChart) scanRadarChart.destroy(); if (modePrefix === 'man' && manRadarChart) manRadarChart.destroy();
       const newRadar = new Chart(radarCtx, {
@@ -747,9 +687,6 @@
       if (modePrefix === 'scan') scanRadarChart = newRadar; else manRadarChart = newRadar;
     }
 
-    // ==========================================================================================
-    // MOTOR DE BI — ESTATÍSTICAS GLOBAIS AGREGADAS (Gerador de Dashboard)
-    // ==========================================================================================
     function computeGlobalStats() {
       const notas = loteNotas;
       const stats = {
@@ -894,7 +831,7 @@
         </div>`).join('');
       lucide.createIcons();
 
-      // ---- Gráfico Donut Status ----
+      // ---- Gráficos do Painel UI ----
       const donutCtx = document.getElementById('dash-donutStatus').getContext('2d');
       if (dashDonutChart) dashDonutChart.destroy();
       dashDonutChart = new Chart(donutCtx, {
@@ -903,7 +840,6 @@
         options: { responsive: true, maintainAspectRatio: false, cutout: '60%', plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e1', font: { size: 10 }, boxWidth: 10 } } } }
       });
 
-      // ---- Gráfico Barras GAP por Fornecedor ----
       const fornArr = Object.entries(stats.porFornecedor).map(([k, v]) => ({ nome: k, gap: v.gap }));
       fornArr.sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap));
       const barFornCtx = document.getElementById('dash-barFornecedor').getContext('2d');
@@ -914,7 +850,6 @@
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', font: { size: 9 } } }, x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 9, weight: 'bold' } } } } }
       });
 
-      // ---- Gráfico Linha Tendência GAP por nota ----
       const lineCtx = document.getElementById('dash-lineTrend').getContext('2d');
       if (dashLineChart) dashLineChart.destroy();
       dashLineChart = new Chart(lineCtx, {
@@ -923,7 +858,6 @@
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', font: { size: 9 } } }, x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 8 }, maxRotation: 60, minRotation: 60 } } } }
       });
 
-      // ---- Gráfico Pizza Acurácia por Turno ----
       const turnoArr = Object.entries(stats.porTurno).map(([k, v]) => ({ nome: k, acc: v.accCount ? v.accSum / v.accCount : 100 }));
       const pieCtx = document.getElementById('dash-pieTurno').getContext('2d');
       if (dashPieTurnoChart) dashPieTurnoChart.destroy();
@@ -933,7 +867,6 @@
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e1', font: { size: 10 }, boxWidth: 10 } } } }
       });
 
-      // ---- Gráfico Ranking Operadores ----
       const opArr = Object.entries(stats.porOperador).map(([k, v]) => ({ nome: k, acc: v.accCount ? v.accSum / v.accCount : 100 }));
       opArr.sort((a, b) => b.acc - a.acc);
       const barOpCtx = document.getElementById('dash-barOperador').getContext('2d');
@@ -944,13 +877,11 @@
         options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', font: { size: 9 } } }, y: { grid: { display: false }, ticks: { color: '#cbd5e1', font: { size: 10, weight: 'bold' } } } } }
       });
 
-      // ---- Insights ----
       const { positivos, atencao } = gerarInsights(stats);
       document.getElementById('dash-insights-positivos').innerHTML = positivos.map(p => `<li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400 mt-0.5 shrink-0"></i><span>${p}</span></li>`).join('');
       document.getElementById('dash-insights-atencao').innerHTML = atencao.map(a => `<li class="flex items-start gap-2"><i data-lucide="alert-circle" class="w-3.5 h-3.5 text-amber-400 mt-0.5 shrink-0"></i><span>${a}</span></li>`).join('');
       lucide.createIcons();
 
-      // ---- Tabela por Nota ----
       const tbodyNotas = document.getElementById('dash-table-notas');
       if (stats.linhaNotas.length === 0) {
         tbodyNotas.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-slate-500 font-bold">Nenhuma nota gravada no lote.</td></tr>`;
@@ -969,7 +900,6 @@
           </tr>`).join('');
       }
 
-      // ---- Tabela Top Divergências ----
       const tbodyDiv = document.getElementById('dash-table-divergencias');
       const top10 = stats.itensDivergentes.slice(0, 10);
       if (top10.length === 0) {
@@ -986,9 +916,6 @@
       }
     }
 
-    // ==========================================================================================
-    // GERADOR DE RELATÓRIO PDF COMPLETO (via impressão do navegador)
-    // ==========================================================================================
     function chartToImage(type, config, w, h) {
       const canvas = document.createElement('canvas');
       canvas.width = w; canvas.height = h;
@@ -1007,7 +934,6 @@
       const agora = new Date();
       const dataGerado = agora.toLocaleDateString('pt-BR') + ' às ' + agora.toLocaleTimeString('pt-BR', { hour12: false });
 
-      // --- Imagens dos gráficos (renderizados offscreen para o PDF, fundo claro) ---
       const fornArr = Object.entries(stats.porFornecedor).map(([k, v]) => ({ nome: k, gap: v.gap, acc: v.accCount ? v.accSum / v.accCount : 100 }));
       fornArr.sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap));
       const opArr = Object.entries(stats.porOperador).map(([k, v]) => ({ nome: k, acc: v.accCount ? v.accSum / v.accCount : 100 }));
@@ -1044,10 +970,9 @@
         options: { responsive: false, animation: false, plugins: { legend: { position: 'bottom', labels: { color: '#111827', font: { size: 11 } } } } }
       }, 500, 320);
 
-      // --- Montagem do HTML do relatório ---
       const linhasNotasHtml = stats.linhaNotas.map(n => `
         <tr>
-          <td>${n.forn}</td><td>${n.nf}</td><td>${n.data}</td><td>${n.op || '-'}</td><td>${n.turno || '-'}</td>
+          <td>${n.forn}</td><td>${n.nf}</td><td>${n.data || '-'}</td><td>${n.op || '-'}</td><td>${n.turno || '-'}</td>
           <td style="text-align:right">${n.caixas}</td>
           <td style="text-align:right;font-weight:700;color:${n.acc >= 95 ? '#059669' : (n.acc >= 80 ? '#b45309' : '#dc2626')}">${n.acc.toFixed(1)}%</td>
           <td style="text-align:right">${n.gap.toFixed(2)} kg</td>
@@ -1063,438 +988,266 @@
         <tr><td>${f.nome}</td><td style="text-align:right">${f.acc.toFixed(1)}%</td><td style="text-align:right">${f.gap.toFixed(2)} kg</td>
         <td style="text-align:right">${fmtMoeda(Math.abs(f.gap) * CUSTO_POR_KG)}</td></tr>`).join('');
 
-      const listaPositivos = positivos.map(p => `<li>${p}</li>`).join('');
-      const listaAtencao = atencao.map(a => `<li>${a}</li>`).join('');
-
-      const th = `padding:8px 10px;background:#111827;color:#fff;font-size:10px;text-transform:uppercase;letter-spacing:.03em;text-align:left;`;
-      const td = `padding:7px 10px;font-size:11px;border-bottom:1px solid #e5e7eb;`;
-      const tableStyle = `width:100%;border-collapse:collapse;margin-top:6px;font-size:11px;`;
-
       const html = `
         <style>
-          #print-report-container * { box-sizing:border-box; }
-          #print-report-container table th { ${th} }
-          #print-report-container table td { ${td} }
-          #print-report-container table { ${tableStyle} }
-          #print-report-container h2 { font-size:18px; font-weight:900; color:#111827; margin:0 0 4px 0; }
-          #print-report-container h3 { font-size:13px; font-weight:800; color:#111827; text-transform:uppercase; letter-spacing:.03em; margin:22px 0 6px 0; border-bottom:2px solid #00AEEF; padding-bottom:4px; }
-          #print-report-container .rp-sub { font-size:11px; color:#6b7280; font-weight:600; }
-          #print-report-container .rp-kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:14px; }
-          #print-report-container .rp-kpi { border:1px solid #e5e7eb; border-radius:10px; padding:10px 12px; }
-          #print-report-container .rp-kpi .l { font-size:9px; text-transform:uppercase; color:#6b7280; font-weight:800; }
-          #print-report-container .rp-kpi .v { font-size:18px; font-weight:900; color:#111827; margin-top:2px; }
-          #print-report-container ul { margin:0; padding-left:18px; font-size:11px; color:#1f2937; }
-          #print-report-container li { margin-bottom:5px; }
-          #print-report-container .rp-box { border:1px solid #e5e7eb; border-radius:10px; padding:12px 14px; }
-          #print-report-container .rp-cover { text-align:center; padding-top:80px; }
-          #print-report-container .rp-footer { margin-top:26px; font-size:9px; color:#9ca3af; text-align:center; }
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
+          #print-report-container { font-family: 'Inter', Arial, sans-serif; background-color: #f1f5f9; padding-bottom: 20px; }
+          #print-report-container * { box-sizing: border-box; }
+          #print-report-container .rp-page { background: #ffffff; margin: 0 auto 24px auto; max-width: 900px; padding: 40px 50px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+          
+          #print-report-container .rp-cover { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; min-height: 280mm; background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border-top: 12px solid #00AEEF; }
+          #print-report-container .rp-cover img { max-width: 250px; margin-bottom: 40px; }
+          #print-report-container .rp-cover-tag { letter-spacing: 0.15em; color: #00AEEF; font-weight: 800; font-size: 14px; text-transform: uppercase; margin-bottom: 10px; }
+          #print-report-container .rp-cover-title { font-size: 42px; font-weight: 900; color: #0f172a; margin: 0 0 15px 0; line-height: 1.1; }
+          #print-report-container .rp-cover-sub { color: #64748b; font-weight: 600; font-size: 14px; margin-bottom: 60px; }
+          
+          #print-report-container .rp-header { border-bottom: 2px solid #00AEEF; padding-bottom: 8px; margin-bottom: 24px; }
+          #print-report-container h2 { font-size: 22px; font-weight: 900; color: #0f172a; margin: 0; text-transform: uppercase; letter-spacing: 0.02em; }
+          #print-report-container h3 { font-size: 14px; font-weight: 800; color: #1e293b; text-transform: uppercase; letter-spacing: 0.03em; margin: 32px 0 12px 0; display: flex; align-items: center; gap: 8px; }
+          #print-report-container h3::before { content: ''; display: inline-block; width: 4px; height: 14px; background-color: #00AEEF; border-radius: 2px; }
+          #print-report-container .rp-sub { font-size: 12px; color: #64748b; font-weight: 600; margin-top: -16px; margin-bottom: 24px; }
+          
+          #print-report-container .rp-kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 20px 0 30px 0; }
+          #print-report-container .rp-kpi { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; position: relative; overflow: hidden; }
+          #print-report-container .rp-kpi::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #00AEEF; }
+          #print-report-container .rp-kpi.danger::before { background: #ef4444; }
+          #print-report-container .rp-kpi.success::before { background: #10b981; }
+          #print-report-container .rp-kpi .l { font-size: 10px; text-transform: uppercase; color: #64748b; font-weight: 800; }
+          #print-report-container .rp-kpi .v { font-size: 22px; font-weight: 900; color: #0f172a; margin-top: 4px; }
+          
+          #print-report-container table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 8px; font-size: 11px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+          #print-report-container th { background: #0f172a; color: #ffffff; padding: 12px 14px; text-align: left; font-weight: 600; text-transform: uppercase; font-size: 10px; letter-spacing: 0.03em; }
+          #print-report-container td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #334155; font-weight: 600; }
+          #print-report-container tr:last-child td { border-bottom: none; }
+          #print-report-container tr:nth-child(even) td { background-color: #f8fafc; }
+          
+          #print-report-container .rp-box { border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; }
+          #print-report-container ul { margin: 0; padding-left: 20px; font-size: 12px; color: #334155; }
+          #print-report-container .rp-footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 10px; color: #94a3b8; text-align: center; font-weight: 600; }
+          
+          @media print {
+            body.printing-report { background: #ffffff !important; }
+            #print-report-container { background: #ffffff; }
+            #print-report-container .rp-page { box-shadow: none; margin: 0; max-width: 100%; padding: 14mm; page-break-after: always; }
+          }
         </style>
 
-        <!-- CAPA -->
         <div class="rp-page rp-cover">
-          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTH5gTFAOdrUUvWGuEK-HORlPypgVIYqApGipybyjIJuQ&s=10" style="max-width:220px;margin:0 auto 30px auto;display:block;" />
-          <p style="letter-spacing:.15em;color:#00AEEF;font-weight:800;font-size:12px;">HL MANDO — CONTROLE LOGÍSTICO</p>
-          <h1 style="font-size:32px;font-weight:900;color:#111827;margin:10px 0 6px 0;">Relatório de Auditoria de Pesagem</h1>
-          <p style="color:#6b7280;font-weight:600;">Análise consolidada do lote de conferências • Gerado em ${dataGerado}</p>
-          <div class="rp-kpi-grid" style="max-width:640px;margin:40px auto 0 auto;">
+          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTH5gTFAOdrUUvWGuEK-HORlPypgVIYqApGipybyjIJuQ&s=10" alt="Logo" />
+          <div class="rp-cover-tag">HL MANDO — CONTROLE LOGÍSTICO</div>
+          <h1 class="rp-cover-title">Relatório de Auditoria<br>de Pesagem</h1>
+          <div class="rp-cover-sub">Análise consolidada do lote de conferências • Gerado em ${dataGerado}</div>
+          <div class="rp-kpi-grid" style="width: 100%; max-width: 700px;">
             <div class="rp-kpi"><div class="l">Notas Analisadas</div><div class="v">${stats.totalNotas}</div></div>
             <div class="rp-kpi"><div class="l">Caixas Avaliadas</div><div class="v">${stats.totalCaixas}</div></div>
-            <div class="rp-kpi"><div class="l">Acurácia Global</div><div class="v">${stats.acuraciaGlobal.toFixed(1)}%</div></div>
-            <div class="rp-kpi"><div class="l">Custo Estimado</div><div class="v">${fmtMoeda(stats.custoTotal)}</div></div>
+            <div class="rp-kpi success"><div class="l">Acurácia Global</div><div class="v">${stats.acuraciaGlobal.toFixed(1)}%</div></div>
+            <div class="rp-kpi danger"><div class="l">Custo Estimado</div><div class="v">${fmtMoeda(stats.custoTotal)}</div></div>
           </div>
         </div>
 
-        <!-- RESUMO EXECUTIVO -->
         <div class="rp-page">
-          <h2>Resumo Executivo</h2>
-          <p class="rp-sub">Visão geral do desempenho de pesagem e conferência do lote atual.</p>
-          <p style="font-size:12px;color:#1f2937;line-height:1.6;margin-top:14px;">
+          <div class="rp-header"><h2>Resumo Executivo</h2></div>
+          <div class="rp-sub">Visão geral do desempenho de pesagem.</div>
+          <p style="font-size:13px; color:#334155; line-height:1.7; font-weight: 500;">
             No período analisado foram processadas <b>${stats.totalNotas}</b> nota(s) fiscal(is), totalizando <b>${stats.totalCaixas}</b> caixas conferidas
-            e <b>${stats.totalPcs}</b> peças mencionadas. A acurácia global de conferência foi de <b>${stats.acuraciaGlobal.toFixed(1)}%</b>,
-            com um GAP total acumulado de <b>${fmtKg(stats.totalGap)}</b> e um custo de oportunidade estimado em <b>${fmtMoeda(stats.custoTotal)}</b>
-            (referência de R$ ${CUSTO_POR_KG.toFixed(2).replace('.', ',')}/kg). Foram identificadas <b>${stats.falta}</b> ocorrência(s) de falta de peso,
-            <b>${stats.sobra}</b> de sobra e <b>${stats.erroCad}</b> erro(s) de cadastro de código.
+            e <b>${stats.totalPcs}</b> peças mencionadas. A acurácia global foi de <b>${stats.acuraciaGlobal.toFixed(1)}%</b>, com GAP de <b>${fmtKg(stats.totalGap)}</b>.
           </p>
-
           <div class="rp-kpi-grid">
-            <div class="rp-kpi"><div class="l">Peso Total NF</div><div class="v">${stats.totalNF.toFixed(1)} kg</div></div>
-            <div class="rp-kpi"><div class="l">Peso Total Mando</div><div class="v">${stats.totalMando.toFixed(1)} kg</div></div>
+            <div class="rp-kpi"><div class="l">Peso NF</div><div class="v">${stats.totalNF.toFixed(1)} kg</div></div>
+            <div class="rp-kpi"><div class="l">Peso Mando</div><div class="v">${stats.totalMando.toFixed(1)} kg</div></div>
             <div class="rp-kpi"><div class="l">GAP Total</div><div class="v">${fmtKg(stats.totalGap)}</div></div>
-            <div class="rp-kpi"><div class="l">Erros de Cadastro</div><div class="v">${stats.erroCad}</div></div>
+            <div class="rp-kpi ${stats.erroCad > 0 ? 'danger' : ''}"><div class="l">Erros Cad.</div><div class="v">${stats.erroCad}</div></div>
           </div>
-
           <h3>Distribuição de Status</h3>
-          <div style="display:flex;gap:20px;align-items:center;">
-            <img src="${imgDonut}" style="width:260px;" />
-            <table style="flex:1">
-              <thead><tr><th>Status</th><th style="text-align:right">Ocorrências</th><th style="text-align:right">% do Total</th></tr></thead>
-              <tbody>
-                <tr><td>Conferido (OK)</td><td style="text-align:right">${stats.conferido}</td><td style="text-align:right">${stats.totalAvaliadas ? (stats.conferido / stats.totalAvaliadas * 100).toFixed(1) : '0.0'}%</td></tr>
-                <tr><td>Falta de peso</td><td style="text-align:right">${stats.falta}</td><td style="text-align:right">${stats.totalAvaliadas ? (stats.falta / stats.totalAvaliadas * 100).toFixed(1) : '0.0'}%</td></tr>
-                <tr><td>Sobra de peso</td><td style="text-align:right">${stats.sobra}</td><td style="text-align:right">${stats.totalAvaliadas ? (stats.sobra / stats.totalAvaliadas * 100).toFixed(1) : '0.0'}%</td></tr>
-                <tr><td>Erro de cadastro</td><td style="text-align:right">${stats.erroCad}</td><td style="text-align:right">${stats.totalAvaliadas ? (stats.erroCad / stats.totalAvaliadas * 100).toFixed(1) : '0.0'}%</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- GRÁFICOS -->
-        <div class="rp-page">
-          <h2>Análise Gráfica</h2>
-          <p class="rp-sub">GAP por fornecedor, tendência ao longo das notas e ranking de acurácia por operador.</p>
-
-          <h3>GAP (Kg) por Fornecedor</h3>
-          <img src="${imgBarForn}" style="width:100%;max-height:260px;object-fit:contain;" />
-
-          <h3>Tendência de GAP por Nota</h3>
-          <img src="${imgLine}" style="width:100%;max-height:220px;object-fit:contain;" />
-
-          <div style="display:flex;gap:16px;margin-top:16px;">
-            <div style="flex:1.4;">
-              <h3>Ranking de Acurácia por Operador</h3>
-              <img src="${imgOp}" style="width:100%;max-height:220px;object-fit:contain;" />
-            </div>
+          <div style="display:flex; gap:30px; align-items:center; margin-top: 20px;">
+            <img src="${imgDonut}" style="width:280px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05));" />
             <div style="flex:1;">
-              <h3>Acurácia por Turno</h3>
-              <img src="${imgTurno}" style="width:100%;max-height:220px;object-fit:contain;" />
+              <table>
+                <thead><tr><th>Status</th><th style="text-align:right">Ocorrências</th></tr></thead>
+                <tbody>
+                  <tr><td>Conferido (OK)</td><td style="text-align:right">${stats.conferido}</td></tr>
+                  <tr><td>Falta de peso</td><td style="text-align:right">${stats.falta}</td></tr>
+                  <tr><td>Sobra de peso</td><td style="text-align:right">${stats.sobra}</td></tr>
+                  <tr><td>Erro de cadastro</td><td style="text-align:right">${stats.erroCad}</td></tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
 
-        <!-- TABELAS DE DADOS -->
         <div class="rp-page">
-          <h2>Dados Detalhados</h2>
+          <div class="rp-header"><h2>Análise Gráfica</h2></div>
+          <h3>GAP (Kg) por Fornecedor</h3>
+          <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center;"><img src="${imgBarForn}" style="max-width:100%; max-height:240px;" /></div>
+          <h3>Tendência de GAP por Nota</h3>
+          <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center;"><img src="${imgLine}" style="max-width:100%; max-height:220px;" /></div>
+          <div style="display:flex; gap:20px; margin-top:20px;">
+            <div style="flex:1.4;"><h3>Ranking Operador</h3><div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center;"><img src="${imgOp}" style="max-width:100%; max-height:200px;" /></div></div>
+            <div style="flex:1;"><h3>Acurácia por Turno</h3><div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center;"><img src="${imgTurno}" style="max-width:100%; max-height:200px;" /></div></div>
+          </div>
+        </div>
+
+        <div class="rp-page">
+          <div class="rp-header"><h2>Dados Detalhados</h2></div>
           <h3>Resumo por Fornecedor</h3>
-          <table>
-            <thead><tr><th>Fornecedor</th><th style="text-align:right">Acurácia Média</th><th style="text-align:right">GAP (Kg)</th><th style="text-align:right">Custo Estimado</th></tr></thead>
-            <tbody>${fornRankHtml}</tbody>
-          </table>
-
-          <h3>Resumo por Nota (Lote Completo)</h3>
-          <table>
-            <thead><tr><th>Fornecedor</th><th>NF</th><th>Data</th><th>Operador</th><th>Turno</th><th style="text-align:right">Caixas</th><th style="text-align:right">Acurácia</th><th style="text-align:right">GAP</th><th style="text-align:right">Custo</th></tr></thead>
-            <tbody>${linhasNotasHtml}</tbody>
-          </table>
-
-          <h3>Top 15 Itens com Maior Divergência</h3>
-          <table>
-            <thead><tr><th>Código</th><th>Descrição</th><th>Fornecedor</th><th>NF</th><th style="text-align:right">GAP</th></tr></thead>
-            <tbody>${linhasDivHtml}</tbody>
-          </table>
+          <table><thead><tr><th>Fornecedor</th><th style="text-align:right">Acurácia Média</th><th style="text-align:right">GAP (Kg)</th><th style="text-align:right">Custo</th></tr></thead><tbody>${fornRankHtml}</tbody></table>
+          <h3>Resumo por Nota</h3>
+          <table><thead><tr><th>Fornecedor</th><th>NF</th><th>Data</th><th>Operador</th><th>Turno</th><th style="text-align:right">Cxs</th><th style="text-align:right">Acurácia</th><th style="text-align:right">GAP</th><th style="text-align:right">Custo</th></tr></thead><tbody>${linhasNotasHtml}</tbody></table>
+          <h3>Top 15 Divergências</h3>
+          <table><thead><tr><th>Código</th><th>Descrição</th><th>Fornecedor</th><th>NF</th><th style="text-align:right">GAP</th></tr></thead><tbody>${linhasDivHtml}</tbody></table>
         </div>
 
-        <!-- CONCLUSÃO / RECOMENDAÇÕES -->
         <div class="rp-page">
-          <h2>Conclusão e Recomendações</h2>
-          <p class="rp-sub">Análise automática gerada a partir dos padrões identificados nos dados do lote.</p>
-
-          <div style="display:flex;gap:16px;margin-top:16px;">
-            <div class="rp-box" style="flex:1;border-color:#a7f3d0;background:#f0fdf4;">
-              <h3 style="border-color:#10b981;color:#065f46;margin-top:0;">✓ Pontos Positivos</h3>
-              <ul>${listaPositivos}</ul>
-            </div>
-            <div class="rp-box" style="flex:1;border-color:#fde68a;background:#fffbeb;">
-              <h3 style="border-color:#f59e0b;color:#92400e;margin-top:0;">⚠ Oportunidades de Melhoria</h3>
-              <ul>${listaAtencao}</ul>
-            </div>
+          <div class="rp-header"><h2>Conclusão</h2></div>
+          <div style="display:flex; gap:20px; margin-top:30px;">
+            <div class="rp-box" style="flex:1; border-color:#86efac; background:#f0fdf4;"><h3 style="color:#166534; margin-top:0; border-bottom:1px solid #bbf7d0; padding-bottom:10px; margin-bottom: 15px;">✓ Pontos Positivos</h3><ul>${positivos.map(p => `<li style="margin-bottom:8px;">${p}</li>`).join('')}</ul></div>
+            <div class="rp-box" style="flex:1; border-color:#fcd34d; background:#fffbeb;"><h3 style="color:#92400e; margin-top:0; border-bottom:1px solid #fde68a; padding-bottom:10px; margin-bottom: 15px;">⚠ Oportunidades de Melhoria</h3><ul>${atencao.map(a => `<li style="margin-bottom:8px;">${a}</li>`).join('')}</ul></div>
           </div>
-
-          <div class="rp-footer">Relatório gerado automaticamente pelo Sistema HL Mando — Pesagem &amp; BI Dashboard • ${dataGerado}</div>
         </div>
       `;
 
       document.getElementById('print-report-container').innerHTML = html;
       document.body.classList.add('printing-report');
-
-      setTimeout(() => {
-        window.print();
-      }, 150);
-
+      setTimeout(() => { window.print(); }, 150);
       logAction("Relatório PDF completo gerado.", 'success');
     }
 
-    window.addEventListener('afterprint', () => {
-      document.body.classList.remove('printing-report');
-    });
+    window.addEventListener('afterprint', () => { document.body.classList.remove('printing-report'); });
 
-    // ==========================================================================================
-    // GERADOR DE POWERPOINT (PPTX) — APRESENTAÇÃO EXECUTIVA COM GRÁFICOS NATIVOS EDITÁVEIS
-    // ==========================================================================================
-    function gerarPowerPoint() {
-      if (typeof PptxGenJS === "undefined") { showToast("Aguarde o carregamento da biblioteca PPTX..."); return; }
+    function gerarDashboardHTML() {
       const stats = computeGlobalStats();
-      if (stats.totalNotas === 0) { showToast("Grave ao menos uma nota no banco antes de gerar a apresentação."); return; }
-
-      const { positivos, atencao } = gerarInsights(stats);
+      if (stats.totalNotas === 0) { showToast("Grave ao menos uma nota no banco antes de gerar o dashboard."); return; }
       const agora = new Date();
-      const dataGerado = agora.toLocaleDateString('pt-BR') + ' ' + agora.toLocaleTimeString('pt-BR', { hour12: false });
+      const dataGerado = agora.toLocaleDateString('pt-BR') + ' às ' + agora.toLocaleTimeString('pt-BR', { hour12: false });
 
-      const AZUL = "00AEEF"; const PRETO = "111111"; const CINZA = "6B7280"; const CINZA_CLARO = "F1F5F9";
-      const VERDE = "10B981"; const AMBAR = "F59E0B"; const VERMELHO = "EF4444"; const AZULCLARO = "38BDF8";
-
-      const pptx = new PptxGenJS();
-      pptx.defineLayout({ name: "HL_WIDE", width: 13.33, height: 7.5 });
-      pptx.layout = "HL_WIDE";
-      pptx.author = "HL Mando — Sistema de Pesagem & BI";
-      pptx.title = "Relatório de Auditoria de Pesagem";
-
-      const fornArr = Object.entries(stats.porFornecedor).map(([k, v]) => ({ nome: k, gap: v.gap, acc: v.accCount ? v.accSum / v.accCount : 100, custo: v.custo }));
+      const fornArr = Object.entries(stats.porFornecedor).map(([k, v]) => ({ nome: k, gap: v.gap }));
       fornArr.sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap));
       const opArr = Object.entries(stats.porOperador).map(([k, v]) => ({ nome: k, acc: v.accCount ? v.accSum / v.accCount : 100 }));
       opArr.sort((a, b) => b.acc - a.acc);
       const turnoArr = Object.entries(stats.porTurno).map(([k, v]) => ({ nome: k, acc: v.accCount ? v.accSum / v.accCount : 100 }));
 
-      // Helper: cabeçalho padrão de página de conteúdo
-      function addHeader(slide, titulo, subtitulo) {
-        slide.background = { color: "FFFFFF" };
-        slide.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 13.33, h: 0.09, fill: { color: AZUL } });
-        slide.addText(titulo, { x: 0.5, y: 0.28, w: 12.3, h: 0.55, fontSize: 24, bold: true, color: PRETO, fontFace: "Arial" });
-        if (subtitulo) slide.addText(subtitulo, { x: 0.5, y: 0.78, w: 12.3, h: 0.32, fontSize: 12, color: CINZA, fontFace: "Arial" });
-        slide.addText("HL MANDO", { x: 11.3, y: 0.32, w: 1.7, h: 0.3, fontSize: 10, bold: true, color: AZUL, align: "right", fontFace: "Arial" });
-      }
-      function addFooter(slide, pagina) {
-        slide.addText(`Relatório de Auditoria de Pesagem • ${dataGerado}`, { x: 0.5, y: 7.15, w: 8, h: 0.25, fontSize: 8, color: "9CA3AF", fontFace: "Arial" });
-        slide.addText(String(pagina), { x: 12.6, y: 7.15, w: 0.4, h: 0.25, fontSize: 8, color: "9CA3AF", align: "right", fontFace: "Arial" });
-      }
+      const htmlTemplate = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard BI - HL Mando</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
+  :root { --bg: #0f172a; --card-bg: #1e293b; --text: #f8fafc; --muted: #94a3b8; --border: #334155; --blue: #00AEEF; --green: #10b981; --red: #ef4444; --yellow: #f59e0b; }
+  * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
+  body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 40px; }
+  header { background: #0b1120; padding: 25px 40px; border-bottom: 3px solid var(--blue); display: flex; justify-content: space-between; align-items: center; }
+  header h1 { margin: 0; font-size: 24px; font-weight: 900; letter-spacing: -0.5px; }
+  header p { margin: 5px 0 0; color: var(--muted); font-size: 13px; font-weight: 600; }
+  .container { max-width: 1400px; margin: 30px auto; padding: 0 20px; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
+  .kpi-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); position: relative; overflow: hidden; }
+  .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--blue); }
+  .kpi-card.success::before { background: var(--green); }
+  .kpi-card.danger::before { background: var(--red); }
+  .kpi-card.warning::before { background: var(--yellow); }
+  .kpi-card .lbl { font-size: 11px; text-transform: uppercase; color: var(--muted); font-weight: 800; letter-spacing: 0.5px; }
+  .kpi-card .val { font-size: 28px; font-weight: 900; margin-top: 8px; color: #fff; }
+  .charts-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; margin-bottom: 20px; }
+  .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .chart-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+  .chart-card h3 { margin: 0 0 15px 0; font-size: 13px; text-transform: uppercase; color: var(--muted); font-weight: 800; letter-spacing: 0.5px; }
+  .canvas-container { position: relative; height: 300px; width: 100%; }
+  @media (max-width: 992px) { .charts-grid, .charts-row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <div><h1>Power BI Dashboard Visual</h1><p>HL Mando - Visualização de Dados (Sem Tabelas)</p></div>
+  <div style="text-align: right;"><p style="color: #fff; font-size: 14px;">${stats.totalNotas} Notas • ${stats.totalCaixas} Caixas</p><p>Gerado em ${dataGerado}</p></div>
+</header>
+<div class="container">
+  <div class="kpi-grid">
+    <div class="kpi-card"><div class="lbl">Total Peças</div><div class="val">${stats.totalPcs}</div></div>
+    <div class="kpi-card"><div class="lbl">Peso NF</div><div class="val">${stats.totalNF.toFixed(1)} kg</div></div>
+    <div class="kpi-card"><div class="lbl">Peso Mando</div><div class="val">${stats.totalMando.toFixed(1)} kg</div></div>
+    <div class="kpi-card ${Math.abs(stats.totalGap) > 1 ? 'warning' : 'success'}"><div class="lbl">GAP Acumulado</div><div class="val">${stats.totalGap.toFixed(2)} kg</div></div>
+    <div class="kpi-card ${stats.acuraciaGlobal >= 95 ? 'success' : 'danger'}"><div class="lbl">Acurácia Global</div><div class="val">${stats.acuraciaGlobal.toFixed(1)}%</div></div>
+    <div class="kpi-card danger"><div class="lbl">Impacto Financeiro</div><div class="val" style="color:var(--red)">R$ ${stats.custoTotal.toFixed(2).replace('.', ',')}</div></div>
+  </div>
+  <div class="charts-grid">
+    <div class="chart-card"><h3>Status Geral das Caixas</h3><div class="canvas-container"><canvas id="chartDonut"></canvas></div></div>
+    <div class="chart-card"><h3>Divergência (Kg) por Fornecedor</h3><div class="canvas-container"><canvas id="chartBarForn"></canvas></div></div>
+  </div>
+  <div class="charts-row">
+    <div class="chart-card"><h3>Tendência de GAP por Nota (Kg)</h3><div class="canvas-container"><canvas id="chartLineTrend"></canvas></div></div>
+    <div class="chart-card"><h3>Ranking de Acurácia: Operadores</h3><div class="canvas-container"><canvas id="chartOpRanking"></canvas></div></div>
+  </div>
+</div>
+<script>
+  Chart.defaults.color = '#94a3b8'; Chart.defaults.font.family = 'Inter'; const gridColor = 'rgba(255, 255, 255, 0.05)';
+  new Chart(document.getElementById('chartDonut').getContext('2d'), {
+    type: 'doughnut',
+    data: { labels: ['OK', 'Falta', 'Sobra', 'Erro Cad'], datasets: [{ data: [${stats.conferido}, ${stats.falta}, ${stats.sobra}, ${stats.erroCad}], backgroundColor: ['#10b981', '#f59e0b', '#38bdf8', '#ef4444'], borderWidth: 0, hoverOffset: 8 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { color: '#f8fafc', padding: 20 } } } }
+  });
+  new Chart(document.getElementById('chartBarForn').getContext('2d'), {
+    type: 'bar',
+    data: { labels: ${JSON.stringify(fornArr.map(f => f.nome))}, datasets: [{ label: 'GAP (Kg)', data: ${JSON.stringify(fornArr.map(f => f.gap))}, backgroundColor: ${JSON.stringify(fornArr.map(f => f.gap >= 0 ? 'rgba(245,158,11,0.85)' : 'rgba(56,189,248,0.85)'))}, borderRadius: 6 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: gridColor } }, x: { grid: { display: false } } } }
+  });
+  new Chart(document.getElementById('chartLineTrend').getContext('2d'), {
+    type: 'line',
+    data: { labels: ${JSON.stringify(stats.linhaNotas.map(n => 'NF ' + n.nf))}, datasets: [{ label: 'GAP (Kg)', data: ${JSON.stringify(stats.linhaNotas.map(n => n.gap))}, borderColor: '#00AEEF', backgroundColor: 'rgba(0,174,239,0.15)', borderWidth: 3, fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#00AEEF' }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: gridColor } }, x: { grid: { display: false } } } }
+  });
+  new Chart(document.getElementById('chartOpRanking').getContext('2d'), {
+    type: 'bar',
+    data: { labels: ${JSON.stringify(opArr.map(o => o.nome))}, datasets: [{ label: 'Acurácia (%)', data: ${JSON.stringify(opArr.map(o => o.acc))}, backgroundColor: ${JSON.stringify(opArr.map(o => o.acc >= 95 ? '#10b981' : (o.acc >= 80 ? '#f59e0b' : '#ef4444')))}, borderRadius: 6 }] },
+    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { min: 0, max: 100, grid: { color: gridColor } }, y: { grid: { display: false }, ticks: { color: '#f8fafc', font: {weight: 'bold'} } } } }
+  });
+<\/script>
+</body></html>`;
 
-      // ---------------- SLIDE 1: CAPA ----------------
-      const s1 = pptx.addSlide();
-      s1.background = { color: PRETO };
-      s1.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 13.33, h: 7.5, fill: { color: "0F172A" } });
-      s1.addShape(pptx.ShapeType.rect, { x: 0, y: 3.55, w: 13.33, h: 0.05, fill: { color: AZUL } });
-      s1.addText("HL MANDO", { x: 0.9, y: 2.55, w: 8, h: 0.5, fontSize: 16, bold: true, color: AZUL, charSpacing: 3, fontFace: "Arial" });
-      s1.addText("Relatório de Auditoria de Pesagem", { x: 0.9, y: 3.0, w: 11.5, h: 0.9, fontSize: 34, bold: true, color: "FFFFFF", fontFace: "Arial" });
-      s1.addText("Dashboard Analítico Consolidado • Controle Logístico & Rastreabilidade", { x: 0.9, y: 3.75, w: 11, h: 0.4, fontSize: 14, color: "94A3B8", fontFace: "Arial" });
-      s1.addText(`Gerado em ${dataGerado}  •  ${stats.totalNotas} nota(s) analisada(s)  •  ${stats.totalCaixas} caixas`, { x: 0.9, y: 6.6, w: 11, h: 0.35, fontSize: 11, color: "64748B", fontFace: "Arial" });
-
-      // ---------------- SLIDE 2: RESUMO EXECUTIVO ----------------
-      const s2 = pptx.addSlide();
-      addHeader(s2, "Resumo Executivo", "Visão geral do desempenho de pesagem e conferência do lote analisado");
-      const kpiCards = [
-        { l: "Notas Analisadas", v: String(stats.totalNotas), c: PRETO },
-        { l: "Caixas Avaliadas", v: String(stats.totalCaixas), c: PRETO },
-        { l: "Acurácia Global", v: stats.acuraciaGlobal.toFixed(1) + "%", c: stats.acuraciaGlobal >= 95 ? VERDE : (stats.acuraciaGlobal >= 80 ? AMBAR : VERMELHO) },
-        { l: "GAP Total", v: fmtKg(stats.totalGap), c: Math.abs(stats.totalGap) < 0.5 ? VERDE : AMBAR },
-        { l: "Custo Estimado", v: fmtMoeda(stats.custoTotal), c: VERMELHO },
-        { l: "Erros de Cadastro", v: String(stats.erroCad), c: stats.erroCad > 0 ? VERMELHO : VERDE },
-      ];
-      const kpiW = 1.97, kpiGap = 0.15, kpiStartX = 0.5, kpiY = 1.35;
-      kpiCards.forEach((k, i) => {
-        const x = kpiStartX + i * (kpiW + kpiGap);
-        s2.addShape(pptx.ShapeType.roundRect, { x, y: kpiY, w: kpiW, h: 1.35, rectRadius: 0.08, fill: { color: CINZA_CLARO }, line: { color: "E2E8F0", width: 1 } });
-        s2.addText(k.l.toUpperCase(), { x: x + 0.1, y: kpiY + 0.12, w: kpiW - 0.2, h: 0.4, fontSize: 8.5, bold: true, color: CINZA, fontFace: "Arial" });
-        s2.addText(k.v, { x: x + 0.1, y: kpiY + 0.55, w: kpiW - 0.2, h: 0.6, fontSize: 17, bold: true, color: k.c, fontFace: "Arial" });
-      });
-      const textoResumo = `No período analisado foram processadas ${stats.totalNotas} nota(s) fiscal(is), totalizando ${stats.totalCaixas} caixas conferidas e ${stats.totalPcs} peças mencionadas. A acurácia global de conferência foi de ${stats.acuraciaGlobal.toFixed(1)}%, com um GAP total acumulado de ${fmtKg(stats.totalGap)} e um custo de oportunidade estimado em ${fmtMoeda(stats.custoTotal)} (referência de R$ ${CUSTO_POR_KG.toFixed(2).replace('.', ',')}/kg). Foram identificadas ${stats.falta} ocorrência(s) de falta de peso, ${stats.sobra} de sobra e ${stats.erroCad} erro(s) de cadastro de código.`;
-      s2.addText(textoResumo, { x: 0.5, y: 3.05, w: 12.3, h: 1.4, fontSize: 13, color: "1F2937", fontFace: "Arial", lineSpacingMultiple: 1.3 });
-
-      s2.addText("Distribuição de Status das Caixas", { x: 0.5, y: 4.55, w: 6, h: 0.35, fontSize: 13, bold: true, color: PRETO, fontFace: "Arial" });
-      s2.addChart(pptx.ChartType.pie, [{ name: "Status", labels: ["OK", "Falta", "Sobra", "Erro Cadastro"], values: [stats.conferido, stats.falta, stats.sobra, stats.erroCad] }],
-        { x: 0.5, y: 4.95, w: 6.0, h: 2.15, showLegend: true, legendPos: "r", legendColor: "1F2937", legendFontSize: 10, chartColors: [VERDE, AMBAR, AZULCLARO, VERMELHO], dataLabelColor: "FFFFFF", showValue: true, showTitle: false });
-
-      s2.addText("Ocorrências por Tipo", { x: 6.9, y: 4.55, w: 6, h: 0.35, fontSize: 13, bold: true, color: PRETO, fontFace: "Arial" });
-      const rowsOcorr = [
-        [{ text: "Status", options: { bold: true, fill: { color: PRETO }, color: "FFFFFF", fontSize: 10 } }, { text: "Qtd", options: { bold: true, fill: { color: PRETO }, color: "FFFFFF", fontSize: 10, align: "right" } }, { text: "%", options: { bold: true, fill: { color: PRETO }, color: "FFFFFF", fontSize: 10, align: "right" } }],
-        ["Conferido (OK)", String(stats.conferido), (stats.totalAvaliadas ? (stats.conferido / stats.totalAvaliadas * 100).toFixed(1) : "0.0") + "%"],
-        ["Falta de peso", String(stats.falta), (stats.totalAvaliadas ? (stats.falta / stats.totalAvaliadas * 100).toFixed(1) : "0.0") + "%"],
-        ["Sobra de peso", String(stats.sobra), (stats.totalAvaliadas ? (stats.sobra / stats.totalAvaliadas * 100).toFixed(1) : "0.0") + "%"],
-        ["Erro de cadastro", String(stats.erroCad), (stats.totalAvaliadas ? (stats.erroCad / stats.totalAvaliadas * 100).toFixed(1) : "0.0") + "%"],
-      ].map((row, ri) => ri === 0 ? row : row.map((c, ci) => ({ text: c, options: { fontSize: 10, align: ci === 0 ? "left" : "right", color: "1F2937", fill: { color: ri % 2 === 0 ? "F8FAFC" : "FFFFFF" } } })));
-      s2.addTable(rowsOcorr, { x: 6.9, y: 4.95, w: 5.9, h: 2.0, border: { type: "solid", color: "E2E8F0", pt: 0.5 }, autoPage: false });
-      addFooter(s2, 2);
-
-      // ---------------- SLIDE 3: GAP POR FORNECEDOR ----------------
-      const s3 = pptx.addSlide();
-      addHeader(s3, "GAP (Kg) por Fornecedor", "Diferença acumulada entre peso da Nota Fiscal e peso conferido (Mando)");
-      s3.addChart(pptx.ChartType.bar, [{ name: "GAP (Kg)", labels: fornArr.length ? fornArr.map(f => f.nome) : ["Sem dados"], values: fornArr.length ? fornArr.map(f => Number(f.gap.toFixed(2))) : [0] }],
-        { x: 0.5, y: 1.3, w: 12.3, h: 5.6, barDir: "col", chartColors: [AZUL], showValue: true, dataLabelFontSize: 9, catAxisLabelColor: "374151", valAxisLabelColor: "374151", showTitle: false, showLegend: false });
-      addFooter(s3, 3);
-
-      // ---------------- SLIDE 4: TENDÊNCIA DE GAP ----------------
-      const s4 = pptx.addSlide();
-      addHeader(s4, "Tendência de GAP por Nota", "Evolução da divergência de peso ao longo das notas registradas no lote");
-      s4.addChart(pptx.ChartType.line, [{ name: "GAP (Kg)", labels: stats.linhaNotas.length ? stats.linhaNotas.map(n => `NF ${n.nf}`) : ["-"], values: stats.linhaNotas.length ? stats.linhaNotas.map(n => Number(n.gap.toFixed(2))) : [0] }],
-        { x: 0.5, y: 1.3, w: 12.3, h: 5.6, chartColors: [AZUL], lineSize: 2.5, lineDataSymbol: "circle", lineDataSymbolSize: 6, catAxisLabelColor: "374151", valAxisLabelColor: "374151", showTitle: false, showLegend: false, catAxisLabelRotate: 45 });
-      addFooter(s4, 4);
-
-      // ---------------- SLIDE 5: RANKING OPERADORES + TURNO ----------------
-      const s5 = pptx.addSlide();
-      addHeader(s5, "Desempenho por Operador e Turno", "Acurácia média de conferência segmentada por responsável e por turno de trabalho");
-      s5.addText("Ranking de Acurácia por Operador", { x: 0.5, y: 1.25, w: 7.5, h: 0.3, fontSize: 12, bold: true, color: PRETO, fontFace: "Arial" });
-      s5.addChart(pptx.ChartType.bar, [{ name: "Acurácia (%)", labels: opArr.length ? opArr.map(o => o.nome) : ["Sem dados"], values: opArr.length ? opArr.map(o => Number(o.acc.toFixed(1))) : [0] }],
-        { x: 0.5, y: 1.6, w: 7.5, h: 5.3, barDir: "bar", chartColors: [AZUL], showValue: true, dataLabelFontSize: 9, valAxisMinVal: 0, valAxisMaxVal: 100, catAxisLabelColor: "374151", valAxisLabelColor: "374151", showTitle: false, showLegend: false });
-
-      s5.addText("Acurácia por Turno", { x: 8.2, y: 1.25, w: 4.6, h: 0.3, fontSize: 12, bold: true, color: PRETO, fontFace: "Arial" });
-      s5.addChart(pptx.ChartType.doughnut, [{ name: "Turno", labels: turnoArr.length ? turnoArr.map(t => `${t.nome} (${t.acc.toFixed(0)}%)`) : ["Sem dados"], values: turnoArr.length ? turnoArr.map(t => Number(t.acc.toFixed(1))) : [1] }],
-        { x: 8.2, y: 1.6, w: 4.6, h: 3.0, showLegend: true, legendPos: "b", legendColor: "1F2937", legendFontSize: 9, chartColors: [AZUL, VERDE, AMBAR, "A78BFA", "F472B6"], showTitle: false });
-      addFooter(s5, 5);
-
-      // ---------------- SLIDE 6: RESUMO POR FORNECEDOR (TABELA) ----------------
-      const s6 = pptx.addSlide();
-      addHeader(s6, "Resumo por Fornecedor", "Acurácia média, GAP acumulado e custo de oportunidade estimado");
-      const headerRow6 = ["Fornecedor", "Notas", "Acurácia Média", "GAP (Kg)", "Custo Estimado"].map(t => ({ text: t, options: { bold: true, fill: { color: PRETO }, color: "FFFFFF", fontSize: 10 } }));
-      const bodyRows6 = fornArr.map((f, i) => [f.nome, String(stats.porFornecedor[f.nome].notas), f.acc.toFixed(1) + "%", f.gap.toFixed(2) + " kg", fmtMoeda(f.custo)]
-        .map((c, ci) => ({ text: c, options: { fontSize: 10, align: ci === 0 ? "left" : "right", color: "1F2937", fill: { color: i % 2 === 0 ? "F8FAFC" : "FFFFFF" } } })));
-      s6.addTable([headerRow6, ...(bodyRows6.length ? bodyRows6 : [[{ text: "Sem dados", options: { colspan: 5, align: "center", color: "9CA3AF" } }]])], { x: 0.5, y: 1.3, w: 12.3, autoPage: false, border: { type: "solid", color: "E2E8F0", pt: 0.5 } });
-      addFooter(s6, 6);
-
-      // ---------------- SLIDES 7+: RESUMO POR NOTA (paginado) ----------------
-      const headerRowNotas = ["Fornecedor", "NF", "Data", "Operador", "Turno", "Caixas", "Acurácia", "GAP (Kg)", "Custo"].map(t => ({ text: t, options: { bold: true, fill: { color: PRETO }, color: "FFFFFF", fontSize: 9 } }));
-      const CHUNK = 12; let paginaAtual = 7;
-      for (let i = 0; i < Math.max(stats.linhaNotas.length, 1); i += CHUNK) {
-        const chunk = stats.linhaNotas.slice(i, i + CHUNK);
-        const sN = pptx.addSlide();
-        addHeader(sN, "Resumo por Nota" + (stats.linhaNotas.length > CHUNK ? ` (${Math.floor(i / CHUNK) + 1}/${Math.ceil(stats.linhaNotas.length / CHUNK)})` : ""), "Detalhamento de cada nota fiscal registrada no lote analisado");
-        const bodyN = chunk.length ? chunk.map((n, idx) => [n.forn, n.nf, n.data, n.op || "-", n.turno || "-", String(n.caixas), n.acc.toFixed(1) + "%", n.gap.toFixed(2), fmtMoeda(n.custo)]
-          .map((c, ci) => ({ text: c, options: { fontSize: 9, align: ci >= 5 ? "right" : "left", color: "1F2937", fill: { color: idx % 2 === 0 ? "F8FAFC" : "FFFFFF" } } })))
-          : [[{ text: "Nenhuma nota gravada no lote.", options: { colspan: 9, align: "center", color: "9CA3AF" } }]];
-        sN.addTable([headerRowNotas, ...bodyN], { x: 0.5, y: 1.3, w: 12.3, autoPage: false, border: { type: "solid", color: "E2E8F0", pt: 0.5 } });
-        addFooter(sN, paginaAtual); paginaAtual++;
-        if (stats.linhaNotas.length === 0) break;
-      }
-
-      // ---------------- SLIDE: TOP 10 DIVERGÊNCIAS ----------------
-      const sDiv = pptx.addSlide();
-      addHeader(sDiv, "Top 10 Itens com Maior Divergência", "Itens que mais impactaram o resultado de conferência do lote");
-      const headerDiv = ["Código", "Descrição", "Fornecedor", "NF", "GAP (Kg)"].map(t => ({ text: t, options: { bold: true, fill: { color: PRETO }, color: "FFFFFF", fontSize: 10 } }));
-      const top10 = stats.itensDivergentes.slice(0, 10);
-      const bodyDiv = top10.length ? top10.map((it, i) => [it.codigo, it.desc, it.forn, it.nf, it.gap.toFixed(2)]
-        .map((c, ci) => ({ text: c, options: { fontSize: 10, align: ci === 4 ? "right" : "left", color: ci === 4 ? (it.gap >= 0 ? "B45309" : "0369A1") : "1F2937", bold: ci === 4, fill: { color: i % 2 === 0 ? "F8FAFC" : "FFFFFF" } } })))
-        : [[{ text: "Nenhuma divergência relevante encontrada.", options: { colspan: 5, align: "center", color: "9CA3AF" } }]];
-      sDiv.addTable([headerDiv, ...bodyDiv], { x: 0.5, y: 1.3, w: 12.3, autoPage: false, border: { type: "solid", color: "E2E8F0", pt: 0.5 } });
-      addFooter(sDiv, paginaAtual); paginaAtual++;
-
-      // ---------------- SLIDE: CONCLUSÃO E RECOMENDAÇÕES ----------------
-      const sC = pptx.addSlide();
-      addHeader(sC, "Conclusão e Recomendações", "Análise automática gerada a partir dos padrões identificados nos dados do lote");
-      sC.addShape(pptx.ShapeType.roundRect, { x: 0.5, y: 1.35, w: 5.95, h: 5.5, rectRadius: 0.08, fill: { color: "F0FDF4" }, line: { color: "A7F3D0", width: 1 } });
-      sC.addText("✓ PONTOS POSITIVOS", { x: 0.75, y: 1.55, w: 5.5, h: 0.35, fontSize: 13, bold: true, color: "065F46", fontFace: "Arial" });
-      sC.addText(positivos.map(p => ({ text: "• " + p.replace(/<\/?b>/g, ""), options: { breakLine: true, paraSpaceAfter: 8 } })), { x: 0.75, y: 2.0, w: 5.5, h: 4.7, fontSize: 11, color: "1F2937", fontFace: "Arial", valign: "top" });
-
-      sC.addShape(pptx.ShapeType.roundRect, { x: 6.85, y: 1.35, w: 5.98, h: 5.5, rectRadius: 0.08, fill: { color: "FFFBEB" }, line: { color: "FDE68A", width: 1 } });
-      sC.addText("⚠ OPORTUNIDADES DE MELHORIA", { x: 7.1, y: 1.55, w: 5.5, h: 0.35, fontSize: 13, bold: true, color: "92400E", fontFace: "Arial" });
-      sC.addText(atencao.map(a => ({ text: "• " + a.replace(/<\/?b>/g, ""), options: { breakLine: true, paraSpaceAfter: 8 } })), { x: 7.1, y: 2.0, w: 5.5, h: 4.7, fontSize: 11, color: "1F2937", fontFace: "Arial", valign: "top" });
-      addFooter(sC, paginaAtual);
-
-      pptx.writeFile({ fileName: `HL_Mando_Apresentacao_${stats.totalNotas}_Notas.pptx` });
-      showToast("Apresentação PowerPoint gerada com sucesso!");
-      logAction("Apresentação PPTX gerada.", 'success');
+      const blob = new Blob([htmlTemplate], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `HL_Mando_PowerBI_Visual_${stats.totalNotas}Notas.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast("Dashboard Visual baixado com sucesso!");
     }
 
-    // ==========================================================================================
-    // EXPORTADOR DE DATASET PARA POWER BI (Excel limpo, formato tabular/estrela — pronto p/ Get Data)
-    // ==========================================================================================
-    // Observação: um arquivo .pbix nativo é um formato binário/proprietário gerado exclusivamente
-    // pelo Power BI Desktop — não é possível criá-lo de forma confiável a partir do navegador.
-    // Em vez disso, este exportador gera um Excel limpo, normalizado (tabela fato + dimensões),
-    // que pode ser carregado diretamente em Power BI Desktop via "Obter Dados > Excel" com um clique,
-    // sem necessidade de tratamento adicional.
-    function exportarParaPowerBI() {
-      if (typeof XLSX === "undefined") { showToast("Aguarde o carregamento da biblioteca Excel..."); return; }
-      const stats = computeGlobalStats();
-      if (stats.totalNotas === 0) { showToast("Grave ao menos uma nota no banco antes de exportar."); return; }
-
-      // ---- Tabela FATO: uma linha por caixa/item (grão mais fino, ideal para Power BI) ----
-      const fatoHeader = ["Nota_ID", "Fornecedor", "NF_Principal", "NF_Margem", "Data_Pesagem", "Operador", "Turno", "Caixa_No", "Codigo_BC", "Descricao", "Quantidade", "Peso_Unitario_Kg", "Peso_Embalagem_Kg", "Peso_NF_Kg", "Peso_Mando_Kg", "GAP_Kg", "GAP_Percentual", "Status", "Custo_Estimado_R$"];
-      const fatoRows = [fatoHeader];
-
-      loteNotas.forEach((nota, notaIdx) => {
-        const cab = nota.cabecalho;
-        (nota.caixas || []).forEach(c => {
-          if (!c.observacao && (!c.quantidade_mencionada || c.quantidade_mencionada === "")) return;
-          const pNf = Number(c.peso_bruto_nf) || 0, pMando = Number(c.peso_bruto_mando) || 0;
-          let gap = 0, gapPerc = 0, status = "OK";
-          if (pNf > 0 && pMando > 0) {
-            gap = pNf - pMando; gapPerc = pNf !== 0 ? (gap / pNf * 100) : 0;
-            if (c.descricao === "[ERRO]") status = "ERRO_CADASTRO";
-            else if (gap > 0.05) status = "FALTA";
-            else if (gap < -0.05) status = "SOBRA";
-          }
-          fatoRows.push([
-            "NOTA_" + (notaIdx + 1), cab.fornecedor || "N/D", cab.nota_fiscal_principal || "", cab.nota_fiscal_margem || "",
-            cab.data_conferencia || "", cab.operador || "N/D", cab.turno || "N/D", c.caixa_no || "",
-            c.observacao || "", c.descricao || "", Number(c.quantidade_mencionada) || 0, Number(c.peso_unitario) || 0,
-            Number(c.peso_embalagem) || 0, pNf, pMando, Number(gap.toFixed(3)), Number(gapPerc.toFixed(2)), status,
-            Number((Math.abs(gap) * CUSTO_POR_KG).toFixed(2))
-          ]);
-        });
-      });
-
-      // ---- Tabela DIMENSÃO NOTAS: uma linha por nota, com métricas agregadas ----
-      const dimHeader = ["Nota_ID", "Fornecedor", "NF_Principal", "NF_Margem", "Data_Pesagem", "Operador", "Turno", "Total_Caixas", "Acuracia_Percentual", "GAP_Total_Kg", "Custo_Estimado_R$"];
-      const dimRows = [dimHeader];
-      stats.linhaNotas.forEach((n, i) => {
-        const cab = loteNotas[n.idx] ? loteNotas[n.idx].cabecalho : {};
-        dimRows.push(["NOTA_" + (n.idx + 1), n.forn, n.nf, cab.nota_fiscal_margem || "", n.data, n.op || "N/D", n.turno || "N/D", n.caixas, Number(n.acc.toFixed(2)), Number(n.gap.toFixed(3)), Number(n.custo.toFixed(2))]);
-      });
-
-      // ---- Tabela DIMENSÃO FORNECEDOR ----
-      const fornHeader = ["Fornecedor", "Total_Notas", "Total_Caixas", "Acuracia_Media_Percentual", "GAP_Total_Kg", "Custo_Estimado_R$"];
-      const fornRows = [fornHeader];
-      Object.entries(stats.porFornecedor).forEach(([nome, v]) => {
-        fornRows.push([nome, v.notas, v.caixas, Number((v.accCount ? v.accSum / v.accCount : 100).toFixed(2)), Number(v.gap.toFixed(3)), Number(v.custo.toFixed(2))]);
-      });
-
-      // ---- Tabela DIMENSÃO OPERADOR ----
-      const opHeader = ["Operador", "Total_Notas", "Total_Caixas", "Acuracia_Media_Percentual"];
-      const opRows = [opHeader];
-      Object.entries(stats.porOperador).forEach(([nome, v]) => {
-        opRows.push([nome, v.notas, v.caixas, Number((v.accCount ? v.accSum / v.accCount : 100).toFixed(2))]);
-      });
-
-      // ---- Tabela DIMENSÃO TURNO ----
-      const turnoHeader = ["Turno", "Total_Caixas", "Acuracia_Media_Percentual"];
-      const turnoRows = [turnoHeader];
-      Object.entries(stats.porTurno).forEach(([nome, v]) => {
-        turnoRows.push([nome, v.caixas, Number((v.accCount ? v.accSum / v.accCount : 100).toFixed(2))]);
-      });
-
-      const wb = XLSX.utils.book_new();
-      const wsFato = XLSX.utils.aoa_to_sheet(fatoRows);
-      const wsDim = XLSX.utils.aoa_to_sheet(dimRows);
-      const wsForn = XLSX.utils.aoa_to_sheet(fornRows);
-      const wsOp = XLSX.utils.aoa_to_sheet(opRows);
-      const wsTurno = XLSX.utils.aoa_to_sheet(turnoRows);
-
-      XLSX.utils.book_append_sheet(wb, wsFato, "Fato_Caixas");
-      XLSX.utils.book_append_sheet(wb, wsDim, "Dim_Notas");
-      XLSX.utils.book_append_sheet(wb, wsForn, "Dim_Fornecedor");
-      XLSX.utils.book_append_sheet(wb, wsOp, "Dim_Operador");
-      XLSX.utils.book_append_sheet(wb, wsTurno, "Dim_Turno");
-
-      XLSX.writeFile(wb, `HL_Mando_Dataset_PowerBI_${stats.totalNotas}_Notas.xlsx`);
-      showToast("Dataset para Power BI exportado! Importe em Power BI Desktop via 'Obter Dados > Excel'.");
-      logAction("Dataset Power BI exportado (tabela fato + dimensões).", 'success');
-    }
-
-    function dispararFlash() {
-      const main = document.getElementById('main-content');
-      main.classList.remove('flash-active'); void main.offsetWidth; main.classList.add('flash-active');
-    }
+    function salvarLoteStorage() { try { localStorage.setItem(LOTE_STORAGE_KEY, JSON.stringify(loteNotas)); } catch (e) { console.error('Erro storage:', e); } }
+    function carregarLoteStorage() { try { const raw = localStorage.getItem(LOTE_STORAGE_KEY); if (raw) { const parsed = JSON.parse(raw); if (Array.isArray(parsed)) loteNotas = parsed; } } catch (e) { console.error('Erro storage:', e); } }
+    function dispararFlash() { const main = document.getElementById('main-content'); main.classList.remove('flash-active'); void main.offsetWidth; main.classList.add('flash-active'); }
 
     function salvarNotaNoLote() {
+      const estavaEditando = editingLoteIndex !== null;
       if (currentMode === 'scan') {
         if (!scanDoc || scanDoc.caixas.length === 0) { showToast("Nenhuma foto processada."); return; }
-        loteNotas.push({ modo: 'scan', title: scanDoc.title, imageSrc: scanDoc.imageSrc, cabecalho: JSON.parse(JSON.stringify(scanDoc.cabecalho)), caixas: JSON.parse(JSON.stringify(scanDoc.caixas)) }); 
-        clearScanData(); logAction(`Nota Scan salva no lote.`, 'success');
+        const notaData = { modo: 'scan', title: scanDoc.title, imageSrc: scanDoc.imageSrc, cabecalho: JSON.parse(JSON.stringify(scanDoc.cabecalho)), caixas: JSON.parse(JSON.stringify(scanDoc.caixas)) };
+        if (estavaEditando) { loteNotas[editingLoteIndex] = notaData; editingLoteIndex = null; }
+        else { loteNotas.push(notaData); }
+        clearScanData(); logAction(estavaEditando ? `Nota Scan atualizada.` : `Nota Scan salva.`, 'success');
       } else {
         const temCaixaPreenchida = manualCaixas.some(c => c.observacao || c.quantidade_mencionada);
         if (!temCaixaPreenchida) { showToast("Preencha ao menos uma caixa."); return; }
-        loteNotas.push({ modo: 'manual', cabecalho: JSON.parse(JSON.stringify(manualHeader)), caixas: JSON.parse(JSON.stringify(manualCaixas)) });
-        logAction(`Nota Manual salva. Forn: ${manualHeader.fornecedor}`, 'success');
+        const notaData = { modo: 'manual', cabecalho: JSON.parse(JSON.stringify(manualHeader)), caixas: JSON.parse(JSON.stringify(manualCaixas)) };
+        if (estavaEditando) { loteNotas[editingLoteIndex] = notaData; editingLoteIndex = null; }
+        else { loteNotas.push(notaData); }
+        logAction(estavaEditando ? `Nota atualizada.` : `Nota salva.`, 'success');
         manualHeader = { fornecedor: "Sada", nota_fiscal_principal: "", nota_fiscal_margem: "", data_conferencia: "", operador: manualHeader.operador, turno: manualHeader.turno };
         document.getElementById("man-hdr-fornecedor").value = manualHeader.fornecedor; document.getElementById("man-hdr-nf-principal").value = "";
         document.getElementById("man-hdr-nf-margem").value = ""; document.getElementById("man-hdr-data-pesagem").value = "";
         manualCaixas = []; addManualRow(3);
       }
-      dispararFlash(); atualizarBadgesLote(); showToast("Nota adicionada ao banco temporário.");
+      dispararFlash(); atualizarBadgesLote(); salvarLoteStorage();
+      showToast(estavaEditando ? "Nota atualizada no banco!" : "Nota adicionada ao banco.");
     }
 
-    function atualizarBadgesLote() {
-      document.querySelectorAll('.lote-counter-badge').forEach(b => b.innerText = loteNotas.length);
-      if (currentMode === 'dashboard') renderGlobalDashboard();
-    }
-    function abrirModalLote() { renderizarListaLote(); document.getElementById('modal-lote').classList.remove('hidden'); logAction("Acessando lote.", 'info'); }
+    function atualizarBadgesLote() { document.querySelectorAll('.lote-counter-badge').forEach(b => b.innerText = loteNotas.length); if (currentMode === 'dashboard') renderGlobalDashboard(); }
+    function abrirModalLote() { renderizarListaLote(); document.getElementById('modal-lote').classList.remove('hidden'); }
     function fecharModalLote() { document.getElementById('modal-lote').classList.add('hidden'); }
 
     function renderizarListaLote() {
@@ -1502,30 +1255,32 @@
       if (loteNotas.length === 0) { container.innerHTML = '<p class="text-sm font-bold text-white py-6 text-center border-2 border-dashed border-slate-700 rounded-lg">Lote vazio.</p>'; return; }
       loteNotas.forEach((nota, index) => {
         const nfStr = nota.cabecalho.nota_fiscal_principal || 'S/ NF'; const modoText = nota.modo === 'scan' ? 'FOTO' : 'MANUAL';
-        const html = `<div class="flex items-center justify-between bg-slate-900 border border-slate-700 p-4 rounded-xl shadow-sm"><div><p class="font-bold text-white text-base">NF: ${nfStr} <span class="text-[10px] bg-slate-700 px-2 py-0.5 rounded text-hlblue ml-1.5 uppercase">${modoText}</span></p><p class="text-xs font-bold text-slate-400 mt-1">${nota.caixas.length} caixas computadas</p></div><div class="flex gap-2"><button onclick="editarNotaLote(${index})" class="px-4 py-2 bg-slate-700 border border-slate-600 hover:bg-slate-600 text-white font-bold rounded-lg transition text-xs flex items-center gap-1.5 shadow-sm"><i data-lucide="edit-3" class="w-4 h-4"></i> Editar</button><button onclick="excluirNotaLote(${index})" class="px-3 py-2 bg-red-900/40 hover:bg-red-900/80 text-red-400 border border-red-800 font-bold rounded-lg transition text-xs flex items-center gap-1.5"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div>`;
-        container.insertAdjacentHTML('beforeend', html);
+        container.insertAdjacentHTML('beforeend', `<div class="flex items-center justify-between bg-slate-900 border border-slate-700 p-4 rounded-xl shadow-sm"><div><p class="font-bold text-white text-base">NF: ${nfStr} <span class="text-[10px] bg-slate-700 px-2 py-0.5 rounded text-hlblue ml-1.5 uppercase">${modoText}</span></p><p class="text-xs font-bold text-slate-400 mt-1">${nota.caixas.length} caixas computadas</p></div><div class="flex gap-2"><button onclick="editarNotaLote(${index})" class="px-4 py-2 bg-slate-700 border border-slate-600 hover:bg-slate-600 text-white font-bold rounded-lg transition text-xs flex items-center gap-1.5 shadow-sm"><i data-lucide="edit-3" class="w-4 h-4"></i> Editar</button><button onclick="excluirNotaLote(${index})" class="px-3 py-2 bg-red-900/40 hover:bg-red-900/80 text-red-400 border border-red-800 font-bold rounded-lg transition text-xs flex items-center gap-1.5"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div>`);
       });
       lucide.createIcons();
     }
 
     function editarNotaLote(index) {
-      const nota = loteNotas[index]; loteNotas.splice(index, 1); atualizarBadgesLote();
+      const nota = loteNotas[index]; editingLoteIndex = index;
       if (nota.modo === 'scan') {
-        scanDoc = { id: "doc_" + Date.now(), title: nota.title || "Nota", imageSrc: nota.imageSrc, cabecalho: nota.cabecalho, caixas: nota.caixas };
+        scanDoc = { id: "doc_" + Date.now(), title: nota.title || "Nota", imageSrc: nota.imageSrc, cabecalho: JSON.parse(JSON.stringify(nota.cabecalho)), caixas: JSON.parse(JSON.stringify(nota.caixas)) };
         switchMode('scan'); document.getElementById("upload-zone").classList.add("hidden"); document.getElementById("workspace-scan-zone").classList.remove("hidden"); renderScanDoc();
       } else {
-        manualHeader = nota.cabecalho; manualCaixas = nota.caixas;
+        manualHeader = JSON.parse(JSON.stringify(nota.cabecalho)); manualCaixas = JSON.parse(JSON.stringify(nota.caixas));
         document.getElementById("man-hdr-fornecedor").value = manualHeader.fornecedor; document.getElementById("man-hdr-nf-principal").value = manualHeader.nota_fiscal_principal;
         document.getElementById("man-hdr-nf-margem").value = manualHeader.nota_fiscal_margem; document.getElementById("man-hdr-data-pesagem").value = manualHeader.data_conferencia;
-        
-        const opEl = document.getElementById("man-hdr-operador"); if(opEl) opEl.value = manualHeader.operador || "";
-        const tuEl = document.getElementById("man-hdr-turno"); if(tuEl) tuEl.value = manualHeader.turno || "Manhã";
-        
+        if(document.getElementById("man-hdr-operador")) document.getElementById("man-hdr-operador").value = manualHeader.operador || "";
+        if(document.getElementById("man-hdr-turno")) document.getElementById("man-hdr-turno").value = manualHeader.turno || "Manhã";
         switchMode('manual');
       }
       fecharModalLote(); logAction(`Editando nota índice ${index}.`, 'warning');
     }
-    function excluirNotaLote(index) { loteNotas.splice(index, 1); atualizarBadgesLote(); renderizarListaLote(); logAction(`Nota removida do lote.`, 'error'); }
+    function excluirNotaLote(index) {
+      loteNotas.splice(index, 1);
+      if (editingLoteIndex === index) editingLoteIndex = null;
+      else if (editingLoteIndex !== null && editingLoteIndex > index) editingLoteIndex--;
+      atualizarBadgesLote(); renderizarListaLote(); salvarLoteStorage(); logAction(`Nota removida do lote.`, 'error');
+    }
 
     function importarExcel(e) {
       const file = e.target.files[0]; if (!file) return;
@@ -1553,14 +1308,21 @@
             currentNota.caixas.push({ id: 'imp_' + Date.now() + '_' + i, caixa_no: currentNota.caixas.length + 1, observacao: obsFormatada, quantidade_mencionada: isNaN(qtd) ? "" : qtd, descricao: desc, peso_unitario: pUnit, peso_embalagem: isNaN(parseFloat(row[7])) ? "" : parseFloat(row[7]), peso_bruto_nf: isNaN(parseFloat(row[8])) ? "" : parseFloat(row[8]), peso_bruto_mando: isNaN(parseFloat(row[9])) ? "" : parseFloat(row[9]) });
           }
           if (currentNota && currentNota.caixas.length > 0) { loteNotas.push(currentNota); notasImportadas++; }
-          atualizarBadgesLote(); e.target.value = ""; 
+          atualizarBadgesLote(); salvarLoteStorage(); e.target.value = ""; 
           if (notasImportadas > 0) { showToast(`${notasImportadas} notas importadas!`); logAction(`Sucesso: ${notasImportadas} notas via Excel.`, 'success'); }
         } catch (err) { console.error(err); showToast("Erro ao ler arquivo Excel."); logAction("Falha na importação Excel.", 'error'); }
       };
       reader.readAsArrayBuffer(file);
     }
 
-    window.addEventListener('DOMContentLoaded', () => { lucide.createIcons(); addManualRow(3); updateDashboard([], 'scan'); updateDashboard([], 'man'); });
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      carregarLoteStorage();
+      addManualRow(3);
+      updateDashboard([], 'scan'); updateDashboard([], 'man');
+      atualizarBadgesLote();
+      if (loteNotas.length > 0) logAction(`${loteNotas.length} nota(s) restaurada(s) do armazenamento local.`, 'info');
+    });
 
     function switchMode(newMode) {
       currentMode = newMode;
@@ -1575,7 +1337,6 @@
       if (newMode === 'scan') { if(scanDoc) updateDashboard(scanDoc.caixas, 'scan'); }
       else if (newMode === 'manual') { renderManualTable(); }
       else if (newMode === 'dashboard') { renderGlobalDashboard(); }
-
       logAction(`Mudança de tela: Modo ${newMode.toUpperCase()}`);
     }
 
@@ -1670,10 +1431,8 @@
       document.getElementById("scan-doc-image").style.transform = `scale(${zoom}) rotate(${rotation}deg)`;
       document.getElementById("scan-hdr-fornecedor").value = scanDoc.cabecalho.fornecedor || ""; document.getElementById("scan-hdr-nf-principal").value = scanDoc.cabecalho.nota_fiscal_principal || "";
       document.getElementById("scan-hdr-nf-margem").value = scanDoc.cabecalho.nota_fiscal_margem || ""; document.getElementById("scan-hdr-data-pesagem").value = scanDoc.cabecalho.data_conferencia || "";
-      
       const opEl = document.getElementById("scan-hdr-operador"); if(opEl) opEl.value = scanDoc.cabecalho.operador || "";
       const tuEl = document.getElementById("scan-hdr-turno"); if(tuEl) tuEl.value = scanDoc.cabecalho.turno || "Manhã";
-
       const tbody = document.getElementById("scan-table-body"); tbody.innerHTML = ""; let focusCounter = 0;
       scanDoc.caixas.forEach(r => {
         const tr = document.createElement("tr"); tr.className = `hover:bg-slate-700/50 transition-colors`;
@@ -1729,7 +1488,7 @@
     }
 
     // =================================================================
-    // EXCEL EXPORT MASTER V7 (7 ABAS, 22 COLUNAS)
+    // EXCEL EXPORT MASTER V8 (ORDENAÇÃO INTELIGENTE DE DATAS + 7 ABAS)
     // =================================================================
     function exportToExcel() {
       try {
@@ -1808,6 +1567,50 @@
 
         if (allExportRows.length === 0) { showToast("Nenhum dado para exportar!"); logAction("Falha: Tentativa de exportar vazio.", 'error'); return; }
 
+        // ----- ORDENAÇÃO DE DATAS INTELIGENTE (Mantendo index original para os sem data) -----
+        const parseDataBr = (dataStr) => {
+          if (!dataStr) return null;
+          const cleaned = String(dataStr).trim();
+          const p = cleaned.split(/[\/\-\.]/);
+          if (p.length >= 3) {
+            const day = parseInt(p[0], 10);
+            const month = parseInt(p[1], 10) - 1;
+            let year = parseInt(p[2], 10);
+            if (year < 100) year += 2000;
+            const time = new Date(year, month, day).getTime();
+            return isNaN(time) ? null : time;
+          }
+          return null;
+        };
+
+        const rowsWithIndex = allExportRows.map((row, index) => ({ row, index, parsedTime: parseDataBr(row[6]) }));
+        
+        let currentFallbackTime = new Date(1900, 0, 1).getTime();
+        for(let i = 0; i < rowsWithIndex.length; i++){
+            if(rowsWithIndex[i].parsedTime !== null){
+                currentFallbackTime = rowsWithIndex[i].parsedTime - 86400000; 
+                break;
+            }
+        }
+
+        for(let i = 0; i < rowsWithIndex.length; i++) {
+            if (rowsWithIndex[i].parsedTime !== null) {
+                currentFallbackTime = rowsWithIndex[i].parsedTime;
+                rowsWithIndex[i].sortTime = currentFallbackTime;
+            } else {
+                currentFallbackTime += 1000; 
+                rowsWithIndex[i].sortTime = currentFallbackTime;
+            }
+        }
+
+        rowsWithIndex.sort((a, b) => {
+            if (a.sortTime !== b.sortTime) return a.sortTime - b.sortTime;
+            return a.index - b.index; 
+        });
+        
+        allExportRows.splice(0, allExportRows.length, ...rowsWithIndex.map(item => item.row));
+        // -------------------------------------------------------------------------------------
+
         const wb = XLSX.utils.book_new();
 
         // ABA 1
@@ -1847,7 +1650,6 @@
         }
         ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s: { r: 2, c: 0 }, e: { r: totalRows - 1, c: 21 } }) };
         ws['!cols'] = [ { wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 18 }, { wch: 30 }, { wch: 14 }, { wch: 16 }, { wch: 15 }, { wch: 14 }, { wch: 20 }, { wch: 12 }, { wch: 14 }, { wch: 12 }, { wch: 18 }, { wch: 18 }, { wch: 20 }, { wch: 20 }, { wch: 25 }, { wch: 18 }, { wch: 22 }, { wch: 20 }, { wch: 15 } ];
-        XLSX.utils.book_append_sheet(wb, ws, "1_Dados_Brutos");
 
         // ABA 2
         logAction("Gerando Aba 2: Dashboard In-Cell...");
@@ -1927,7 +1729,6 @@
           }
         }
         wsGraficos['!cols'] = [{ wch: 25 }, { wch: 18 }, { wch: 22 }, { wch: 20 }, { wch: 18 }, { wch: 50 }];
-        XLSX.utils.book_append_sheet(wb, wsGraficos, "2_Dashboard_Graficos");
 
         // ABA 3
         logAction("Gerando Aba 3: Curva ABC Pareto...");
@@ -1957,7 +1758,6 @@
           }
         }
         wsPareto['!cols'] = [{ wch: 25 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }];
-        XLSX.utils.book_append_sheet(wb, wsPareto, "3_Curva_ABC_Pareto");
 
         // ABA 4
         logAction("Gerando Aba 4: Fornecedores...");
@@ -1987,34 +1787,9 @@
           }
         }
         wsForn['!cols'] = [{ wch: 30 }, { wch: 15 }, { wch: 20 }, { wch: 18 }, { wch: 25 }];
-        XLSX.utils.book_append_sheet(wb, wsForn, "4_Mapa_Fornecedores");
 
         // ABA 5
-        logAction("Gerando Aba 5: Auditoria...");
-        const dataHoje = new Date();
-        const wsAuditoriaData = [
-          ["LOG DE SISTEMA E AUDITORIA", ""], ["", ""],
-          ["SISTEMA:", "HL Mando BI Max (Versão 7.0)"],
-          ["DATA DA EXPORTAÇÃO:", dataHoje.toLocaleDateString('pt-BR')],
-          ["HORA DA EXPORTAÇÃO:", dataHoje.toLocaleTimeString('pt-BR')],
-          ["NOTAS PROCESSADAS (LOTE):", loteNotas.length > 0 ? loteNotas.length : 1],
-          ["TOTAL LINHAS AVALIADAS:", allExportRows.length - 1],
-          ["STATUS GERAL:", "Arquivo processado e validado."]
-        ];
-        const wsAuditoria = XLSX.utils.aoa_to_sheet(wsAuditoriaData);
-        wsAuditoria['!merges'] = [ { s: {r:0, c:0}, e: {r:0, c:1} } ];
-        for (let R = 0; R < wsAuditoriaData.length; ++R) {
-          for (let C = 0; C < 2; ++C) {
-            const cellRef = XLSX.utils.encode_cell({ r: R, c: C }); if (!wsAuditoria[cellRef]) wsAuditoria[cellRef] = { v: "", t: "s" };
-            if (R === 0) { wsAuditoria[cellRef].s = { fill: { fgColor: { rgb: "111111" } }, font: { name: "Arial", sz: 12, bold: true, color: { rgb: "FFFFFF" } }, alignment: { horizontal: "center", vertical: "center" } }; } 
-            else if (R > 1) { wsAuditoria[cellRef].s = { font: { name: "Arial", sz: 10, bold: (C === 0), color: { rgb: "334155" } }, alignment: { horizontal: (C === 0 ? "right" : "left"), vertical: "center" } }; }
-          }
-        }
-        wsAuditoria['!cols'] = [{ wch: 30 }, { wch: 40 }];
-        XLSX.utils.book_append_sheet(wb, wsAuditoria, "5_Auditoria_Sistema");
-
-        // ABA 6
-        logAction("Gerando Aba 6: Metas Logísticas...");
+        logAction("Gerando Aba 5: Metas Logísticas...");
         const wsMetasData = [
           ["ACOMPANHAMENTO DE METAS LOGÍSTICAS", "", "", ""], ["", "", "", ""],
           ["INDICADOR", "REALIZADO", "META ESTABELECIDA", "STATUS DA META"],
@@ -2041,10 +1816,9 @@
           }
         }
         wsMetas['!cols'] = [{ wch: 30 }, { wch: 20 }, { wch: 25 }, { wch: 25 }];
-        XLSX.utils.book_append_sheet(wb, wsMetas, "6_Metas_Logistica");
 
-        // ABA 7 (NOVA: MASTER DASHBOARD)
-        logAction("Gerando Aba 7: Master Dashboard...");
+        // ABA 6
+        logAction("Gerando Aba 6: Master Dashboard...");
         const wsMasterData = [
           ["PAINEL MASTER DE BI - VISÃO EXECUTIVA", "", "", "", "", "", ""], ["", "", "", "", "", "", ""],
           ["KPIs DE OPERAÇÃO", "", "", "STATUS DE METAS GLOBAIS", "", "", ""],
@@ -2100,12 +1874,43 @@
           }
         }
         wsMaster['!cols'] = [{ wch: 25 }, { wch: 15 }, { wch: 15 }, { wch: 25 }, { wch: 20 }, { wch: 10 }, { wch: 10 }];
-        XLSX.utils.book_append_sheet(wb, wsMaster, "7_Painel_Master_BI");
+
+        // ABA 7 (AUDITORIA DE SISTEMA - SEMPRE A ÚLTIMA)
+        logAction("Gerando Aba 7: Auditoria...");
+        const dataHoje = new Date();
+        const wsAuditoriaData = [
+          ["LOG DE SISTEMA E AUDITORIA", ""], ["", ""],
+          ["SISTEMA:", "HL Mando BI Max (Versão 8.0 - ULTRA)"],
+          ["DATA DA EXPORTAÇÃO:", dataHoje.toLocaleDateString('pt-BR')],
+          ["HORA DA EXPORTAÇÃO:", dataHoje.toLocaleTimeString('pt-BR')],
+          ["NOTAS PROCESSADAS (LOTE):", loteNotas.length > 0 ? loteNotas.length : 1],
+          ["TOTAL LINHAS AVALIADAS:", allExportRows.length],
+          ["STATUS GERAL:", "Arquivo processado com ordenação cronológica inteligente."]
+        ];
+        const wsAuditoria = XLSX.utils.aoa_to_sheet(wsAuditoriaData);
+        wsAuditoria['!merges'] = [ { s: {r:0, c:0}, e: {r:0, c:1} } ];
+        for (let R = 0; R < wsAuditoriaData.length; ++R) {
+          for (let C = 0; C < 2; ++C) {
+            const cellRef = XLSX.utils.encode_cell({ r: R, c: C }); if (!wsAuditoria[cellRef]) wsAuditoria[cellRef] = { v: "", t: "s" };
+            if (R === 0) { wsAuditoria[cellRef].s = { fill: { fgColor: { rgb: "111111" } }, font: { name: "Arial", sz: 12, bold: true, color: { rgb: "FFFFFF" } }, alignment: { horizontal: "center", vertical: "center" } }; } 
+            else if (R > 1) { wsAuditoria[cellRef].s = { font: { name: "Arial", sz: 10, bold: (C === 0), color: { rgb: "334155" } }, alignment: { horizontal: (C === 0 ? "right" : "left"), vertical: "center" } }; }
+          }
+        }
+        wsAuditoria['!cols'] = [{ wch: 30 }, { wch: 45 }];
+
+        // ORDENAÇÃO E APPEND DAS ABAS
+        XLSX.utils.book_append_sheet(wb, ws, "1_Dados_Brutos");
+        XLSX.utils.book_append_sheet(wb, wsGraficos, "2_Dashboard_Graficos");
+        XLSX.utils.book_append_sheet(wb, wsPareto, "3_Curva_ABC_Pareto");
+        XLSX.utils.book_append_sheet(wb, wsForn, "4_Mapa_Fornecedores");
+        XLSX.utils.book_append_sheet(wb, wsMetas, "5_Metas_Logistica");
+        XLSX.utils.book_append_sheet(wb, wsMaster, "6_Painel_Master_BI");
+        XLSX.utils.book_append_sheet(wb, wsAuditoria, "7_Auditoria_Sistema"); // <-- ÚLTIMA ABA GARANTIDA
 
         // DOWNLOAD
         const nomeArquivo = loteNotas.length > 0 ? `HL_Mando_Lote_${loteNotas.length}_Notas.xlsx` : `HL_Mando_Pesagem_NF_${allExportRows[0][1] || 'S-NF'}.xlsx`;
         XLSX.writeFile(wb, nomeArquivo);
-        logAction("Excel Master gerado com 7 planilhas.", 'success');
+        logAction("Excel Master gerado com 7 planilhas ordenadas.", 'success');
         showToast("Super Planilha gerada com sucesso!");
 
       } catch (error) {
