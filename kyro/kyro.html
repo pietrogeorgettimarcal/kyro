@@ -1,32 +1,33 @@
 <!DOCTYPE html>
-<html lang="pt-br" class="scroll-smooth">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kyro Fluxo Inteligente + Life OS</title>
-    <link rel="stylesheet" href="styles/css/kyro.css">
-    <link rel="shortcut icon" href="https://placehold.co/32x32/ea580c/FFFFFF?text=K" type="image/x-icon">
+    <title>Kyro</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="shortcut icon" href="../imagens/favicon.ico" type="image/x-icon">
     <script src="https://unpkg.com/lucide@latest"></script>
+
     <script>
         tailwind.config = {
-            darkMode: 'class',
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
+                        sans: ['Outfit', 'sans-serif'],
                     },
                     colors: {
-                        'kyro-orange': {
-                            500: '#f97316',
-                            600: '#ea580c',
-                            700: '#c2410c',
+                        navy: {
+                            700: '#334155',
+                            800: '#1e293b', 
+                            900: '#0f172a', // Azul escuro profundo (Sidebar e Cards)
+                            950: '#020617', // Quase preto/azul
+                        },
+                        crimson: {
+                            500: '#ef4444',
+                            600: '#dc2626', // Vermelho principal
+                            700: '#b91c1c',
                         }
                     }
                 }
@@ -35,342 +36,513 @@
     </script>
 
     <style>
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 0px; }
-        .dark ::-webkit-scrollbar-thumb { background: #4b5563; }
-        body { transition: background-color 0.2s, color 0.2s; }
+        body {
+            background-color: #ffffff; /* Fundo Branco Puro */
+            color: #0f172a; 
+            overflow-x: hidden;
+            background-image: radial-gradient(#0f172a 0.5px, transparent 0.5px);
+            background-size: 32px 32px;
+            background-position: -19px -19px;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f8fafc; }
+        ::-webkit-scrollbar-thumb { background: #0f172a; }
+
+        /* Máscara Surreal para a Fachada */
+        .surreal-mask {
+            clip-path: polygon(0 0, 100% 10%, 100% 100%, 10% 100%, 0 90%);
+            transition: all 0.7s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .surreal-mask-wrapper:hover .surreal-mask {
+            clip-path: polygon(0 10%, 100% 0, 100% 90%, 90% 100%, 0 100%);
+            transform: scale(1.02);
+        }
+
+        .shard-wrapper {
+            filter: drop-shadow(0 10px 15px rgba(15, 23, 42, 0.05));
+            transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        #shard-grid {
+            transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .shard-card {
+            background-color: #0f172a; /* Fundo Azul Escuro */
+            color: #ffffff;
+            clip-path: polygon(24px 0, 100% 0, 100% calc(100% - 24px), calc(100% - 24px) 100%, 0 100%, 0 24px);
+            position: relative;
+            height: 100%;
+        }
+
+        /* Moldura de Ícone Surreal (Hexágono) */
+        .icon-hexagon {
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            transition: all 0.4s ease;
+        }
+
+        .shard-wrapper:hover {
+            transform: translateY(-8px);
+            filter: drop-shadow(0 15px 25px rgba(220, 38, 38, 0.3)); /* Sombra vermelha */
+            z-index: 10;
+        }
+
+        .shard-wrapper:hover .icon-hexagon {
+            background-color: rgba(220, 38, 38, 0.15);
+            transform: rotate(90deg) scale(1.1);
+        }
+        .shard-wrapper:hover .shard-icon {
+            color: #dc2626;
+            transform: rotate(-90deg);
+        }
+
+        .shard-wrapper:hover .shard-accent {
+            width: 100%;
+        }
+
+        .shard-accent {
+            position: absolute;
+            top: 0;
+            left: 24px;
+            width: 40px;
+            height: 3px;
+            background-color: #dc2626;
+            transition: width 0.4s ease;
+        }
+
+        /* Abas (Tabs) */
+        .cyber-tab {
+            position: relative;
+            padding: 8px 16px;
+            border: 1px solid #e2e8f0;
+            background-color: transparent;
+            color: #64748b;
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            transition: all 0.3s ease;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+            cursor: pointer;
+        }
+        
+        .cyber-tab:hover {
+            border-color: #dc2626;
+            color: #0f172a;
+        }
+
+        .cyber-tab.active {
+            background-color: #dc2626;
+            color: #ffffff;
+            border-color: #dc2626;
+        }
+
+        /* Tooltips da Sidebar Compacta */
+        .sidebar-tooltip {
+            position: absolute;
+            left: 100%;
+            top: 50%;
+            transform: translateY(-50%) translateX(10px);
+            background-color: #dc2626;
+            color: white;
+            padding: 6px 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.2s ease;
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%);
+        }
+        .sidebar-icon-wrapper:hover .sidebar-tooltip {
+            opacity: 1;
+            transform: translateY(-50%) translateX(16px);
+        }
     </style>
-
 </head>
-<body class="font-sans bg-white text-gray-900 antialiased dark:bg-black dark:text-gray-100">
+<body class="font-sans selection:bg-crimson-600 selection:text-white flex">
 
-    <div id="landing-page">
-        <header class="bg-white dark:bg-black border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50">
-            <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center h-16">
-                    <div class="flex-shrink-0">
-                        <a href="#" class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                            <i data-lucide="layers" class="text-kyro-orange-600"></i> Kyro
-                        </a>
-                    </div>
-                    
-                    <div class="hidden md:flex md:items-center md:space-x-8">
-                        <a href="#sobre" class="text-gray-600 dark:text-gray-400 hover:text-kyro-orange-600 dark:hover:text-kyro-orange-500 font-medium transition-colors">Sobre</a>
-                        <a href="#servicos" class="text-gray-600 dark:text-gray-400 hover:text-kyro-orange-600 dark:hover:text-kyro-orange-500 font-medium transition-colors">Serviços</a>
-                        
-                        <button id="theme-toggle" class="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-sm transition-colors focus:outline-none">
-                            <i data-lucide="moon" id="theme-toggle-dark-icon" class="hidden w-5 h-5"></i>
-                            <i data-lucide="sun" id="theme-toggle-light-icon" class="hidden w-5 h-5"></i>
-                        </button>
+    <!-- SIDEBAR FIXA COMPACTA (Apenas Ícones) -->
+    <aside class="fixed inset-y-0 left-0 w-20 bg-navy-900 border-r border-navy-950 flex flex-col items-center py-6 z-50 transition-transform transform -translate-x-full lg:translate-x-0" id="sidebar">
+        
+        <!-- Logo Abstrata Surreal -->
+        <div class="mb-10 w-12 h-12 relative flex items-center justify-center">
+            <img src="../imagens/logo.png" alt="logo">
+        </div>
 
-                        <a href="#login" class="bg-kyro-orange-600 text-white px-5 py-2 text-sm font-medium hover:bg-kyro-orange-700 transition-colors rounded-sm">
-                            Login
-                        </a>
-                    </div>
-                    
-                    <div class="md:hidden flex items-center gap-4">
-                         <button id="theme-toggle-mobile" class="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-sm transition-colors">
-                            <i data-lucide="sun-moon" class="w-6 h-6"></i>
-                        </button>
+        <!-- Links de Navegação em Ícones -->
+        <nav class="flex-1 w-full flex flex-col gap-4 items-center">
+            
+            <a href="#" class="sidebar-icon-wrapper sidebar-link active-sidebar relative w-12 h-12 flex items-center justify-center text-white bg-navy-800/80 rounded-xl border-l-2 border-crimson-600 transition-colors" data-filter="all" data-title="Visão Geral" data-desc="Todos os 10 sistemas operacionais ativos">
+                <i data-lucide="layout-grid" class="w-5 h-5 text-crimson-500 sidebar-icon"></i>
+                <div class="sidebar-tooltip z-50">Hub Operacional</div>
+            </a>
+            
+            <a href="#" class="sidebar-icon-wrapper sidebar-link relative w-12 h-12 flex items-center justify-center text-gray-400 hover:text-white hover:bg-navy-800/80 rounded-xl transition-colors border-l-2 border-transparent hover:border-crimson-600" data-filter="fluxos" data-title="Fluxos da Dívida" data-desc="Extrações de dados e BICs">
+                <i data-lucide="activity" class="w-5 h-5 sidebar-icon"></i>
+                <div class="sidebar-tooltip z-50">Fluxos da Dívida</div>
+            </a>
+            
+            <a href="#" class="sidebar-icon-wrapper sidebar-link relative w-12 h-12 flex items-center justify-center text-gray-400 hover:text-white hover:bg-navy-800/80 rounded-xl transition-colors border-l-2 border-transparent hover:border-crimson-600" data-filter="relatorios" data-title="Relatórios IA" data-desc="Matrizes procedurais e Dashboards">
+                <i data-lucide="pie-chart" class="w-5 h-5 sidebar-icon"></i>
+                <div class="sidebar-tooltip z-50">Relatórios IA</div>
+            </a>
+            
+            <a href="#" class="sidebar-icon-wrapper sidebar-link relative w-12 h-12 flex items-center justify-center text-gray-400 hover:text-white hover:bg-navy-800/80 rounded-xl transition-colors border-l-2 border-transparent hover:border-crimson-600" data-filter="rh" data-title="Gestão & RH" data-desc="Controle de servidores e jornadas">
+                <i data-lucide="users" class="w-5 h-5 sidebar-icon"></i>
+                <div class="sidebar-tooltip z-50">Servidores</div>
+            </a>
+        </nav>
 
-                        <button id="mobile-menu-button" class="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
-                            <i data-lucide="menu" id="menu-icon-open"></i>
-                            <i data-lucide="x" id="menu-icon-close" class="hidden"></i>
-                        </button>
-                    </div>
-                </div>
-            </nav>
+        <!-- Avatar / User Minimalista -->
+        <div class="mt-auto sidebar-icon-wrapper relative w-12 h-12 flex items-center justify-center bg-navy-950 text-gray-500 hover:text-crimson-500 border border-navy-800 transition-colors" style="clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);">
+            <i data-lucide="user" class="w-5 h-5"></i>
+            <div class="sidebar-tooltip z-50">Matrícula 48291</div>
+        </div>
+    </aside>
 
-            <div id="mobile-menu" class="hidden md:hidden bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 w-full absolute">
-                <div class="px-4 pt-2 pb-4 space-y-2">
-                    <a href="#sobre" class="block py-2 text-gray-700 dark:text-gray-300 font-medium">Sobre</a>
-                    <a href="#servicos" class="block py-2 text-gray-700 dark:text-gray-300 font-medium">Serviços</a>
-                    <a href="#login" class="bg-kyro-orange-600 text-white block w-full text-center py-2 font-medium hover:bg-kyro-orange-700 mt-4 rounded-sm">Login</a>
-                </div>
+    <!-- ÁREA PRINCIPAL -->
+    <div class="flex-1 lg:ml-20 min-h-screen flex flex-col relative">
+        
+        <!-- Header Mobile -->
+        <header class="lg:hidden fixed top-0 left-0 w-full bg-navy-900 border-b border-navy-800 z-40 h-16 flex items-center justify-between px-4">
+            <div class="w-8 h-8 relative flex items-center justify-center">
+                <div class="absolute inset-0 border-2 border-crimson-600 rounded-sm transform rotate-45"></div>
+                <div class="w-2 h-2 bg-crimson-500 rounded-full"></div>
             </div>
+            <button id="mobile-menu-btn" class="text-white p-2">
+                <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
         </header>
 
-        <section class="bg-gray-50 dark:bg-[#0a0a0a] py-20 md:py-32 border-b border-gray-200 dark:border-gray-800">
-            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                <span class="inline-block py-1 px-3 border border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-400 text-sm font-bold mb-6 bg-white dark:bg-black rounded-sm">
-                    Versão 3.0 Live
-                </span>
-                <h1 class="text-4xl md:text-6xl font-bold mb-6 text-gray-900 dark:text-white tracking-tight">
-                    Seu Fluxo de Trabalho,<br/> Reinventado.
-                </h1>
-                <p class="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-10">
-                    Um sistema centralizado e direto que unifica Gestão Corporativa e Life OS.
-                </p>
-                
-                <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a href="../smart-planner/smart-planner.html" class="inline-block">
-                        <button class="w-full sm:w-auto bg-kyro-orange-600 text-white px-8 py-3.5 font-semibold text-lg hover:bg-kyro-orange-700 transition-colors flex items-center justify-center gap-2 rounded-sm">
-                            <i data-lucide="rocket" class="w-5 h-5"></i> Acessar SmartPlanner
-                        </button>
-                    </a>
-                    <a href="#servicos" class="inline-block">
-                        <button class="w-full sm:w-auto bg-white dark:bg-black border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white px-8 py-3.5 font-semibold text-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors flex items-center justify-center gap-2 rounded-sm">
-                            <i data-lucide="grid" class="w-5 h-5"></i> Explorar Apps
-                        </button>
-                    </a>
-                </div>
-            </div>
-        </section>
+        <div id="mobile-overlay" class="fixed inset-0 bg-navy-950/80 z-40 hidden lg:hidden backdrop-blur-sm transition-opacity opacity-0"></div>
 
-        <section id="sobre" class="py-20 bg-white dark:bg-black border-b border-gray-200 dark:border-gray-800">
-            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="grid md:grid-cols-2 gap-12 items-center">
-                    <div>
-                        <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">Mais que software, um <span class="text-kyro-orange-600">Sistema Base</span>.</h2>
-                        <p class="text-gray-600 dark:text-gray-400 mb-6">
-                            A Kyro integra o módulo Life OS 3.0, permitindo gerenciar trabalho, dados e processos em um único hub limpo e focado no essencial.
+        <main class="flex-grow pt-24 lg:pt-16 pb-24 px-6 max-w-7xl mx-auto w-full">
+            
+            <!-- HERO SECTION -->
+            <section class="mb-20 relative">
+                <div class="absolute right-0 top-0 w-48 h-48 bg-crimson-600 mix-blend-multiply opacity-5 pointer-events-none" style="clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);"></div>
+
+                <div class="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+                    
+                    <div class="w-full lg:w-5/12 z-10">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 bg-navy-900 text-white text-[10px] font-bold uppercase tracking-widest mb-6" style="clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);">
+                            Integração Governamental
+                        </div>
+                        
+                        <h1 class="text-4xl sm:text-5xl font-black text-navy-900 leading-[1.1] mb-6 tracking-tight">
+                            Arquitetura de <br>
+                            <span class="text-crimson-600">Alta Sincronia</span>
+                        </h1>
+                        
+                        <p class="text-navy-800 text-base leading-relaxed mb-8 border-l-4 border-crimson-600 pl-4">
+                            Central de processamento da Prefeitura operando na infraestrutura Kyro. Automação de processos logísticos e gestão unificada em tempo real.
                         </p>
-                        <ul class="space-y-4">
-                            <li class="flex items-start gap-3 text-gray-700 dark:text-gray-300">
-                                <i data-lucide="check" class="text-kyro-orange-600 w-5 h-5 mt-0.5"></i> 
-                                <span>Automação de processos repetitivos</span>
-                            </li>
-                            <li class="flex items-start gap-3 text-gray-700 dark:text-gray-300">
-                                <i data-lucide="check" class="text-kyro-orange-600 w-5 h-5 mt-0.5"></i> 
-                                <span>Inteligência Artificial generativa</span>
-                            </li>
-                            <li class="flex items-start gap-3 text-gray-700 dark:text-gray-300">
-                                <i data-lucide="check" class="text-kyro-orange-600 w-5 h-5 mt-0.5"></i> 
-                                <span>Gestão integrada de equipes</span>
-                            </li>
-                        </ul>
-                    </div>
-                    
-                    <div class="bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 p-8 rounded-sm">
-                        <div class="grid grid-cols-2 gap-6">
-                            <div class="border border-gray-200 dark:border-gray-800 bg-white dark:bg-black p-4 rounded-sm">
-                                <i data-lucide="bar-chart" class="text-gray-900 dark:text-white mb-4"></i>
-                                <div class="h-2 w-full bg-gray-200 dark:bg-gray-800 mb-2"></div>
-                                <div class="h-2 w-2/3 bg-gray-200 dark:bg-gray-800"></div>
-                            </div>
-                            <div class="border border-gray-200 dark:border-gray-800 bg-white dark:bg-black p-4 rounded-sm mt-6">
-                                <i data-lucide="users" class="text-gray-900 dark:text-white mb-4"></i>
-                                <div class="h-2 w-full bg-gray-200 dark:bg-gray-800 mb-2"></div>
-                                <div class="h-2 w-1/2 bg-gray-200 dark:bg-gray-800"></div>
+
+                        <!-- Pódio de Vidro Logo Prefeitura -->
+                        <div class="inline-flex items-center gap-5 p-4 bg-white border border-gray-200 shadow-xl" style="clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);">
+                            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQm2UzfY6PUwjJjXdOqS8DluEGsII1SDUVknDxLeiBXfw&s=10" alt="Logo Prefeitura" class="h-14 object-contain">
+                            <div class="w-px h-10 bg-gray-200"></div>
+                            <div class="flex flex-col">
+                                <span class="text-[9px] text-gray-500 uppercase tracking-widest font-bold">Parceiro Oficial</span>
+                                <span class="text-sm font-black text-navy-900 uppercase">Limeira / SP</span>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </section>
 
-        <section id="servicos" class="py-20 bg-gray-50 dark:bg-[#0a0a0a] border-b border-gray-200 dark:border-gray-800">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                
-                <div class="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+                    <!-- Fachada Surreal -->
+                    <div class="w-full lg:w-7/12 relative surreal-mask-wrapper">
+                        <div class="absolute inset-0 bg-crimson-600 translate-x-3 translate-y-3" style="clip-path: polygon(0 0, 100% 10%, 100% 100%, 10% 100%, 0 90%);"></div>
+                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSZ-wiComexafbMz0TDKWvIS5cd3w80ilGaAPgobjrjtA&s=10" alt="Fachada Prefeitura" class="w-full h-[320px] lg:h-[400px] object-cover relative z-10 surreal-mask filter contrast-110">
+                        
+                        <div class="absolute -bottom-5 -left-5 z-20 bg-navy-900 text-white p-4 shadow-2xl flex items-center gap-3" style="clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);">
+                            <i data-lucide="cpu" class="text-crimson-500 w-6 h-6"></i>
+                            <div>
+                                <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Processamento</p>
+                                <p class="text-xs font-black uppercase tracking-wider">Online</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- NAVEGAÇÃO E FILTROS -->
+            <section class="mb-10">
+                <div class="flex flex-col md:flex-row justify-between items-end gap-6 border-b-2 border-gray-100 pb-4">
                     <div>
-                        <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Ecossistema</h2>
-                        <p class="text-gray-600 dark:text-gray-400">Ferramentas organizadas para o dia a dia.</p>
+                        <h2 id="category-title" class="text-2xl font-black text-navy-900 uppercase tracking-tight transition-opacity duration-300">Visão Geral</h2>
+                        <div class="flex items-center gap-2 mt-1 transition-opacity duration-300" id="category-info">
+                            <span id="module-counter" class="bg-crimson-600 text-white text-[10px] font-bold px-2 py-0.5 uppercase tracking-widest" style="clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);">10 MÓDULOS</span>
+                            <p id="category-desc" class="text-[11px] text-gray-500 font-bold tracking-widest uppercase">Todos os sistemas operacionais ativos</p>
+                        </div>
                     </div>
-                    
-                    <div class="w-full md:w-80 relative">
-                        <i data-lucide="search" class="absolute left-3 top-3 h-5 w-5 text-gray-400"></i>
-                        <input type="text" id="service-search" placeholder="Buscar..." 
-                            class="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-700 bg-white dark:bg-black text-gray-900 dark:text-white focus:outline-none focus:border-kyro-orange-600 dark:focus:border-kyro-orange-500 rounded-sm transition-colors">
+
+                    <!-- Botões de Aba -->
+                    <div class="flex flex-wrap gap-3" id="tab-container">
+                        <button class="cyber-tab active" data-filter="all" data-title="Visão Geral" data-desc="Todos os 10 sistemas operacionais ativos">
+                            Visão Geral
+                        </button>
+                        <button class="cyber-tab" data-filter="ia" data-title="Automação IA" data-desc="Motores neurais e extração autônoma">
+                            Automação IA
+                        </button>
+                        <button class="cyber-tab" data-filter="rh" data-title="Gestão & RH" data-desc="Controle de servidores e jornadas">
+                            Gestão & RH
+                        </button>
                     </div>
                 </div>
+            </section>
+
+            <!-- GRID COM OS 10 CARDS COMPLETOS -->
+            <div id="shard-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 relative min-h-[500px]">
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="services-grid">
-                    
-                    <a href="../smart-planner/smart-planner.html" class="service-card block" data-category="produtividade">
-                        <div class="h-full bg-white dark:bg-black p-6 border border-gray-200 dark:border-gray-800 hover:border-kyro-orange-600 transition-colors rounded-sm relative">
-                            <span class="absolute top-4 right-4 text-xs font-bold bg-gray-100 dark:bg-gray-800 px-2 py-1 text-gray-600 dark:text-gray-300 rounded-sm">PRO</span>
-                            <i data-lucide="calendar-days" class="w-8 h-8 text-gray-900 dark:text-white mb-4"></i>
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">SmartPlanner</h3>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Agendamento inteligente onde a IA gerencia suas reuniões.</p>
+                <!-- 1. SmartPlanner -->
+                <a href="../smart-planner/smart-planner.html" class="shard-wrapper shard-item block h-56 group" data-category="ia">
+                    <div class="shard-card p-6 flex flex-col justify-between">
+                        <div class="shard-accent"></div>
+                        <div class="flex justify-between items-start">
+                            <div class="w-14 h-14 bg-navy-800 flex items-center justify-center icon-hexagon border border-navy-700">
+                                <i data-lucide="orbit" class="w-6 h-6 text-white shard-icon transition-colors"></i>
+                            </div>
+                            <span class="text-[9px] font-bold text-white bg-crimson-600 px-2 py-1 uppercase tracking-widest" style="clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);">PRO</span>
                         </div>
-                    </a>
-
-                    <a href="../processo/processo_sem_ai.html" class="service-card block" data-category="automacao">
-                        <div class="h-full bg-white dark:bg-black p-6 border border-gray-200 dark:border-gray-800 hover:border-kyro-orange-600 transition-colors rounded-sm">
-                            <i data-lucide="file-search" class="w-8 h-8 text-gray-900 dark:text-white mb-4"></i>
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Processos IA</h3>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Automação para extração de dados de débitos e BICs.</p>
+                        <div>
+                            <h3 class="text-lg font-bold text-white mb-1 uppercase tracking-wide">SmartPlanner</h3>
+                            <p class="text-xs text-gray-400 font-light">Agendamento autônomo Life OS.</p>
                         </div>
-                    </a>
-                    
-                    <a href="../kyro-suite/kyro-suite.html" class="service-card block" data-category="ia">
-                         <div class="h-full bg-white dark:bg-black p-6 border border-gray-200 dark:border-gray-800 hover:border-kyro-orange-600 transition-colors rounded-sm">
-                            <i data-lucide="sparkles" class="w-8 h-8 text-gray-900 dark:text-white mb-4"></i>
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Kyro Suite</h3>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Gerador de despachos técnicos alimentado por dados.</p>
-                        </div>
-                    </a>
-
-                    <a href="../escala/escala.html" class="service-card block" data-category="rh">
-                        <div class="h-full bg-white dark:bg-black p-6 border border-gray-200 dark:border-gray-800 hover:border-kyro-orange-600 transition-colors rounded-sm">
-                            <i data-lucide="calendar-clock" class="w-8 h-8 text-gray-900 dark:text-white mb-4"></i>
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Escalas</h3>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Organize turnos de trabalho de forma prática.</p>
-                        </div>
-                    </a>
-
-                    <a href="../ponto-digital/ponto-digital.html" class="service-card block" data-category="rh">
-                         <div class="h-full bg-white dark:bg-black p-6 border border-gray-200 dark:border-gray-800 hover:border-kyro-orange-600 transition-colors rounded-sm">
-                            <i data-lucide="fingerprint" class="w-8 h-8 text-gray-900 dark:text-white mb-4"></i>
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Ponto Digital</h3>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Registro seguro de entrada e saída de colaboradores.</p>
-                        </div>
-                    </a>
-
-                    <a href="../portal-rh/portal-rh.html" class="service-card block" data-category="rh">
-                        <div class="h-full bg-white dark:bg-black p-6 border border-gray-200 dark:border-gray-800 hover:border-kyro-orange-600 transition-colors rounded-sm">
-                            <i data-lucide="users-2" class="w-8 h-8 text-gray-900 dark:text-white mb-4"></i>
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Portal RH</h3>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Gestão completa de colaboradores e benefícios.</p>
-                        </div>
-                    </a>
-                    
-                    <a href="../Analytics PRO/analytics.html" class="service-card block" data-category="dados">
-                        <div class="h-full bg-white dark:bg-black p-6 border border-gray-200 dark:border-gray-800 hover:border-kyro-orange-600 transition-colors rounded-sm">
-                            <i data-lucide="pie-chart" class="w-8 h-8 text-gray-900 dark:text-white mb-4"></i>
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Analytics PRO</h3>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Transforme planilhas em gráficos de decisão.</p>
-                        </div>
-                    </a>
-
-                    <a href="../ramais/ramais.html" class="service-card block" data-category="comunicacao">
-                        <div class="h-full bg-white dark:bg-black p-6 border border-gray-200 dark:border-gray-800 hover:border-kyro-orange-600 transition-colors rounded-sm">
-                            <i data-lucide="phone-call" class="w-8 h-8 text-gray-900 dark:text-white mb-4"></i>
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Lista de Ramais</h3>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Encontre contatos de qualquer colaborador.</p>
-                        </div>
-                    </a>
-
-                    <!-- NOVO CARD 1: HL_MANDO Tactical Engine / Procedural BI -->
-                    <a href="../hl-mando-bi/hl-mando-bi.html" class="service-card block" data-category="dados">
-                        <div class="h-full bg-white dark:bg-black p-6 border border-gray-200 dark:border-gray-800 hover:border-kyro-orange-600 transition-colors rounded-sm relative">
-                            <span class="absolute top-4 right-4 text-xs font-bold bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200 px-2 py-1 rounded-sm">BI</span>
-                            <i data-lucide="layout-dashboard" class="w-8 h-8 text-gray-900 dark:text-white mb-4"></i>
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">HL_MANDO BI</h3>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Tactical Engine V17 com dashboards procedurais e injeção de matrizes.</p>
-                        </div>
-                    </a>
-
-                    <!-- NOVO CARD 2: Sistema de Pesagem -->
-                    <a href="../sistema-pesagem/sistema-pesagem.html" class="service-card block" data-category="automacao">
-                        <div class="h-full bg-white dark:bg-black p-6 border border-gray-200 dark:border-gray-800 hover:border-kyro-orange-600 transition-colors rounded-sm relative">
-                            <span class="absolute top-4 right-4 text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200 px-2 py-1 rounded-sm">LOG</span>
-                            <i data-lucide="scale" class="w-8 h-8 text-gray-900 dark:text-white mb-4"></i>
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Sistema de Pesagem</h3>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Digitalização por OCR, conferência e lançamento logístico de fichas.</p>
-                        </div>
-                    </a>
-
-                </div>
-            </div>
-        </section>
-        
-        <section id="login" class="py-24 bg-white dark:bg-black border-b border-gray-200 dark:border-gray-800">
-             <div class="max-w-md mx-auto px-4 text-center">
-                <i data-lucide="lock" class="w-8 h-8 text-gray-900 dark:text-white mx-auto mb-6"></i>
-                <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Acesso Restrito[cite: 1]</h2>
-                <p class="text-gray-600 dark:text-gray-400 mb-8">
-                    Autentique-se para acessar seu painel de controle.
-                </p>
-                
-                <button id="btn-login-google" class="w-full flex items-center justify-center gap-3 bg-white dark:bg-black border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white px-6 py-3 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors rounded-sm font-medium">
-                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5" alt="Google">
-                    <span>Continuar com Google</span>
-                </button>
-            </div>
-        </section>
-
-        <footer class="bg-gray-50 dark:bg-[#0a0a0a] py-12">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div class="flex items-center gap-2">
-                         <i data-lucide="layers" class="text-gray-900 dark:text-white w-5 h-5"></i>
-                         <span class="font-bold text-gray-900 dark:text-white">Kyro</span>
                     </div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">
-                        &copy; <span id="current-year"></span> Sistema Kyro.
+                </a>
+
+                <!-- 2. Processos IA -->
+                <a href="../processo/processo_sem_ai.html" class="shard-wrapper shard-item block h-56 group" data-category="ia fluxos">
+                    <div class="shard-card p-6 flex flex-col justify-between">
+                        <div class="shard-accent"></div>
+                        <div class="flex justify-between items-start">
+                            <div class="w-14 h-14 bg-navy-800 flex items-center justify-center icon-hexagon border border-navy-700">
+                                <i data-lucide="bot" class="w-6 h-6 text-white shard-icon transition-colors"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white mb-1 uppercase tracking-wide">Processos IA</h3>
+                            <p class="text-xs text-gray-400 font-light">Extração de dados BICs.</p>
+                        </div>
                     </div>
-                </div>
+                </a>
+
+                <!-- 3. Kyro Suite -->
+                <a href="../kyro-suite/kyro-suite.html" class="shard-wrapper shard-item block h-56 group" data-category="ia fluxos">
+                    <div class="shard-card p-6 flex flex-col justify-between">
+                        <div class="shard-accent"></div>
+                        <div class="flex justify-between items-start">
+                            <div class="w-14 h-14 bg-navy-800 flex items-center justify-center icon-hexagon border border-navy-700">
+                                <i data-lucide="wand-2" class="w-6 h-6 text-white shard-icon transition-colors"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white mb-1 uppercase tracking-wide">Kyro Suite</h3>
+                            <p class="text-xs text-gray-400 font-light">Gerador de despachos.</p>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- 5. Portal RH -->
+                <a href="../portal-rh/portal-rh.html" class="shard-wrapper shard-item block h-56 group" data-category="rh">
+                    <div class="shard-card p-6 flex flex-col justify-between">
+                        <div class="shard-accent"></div>
+                        <div class="flex justify-between items-start">
+                            <div class="w-14 h-14 bg-navy-800 flex items-center justify-center icon-hexagon border border-navy-700">
+                                <i data-lucide="users-2" class="w-6 h-6 text-white shard-icon transition-colors"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white mb-1 uppercase tracking-wide">Portal RH</h3>
+                            <p class="text-xs text-gray-400 font-light">Gestão de servidores.</p>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- 6. Escalas -->
+                <a href="../escala/escala.html" class="shard-wrapper shard-item block h-56 group" data-category="rh">
+                    <div class="shard-card p-6 flex flex-col justify-between">
+                        <div class="shard-accent"></div>
+                        <div class="flex justify-between items-start">
+                            <div class="w-14 h-14 bg-navy-800 flex items-center justify-center icon-hexagon border border-navy-700">
+                                <i data-lucide="hourglass" class="w-6 h-6 text-white shard-icon transition-colors"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white mb-1 uppercase tracking-wide">Escalas</h3>
+                            <p class="text-xs text-gray-400 font-light">Controle de plantões.</p>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- 7. Ponto Digital -->
+                <a href="../ponto-digital/ponto-digital.html" class="shard-wrapper shard-item block h-56 group" data-category="rh">
+                    <div class="shard-card p-6 flex flex-col justify-between">
+                        <div class="shard-accent"></div>
+                        <div class="flex justify-between items-start">
+                            <div class="w-14 h-14 bg-navy-800 flex items-center justify-center icon-hexagon border border-navy-700">
+                                <i data-lucide="fingerprint" class="w-6 h-6 text-white shard-icon transition-colors"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white mb-1 uppercase tracking-wide">Ponto Digital</h3>
+                            <p class="text-xs text-gray-400 font-light">Biometria e jornadas.</p>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- 9. Analytics PRO -->
+                <a href="../Analytics PRO/analytics.html" class="shard-wrapper shard-item block h-56 group" data-category="relatorios dados">
+                    <div class="shard-card p-6 flex flex-col justify-between">
+                        <div class="shard-accent"></div>
+                        <div class="flex justify-between items-start">
+                            <div class="w-14 h-14 bg-navy-800 flex items-center justify-center icon-hexagon border border-navy-700">
+                                <i data-lucide="pie-chart" class="w-6 h-6 text-white shard-icon transition-colors"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white mb-1 uppercase tracking-wide">Analytics PRO</h3>
+                            <p class="text-xs text-gray-400 font-light">Dashboards e métricas visuais.</p>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- 10. Lista de Ramais -->
+                <a href="../ramais/ramais.html" class="shard-wrapper shard-item block h-56 group" data-category="comunicacao rh">
+                    <div class="shard-card p-6 flex flex-col justify-between">
+                        <div class="shard-accent"></div>
+                        <div class="flex justify-between items-start">
+                            <div class="w-14 h-14 bg-navy-800 flex items-center justify-center icon-hexagon border border-navy-700">
+                                <i data-lucide="phone-call" class="w-6 h-6 text-white shard-icon transition-colors"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white mb-1 uppercase tracking-wide">Lista de Ramais</h3>
+                            <p class="text-xs text-gray-400 font-light">Guia telefônico e contatos.</p>
+                        </div>
+                    </div>
+                </a>
+
             </div>
-        </footer>
+        </main>
     </div>
 
     <script>
-        document.getElementById('current-year').textContent = new Date().getFullYear();
         lucide.createIcons();
 
-        // Menu Mobile
-        const menuButton = document.getElementById('mobile-menu-button');
-        const mobileMenu = document.getElementById('mobile-menu');
-        const menuIconOpen = document.getElementById('menu-icon-open');
-        const menuIconClose = document.getElementById('menu-icon-close');
+        // Menu Mobile Lógica
+        const btnMenu = document.getElementById('mobile-menu-btn');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobile-overlay');
 
-        if(menuButton) {
-            menuButton.addEventListener('click', () => {
-                mobileMenu.classList.toggle('hidden');
-                menuIconOpen.classList.toggle('hidden');
-                menuIconClose.classList.toggle('hidden');
-            });
-        }
-
-        // Dark Mode
-        const themeToggleBtn = document.getElementById('theme-toggle');
-        const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
-        const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
-        const themeToggleMobile = document.getElementById('theme-toggle-mobile');
-
-        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-            themeToggleLightIcon.classList.remove('hidden');
-        } else {
-            document.documentElement.classList.remove('dark');
-            themeToggleDarkIcon.classList.remove('hidden');
-        }
-
-        function toggleTheme() {
-            themeToggleDarkIcon.classList.toggle('hidden');
-            themeToggleLightIcon.classList.toggle('hidden');
-
-            if (localStorage.getItem('color-theme')) {
-                if (localStorage.getItem('color-theme') === 'light') {
-                    document.documentElement.classList.add('dark');
-                    localStorage.setItem('color-theme', 'dark');
-                } else {
-                    document.documentElement.classList.remove('dark');
-                    localStorage.setItem('color-theme', 'light');
-                }
+        function toggleSidebar() {
+            const isClosed = sidebar.classList.contains('-translate-x-full');
+            if (isClosed) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
             } else {
-                if (document.documentElement.classList.contains('dark')) {
-                    document.documentElement.classList.remove('dark');
-                    localStorage.setItem('color-theme', 'light');
-                } else {
-                    document.documentElement.classList.add('dark');
-                    localStorage.setItem('color-theme', 'dark');
-                }
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('opacity-0');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
             }
         }
 
-        themeToggleBtn.addEventListener('click', toggleTheme);
-        if(themeToggleMobile) themeToggleMobile.addEventListener('click', toggleTheme);
+        btnMenu.addEventListener('click', toggleSidebar);
+        overlay.addEventListener('click', toggleSidebar);
 
-        // Pesquisa (Simplificada sem animações de pulo)
-        const searchInput = document.getElementById('service-search');
-        const serviceCards = document.querySelectorAll('.service-card');
+        // Lógica de Filtros e Abas Unificada
+        const filterTriggers = document.querySelectorAll('.cyber-tab, .sidebar-link');
+        const tabs = document.querySelectorAll('.cyber-tab');
+        const sidebarLinks = document.querySelectorAll('.sidebar-link');
+        const shards = document.querySelectorAll('.shard-item');
+        const categoryTitle = document.getElementById('category-title');
+        const categoryDesc = document.getElementById('category-desc');
+        const moduleCounter = document.getElementById('module-counter');
+        const gridContainer = document.getElementById('shard-grid');
 
-        searchInput.addEventListener('keyup', (e) => {
-            const term = e.target.value.toLowerCase();
-            
-            serviceCards.forEach(card => {
-                const title = card.querySelector('h3').textContent.toLowerCase();
-                const desc = card.querySelector('p').textContent.toLowerCase();
-                
-                if(title.includes(term) || desc.includes(term)) {
-                    card.style.display = 'block';
+        filterTriggers.forEach(trigger => {
+            trigger.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (trigger.classList.contains('active') || trigger.classList.contains('active-sidebar')) return;
+
+                const isSidebar = trigger.classList.contains('sidebar-link');
+                const filterCategory = trigger.getAttribute('data-filter');
+                const newTitle = trigger.getAttribute('data-title');
+                const newDesc = trigger.getAttribute('data-desc');
+
+                if (isSidebar) {
+                    sidebarLinks.forEach(link => {
+                        link.classList.remove('active-sidebar', 'border-crimson-600', 'text-white', 'bg-navy-800/80');
+                        link.classList.add('border-transparent', 'text-gray-400');
+                        const icon = link.querySelector('.sidebar-icon');
+                        if(icon) icon.classList.remove('text-crimson-500');
+                    });
+                    
+                    trigger.classList.remove('border-transparent', 'text-gray-400');
+                    trigger.classList.add('active-sidebar', 'border-crimson-600', 'text-white', 'bg-navy-800/80');
+                    const activeIcon = trigger.querySelector('.sidebar-icon');
+                    if(activeIcon) activeIcon.classList.add('text-crimson-500');
+                    
+                    tabs.forEach(t => t.classList.remove('active'));
                 } else {
-                    card.style.display = 'none';
+                    tabs.forEach(t => t.classList.remove('active'));
+                    trigger.classList.add('active');
+                    
+                    sidebarLinks.forEach(link => {
+                        link.classList.remove('active-sidebar', 'border-crimson-600', 'text-white', 'bg-navy-800/80');
+                        link.classList.add('border-transparent', 'text-gray-400');
+                        const icon = link.querySelector('.sidebar-icon');
+                        if(icon) icon.classList.remove('text-crimson-500');
+                    });
                 }
+
+                gridContainer.style.opacity = '0.1';
+                gridContainer.style.transform = 'translateY(15px)';
+                categoryTitle.style.opacity = '0';
+                document.getElementById('category-info').style.opacity = '0';
+
+                setTimeout(() => {
+                    categoryTitle.textContent = newTitle;
+                    categoryDesc.textContent = newDesc;
+                    
+                    categoryTitle.style.opacity = '1';
+                    document.getElementById('category-info').style.opacity = '1';
+
+                    let activeCount = 0;
+
+                    shards.forEach(shard => {
+                        const cardCategories = shard.getAttribute('data-category').split(' ');
+                        
+                        if (filterCategory === 'all' || cardCategories.includes(filterCategory)) {
+                            shard.style.display = 'block';
+                            void shard.offsetWidth;
+                            shard.style.opacity = '1';
+                            shard.style.transform = 'scale(1)';
+                            activeCount++;
+                        } else {
+                            shard.style.opacity = '0';
+                            shard.style.transform = 'scale(0.9)';
+                            setTimeout(() => {
+                                if (shard.style.opacity === '0') {
+                                    shard.style.display = 'none';
+                                }
+                            }, 400); 
+                        }
+                    });
+
+                    moduleCounter.textContent = `${activeCount} MÓDULO${activeCount > 1 ? 'S' : ''}`;
+                    gridContainer.style.opacity = '1';
+                    gridContainer.style.transform = 'translateY(0)';
+
+                }, 400); 
             });
         });
     </script>

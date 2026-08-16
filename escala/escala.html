@@ -3,27 +3,37 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Kyro - Gestão de Escala Pro (DnD & Modelos)</title>
-    <link rel="shortcut icon" href="https://placehold.co/32x32/ea580c/FFFFFF?text=K" type="image/x-icon">
+    <title>Kyro - Gestão de Escala</title>
+    <link rel="shortcut icon" href="../imagens/favicon.ico" type="image/x-icon">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    fontFamily: { sans: ['"Outfit"', 'sans-serif'] },
                     colors: {
-                        'kyro-orange': {
-                            500: '#f97316',
-                            600: '#ea580c',
-                            700: '#c2410c',
+                        navy: {
+                            700: '#334155',
+                            800: '#1e293b', 
+                            900: '#0f172a', // Azul escuro profundo
+                            950: '#020617', // Quase preto/azul
+                        },
+                        crimson: {
+                            500: '#ef4444',
+                            600: '#dc2626', // Vermelho principal
+                            700: '#b91c1c',
+                            glow: 'rgba(220, 38, 38, 0.4)',
                         }
                     }
                 }
@@ -32,21 +42,46 @@
     </script>
 
     <style>
-        /* Estilos Globais Minimalistas */
+        /* Estilos Globais Surreais / Clean White + Deep Blue + Crimson */
         :root {
             --table-font-size: min(1.6vh, 0.75vw); 
             --table-line-height: 1.1;
             --table-cell-padding: 0.2vh;
         }
 
-        body { background-color: #fafafa; color: #111827; font-size: 0.9rem; overflow: hidden; } 
+        body { 
+            background-color: #ffffff; 
+            color: #0f172a; 
+            font-size: 0.9rem; 
+            overflow: hidden; 
+            background-image: radial-gradient(#0f172a 0.5px, transparent 0.5px);
+            background-size: 32px 32px;
+            background-position: -19px -19px;
+        } 
         
         ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 0px; }
-        ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 0px; }
+        ::-webkit-scrollbar-thumb:hover { background: #dc2626; }
 
-        /* Tabela Flat */
+        /* Formas Surreais */
+        .shard-panel {
+            background: #ffffff;
+            border-right: 1px solid rgba(15, 23, 42, 0.1);
+            border-left: 1px solid rgba(15, 23, 42, 0.1);
+            position: relative;
+        }
+
+        .shard-panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, rgba(15,23,42,0.02) 0%, transparent 100%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Tabela Matriz (Branco, Azul Escuro, Vermelho) */
         .modern-table { 
             width: 100%; 
             height: 100%; 
@@ -54,116 +89,217 @@
             font-size: var(--table-font-size);
             line-height: var(--table-line-height);
             table-layout: fixed; 
+            background: #ffffff;
+            position: relative;
+            z-index: 10;
         }
         .modern-table th { 
-            background: #f9fafb; color: #4b5563; font-weight: 600; text-transform: uppercase; 
-            letter-spacing: 0.05em; padding: 4px 2px; border-bottom: 1px solid #d1d5db; border-right: 1px solid #e5e7eb;
+            background: #0f172a; 
+            color: #ffffff; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            letter-spacing: 0.05em; 
+            padding: 4px 2px; 
+            border-bottom: 2px solid #dc2626; 
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
             height: 3vh; 
             user-select: none;
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%);
         }
         .modern-table td { 
-            border-bottom: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;
+            border-bottom: 1px solid rgba(15, 23, 42, 0.1); 
+            border-right: 1px solid rgba(15, 23, 42, 0.1);
             padding: 0 2px; 
             text-align: center; white-space: nowrap;
             overflow: hidden; text-overflow: ellipsis;
             height: 1px; 
             cursor: pointer;
+            transition: all 0.2s ease;
+            color: #1e293b;
+            font-weight: 500;
         }
-        .modern-table tr:hover td { background-color: #f3f4f6; }
 
-        /* Estados de Célula Planos */
-        .editable:hover { background-color: #fff7ed !important; color: #ea580c; font-weight: 600; }
+        /* Estados de Célula Translúcidos/Neon */
+        .editable:hover { 
+            background-color: rgba(220, 38, 38, 0.05) !important; 
+            color: #dc2626; 
+            font-weight: 700; 
+            box-shadow: inset 0 0 0 1px #dc2626;
+        }
         .cursor-troca .editable { cursor: alias !important; }
-        .celula-troca-origem { background-color: #ffedd5 !important; border: 1px solid #ea580c !important; }
-        .celula-travada { background-color: #f9fafb !important; color: #6b7280; font-weight: 600; border: 1px solid #d1d5db; }
-        .dia-hoje { background-color: #f3f4f6 !important; border-left: 3px solid #ea580c; }
         
-        .bg-custom-gray { background-color: #f3f4f6 !important; } 
-        .bg-custom-gray-header { background-color: #e5e7eb !important; color: #111827 !important; }
-        .bg-custom-gray-group { background-color: #e5e7eb !important; color: #374151 !important; }
+        .celula-troca-origem { 
+            background-color: #0f172a !important; 
+            border: 1px solid #dc2626 !important; 
+            color: #ffffff !important;
+            font-weight: bold;
+        }
+        
+        .celula-travada { 
+            background-color: rgba(15, 23, 42, 0.03) !important; 
+            color: #94a3b8; 
+            font-weight: 400;
+        }
+        
+        .dia-hoje { 
+            background-color: rgba(15, 23, 42, 0.02) !important; 
+            border-left: 3px solid #dc2626; 
+        }
+        
+        /* Mapeamento de Cores de Estrutura */
+        .bg-custom-gray { background-color: rgba(15, 23, 42, 0.03) !important; } 
+        .bg-custom-gray-header { background-color: #1e293b !important; color: #ffffff !important; }
+        .bg-custom-gray-group { background-color: #020617 !important; color: #ffffff !important; border-bottom: 1px solid #334155 !important;}
 
-        .sync-active { background-color: #dcfce7; transition: background-color 1.5s; }
+        .sync-active { background-color: rgba(220, 38, 38, 0.1); border-color: #dc2626; transition: all 1.5s; }
 
-        /* Drag and Drop Minimalista */
+        /* Drag and Drop - Data Shards */
         .draggable-item { cursor: grab; }
         .draggable-item:active { cursor: grabbing; }
-        .drag-over { border: 1px dashed #ea580c !important; background-color: #fff7ed !important; }
-        .dragging { opacity: 0.4; border: 1px dashed #9ca3af; }
-        .drop-target-group { border: 1px solid #ea580c !important; }
+        .drag-over { border: 1px dashed #dc2626 !important; background-color: rgba(220, 38, 38, 0.05) !important; }
+        .dragging { opacity: 0.3; border: 1px dashed #dc2626; filter: grayscale(1); }
+        .drop-target-group { transition: all 0.2s; clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); }
+        .drop-target-group.drag-over { border-color: #dc2626 !important; box-shadow: 0 0 15px rgba(220, 38, 38, 0.2); }
 
         /* Layout Dinâmico */
         .dashboard-container {
             display: flex;
-            height: calc(100vh - 50px);
+            height: calc(100vh - 55px);
             overflow: hidden;
             gap: 0px;
             padding: 0px;
-            border-top: 1px solid #e5e7eb;
+            border-top: 2px solid #0f172a;
         }
 
         .sidebar-left, .sidebar-right {
-            transition: width 0.2s ease-in-out;
+            transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             overflow: hidden;
             flex-shrink: 0;
             background: #ffffff;
+            z-index: 20;
         }
         
-        .sidebar-left { width: 300px; border-right: 1px solid #e5e7eb; } 
-        .sidebar-right { width: 280px; border-left: 1px solid #e5e7eb; }
+        .sidebar-left { width: 300px; } 
+        .sidebar-right { width: 280px; }
         
         .sidebar-left.collapsed { width: 0; border-width: 0; }
         .sidebar-right.collapsed { width: 0; border-width: 0; }
 
         .main-panel {
             flex: 1; min-width: 0; display: flex; flex-direction: column;
-            background: white; height: 100%; 
+            background: #ffffff; height: 100%; position: relative; z-index: 10;
         }
 
         .panel { display: flex; flex-direction: column; overflow: hidden; height: 100%; }
-        .panel-header { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; background: #f9fafb; display: flex; justify-content: space-between; align-items: center; min-height: 40px; }
-        .panel-content { padding: 0; overflow-y: auto; flex: 1; }
+        .panel-header { 
+            padding: 10px 16px; 
+            border-bottom: 2px solid #0f172a; 
+            background: #ffffff; 
+            display: flex; justify-content: space-between; align-items: center; min-height: 44px; 
+            position: relative;
+            z-index: 20;
+        }
+        .panel-content { padding: 0; overflow-y: auto; flex: 1; position: relative; z-index: 10;}
         
-        /* Botões Flat */
-        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 2px; font-weight: 500; font-size: 0.75rem; cursor: pointer; border: 1px solid transparent; }
-        .btn-sm { padding: 4px 8px; font-size: 0.7rem; }
-        .btn-primary { background: #ea580c; color: white; border-color: #c2410c; }
-        .btn-primary:hover { background: #c2410c; }
-        .btn-secondary { background: #ffffff; color: #374151; border-color: #d1d5db; }
-        .btn-secondary:hover { background: #f9fafb; border-color: #9ca3af; }
-        .btn-ghost { background: transparent; color: #4b5563; }
-        .btn-ghost:hover { background: #f3f4f6; color: #111827; }
-        .btn-danger { background: #dc2626; color: white; border-color: #b91c1c; }
-        .btn-active { background: #fff7ed; color: #ea580c; border-color: #ea580c; }
+        /* Botões Surreais (Angular/Hex) */
+        .btn { 
+            display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; 
+            font-weight: 700; font-size: 0.75rem; 
+            cursor: pointer; transition: all 0.2s;
+            text-transform: uppercase; letter-spacing: 0.05em; font-family: 'Outfit', sans-serif;
+            clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+        }
+        .btn-sm { padding: 4px 10px; font-size: 0.7rem; clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);}
         
-        .editor-btn { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 2px; color: #4b5563; cursor: pointer; }
-        .editor-btn:hover { background-color: #e5e7eb; color: #111827; }
+        .btn-primary { 
+            background: #0f172a; 
+            color: #ffffff; 
+            border: none;
+        }
+        .btn-primary:hover { 
+            background: #dc2626; 
+        }
+        
+        .btn-secondary { 
+            background: #f8fafc; 
+            color: #0f172a; 
+            border: 1px solid #e2e8f0; 
+        }
+        .btn-secondary:hover { 
+            background: #e2e8f0; 
+            border-color: #0f172a;
+        }
+        
+        .btn-active { 
+            background: #dc2626; 
+            color: #ffffff; 
+            border-color: #dc2626; 
+        }
+        
+        .editor-btn { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; color: #64748b; cursor: pointer; border: 1px solid transparent; clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);}
+        .editor-btn:hover { background-color: #f1f5f9; color: #0f172a; border-color: #cbd5e1; }
         
         .valign-top { justify-content: flex-start; }
         .valign-middle { justify-content: center; }
         .valign-bottom { justify-content: flex-end; }
         
-        .modal-backdrop { background: rgba(0, 0, 0, 0.4); }
-        .input-std { width: 100%; padding: 6px; border: 1px solid #d1d5db; border-radius: 2px; font-size: 0.75rem; background: #ffffff; outline: none; }
-        .input-std:focus { border-color: #ea580c; }
+        /* Modais */
+        .modal-backdrop { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(5px); }
+        .modal-content {
+            background: #ffffff;
+            border: 2px solid #0f172a;
+            box-shadow: 20px 20px 0px rgba(15, 23, 42, 0.1);
+            clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
+        }
+
+        .input-std { 
+            width: 100%; padding: 8px 10px; 
+            border: 1px solid #cbd5e1; 
+            font-size: 0.75rem; 
+            background: #f8fafc; 
+            color: #0f172a;
+            outline: none; transition: all 0.2s;
+            clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+        }
+        .input-std:focus { border-color: #0f172a; background: #ffffff; box-shadow: 4px 4px 0 rgba(15,23,42,0.05);}
         
         .toggle-sidebar-btn {
-            width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
-            border-radius: 2px; color: #6b7280; cursor: pointer;
+            width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+            color: #64748b; cursor: pointer; border: 1px solid transparent;
+            clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
         }
-        .toggle-sidebar-btn:hover { background: #f3f4f6; color: #111827; }
+        .toggle-sidebar-btn:hover { background: #0f172a; color: #ffffff; }
         
-        /* Resumo Flat */
-        .resumo-table-container { overflow-x: auto; }
+        /* Resumo Flat -> Surreal */
+        .resumo-table-container { overflow-x: auto; background: #ffffff; }
         .resumo-table { border-collapse: collapse; font-size: 10px; width: auto; min-width: 100%; }
-        .resumo-table th, .resumo-table td { padding: 6px 8px; border-bottom: 1px solid #f3f4f6; border-right: 1px solid #f3f4f6; white-space: nowrap; text-align: center; }
+        .resumo-table th, .resumo-table td { padding: 6px 8px; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; white-space: nowrap; text-align: center; }
         .resumo-col-nome {
-            position: sticky; left: 0; background: white; z-index: 10;
-            border-right: 1px solid #d1d5db; text-align: left; width: 120px;
+            position: sticky; left: 0; background: #ffffff; z-index: 10;
+            border-right: 2px solid #0f172a; text-align: left; width: 120px;
             min-width: 120px; max-width: 120px; overflow: hidden; text-overflow: ellipsis;
+            color: #0f172a;
+            font-weight: 700;
         }
-        .resumo-table thead .resumo-col-nome { background: #f9fafb; border-bottom: 1px solid #d1d5db; }
-        .resumo-table thead th { border-bottom: 1px solid #d1d5db; background: #f9fafb; }
+        .resumo-table thead .resumo-col-nome { background: #0f172a; border-bottom: 2px solid #dc2626; color: #ffffff;}
+        .resumo-table thead th { border-bottom: 2px solid #dc2626; background: #0f172a; color: #ffffff; font-weight: 700;}
+        .resumo-table tbody tr:hover { background-color: #f8fafc; }
+        .resumo-table tbody tr:hover .resumo-col-nome { background-color: #f8fafc; }
+
+        #editor-obs {
+            background: #ffffff;
+            color: #0f172a;
+        }
+
+        /* Custom Drag Icon */
+        .drag-handle {
+            cursor: grab;
+            color: #94a3b8;
+        }
+        .drag-handle:active {
+            cursor: grabbing;
+        }
 
         @media (max-width: 900px) {
             #mes-select, #ano-input { font-size: 0.75rem; }
@@ -171,110 +307,119 @@
         }
     </style>
 </head>
-<body class="flex flex-col h-screen overflow-hidden bg-white">
+<body class="flex flex-col h-screen overflow-hidden selection:bg-crimson-600 selection:text-white">
 
-    <header class="bg-white h-[50px] flex-shrink-0 z-30 px-4 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-            <div class="bg-kyro-orange-600 text-white w-7 h-7 rounded-sm flex items-center justify-center font-bold text-sm">P</div>
+    <!-- HEADER SURREAL -->
+    <header class="bg-navy-900 h-[55px] flex-shrink-0 z-30 px-6 flex items-center justify-between border-b-4 border-crimson-600 shadow-lg">
+        <div class="flex items-center gap-4">
+            <!-- Logo Surreal -->
+            <div class="w-8 h-8 relative flex items-center justify-center">
+                <img src="../imagens/logo.png" alt="logo">
+            </div>
             <div class="leading-tight">
-                <div class="flex items-center gap-2">
-                    <h1 class="text-sm font-bold text-gray-900">Prefeitura de Limeira</h1>
-                    <div id="sync-indicator" class="hidden items-center gap-1 bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded-sm border border-gray-200">
-                        <div class="w-1.5 h-1.5 bg-gray-500 rounded-full"></div>
-                        <span class="text-[9px] font-bold uppercase tracking-wider">Sincronizado</span>
-                    </div>
+                <div class="flex items-center gap-3">
+                    <h1 class="text-sm font-bold text-white tracking-wide uppercase">Kyro</h1>
                 </div>
-                <p class="text-[10px] text-gray-500 font-medium">Dívida Ativa</p>
+                <p class="text-[10px] text-gray-400 font-mono tracking-widest uppercase mt-0.5">Gestão de Escalonamento</p>
             </div>
         </div>
         
-        <div class="flex items-center gap-1 bg-gray-50 p-1 rounded-sm border border-gray-200">
-            <button onclick="toggleSidebar('left')" class="toggle-sidebar-btn" title="Alternar Painel Esquerdo" id="btn-toggle-left">
+        <div class="flex items-center gap-1 bg-navy-950 p-1 border border-navy-800" style="clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);">
+            <button onclick="toggleSidebar('left')" class="toggle-sidebar-btn hover:bg-navy-800 text-gray-400 hover:text-white" title="Alternar Painel Esquerdo" id="btn-toggle-left">
                 <i class="fas fa-columns text-sm"></i>
             </button>
-            <div class="h-4 w-px bg-gray-300 mx-1"></div>
-            <button onclick="toggleSidebar('right')" class="toggle-sidebar-btn" title="Alternar Painel Direito" id="btn-toggle-right">
-                <i class="fas fa-cog text-sm"></i>
+            <div class="h-4 w-px bg-navy-700 mx-1"></div>
+            <button onclick="toggleSidebar('right')" class="toggle-sidebar-btn hover:bg-navy-800 text-gray-400 hover:text-white" title="Alternar Painel Direito" id="btn-toggle-right">
+                <i class="fas fa-microchip text-sm"></i>
             </button>
         </div>
 
-        <div class="flex items-center gap-2">
-            <button onclick="abrirModalMestre()" class="btn btn-secondary btn-sm">
-                <i class="fas fa-database text-gray-500"></i> <span class="hidden md:inline font-semibold">Mestre</span>
+        <div class="flex items-center gap-3">
+            <button onclick="abrirModalMestre()" class="btn btn-primary btn-sm group bg-white text-navy-900 hover:bg-gray-200">
+                <i class="fas fa-database text-crimson-600"></i> <span class="hidden md:inline font-bold tracking-wider">Mestre</span>
             </button>
             
-            <button onclick="exportarBackupMestre()" class="btn btn-secondary btn-sm" title="Salvar Backup dos Funcionários">
-                <i class="fas fa-file-export text-gray-500"></i> <span class="hidden md:inline font-semibold">Backup</span>
+            <div class="h-4 w-px bg-navy-700 hidden sm:block"></div>
+
+            <button onclick="exportarBackupMestre()" class="btn btn-secondary btn-sm group bg-navy-800 text-white border-navy-700 hover:bg-navy-700" title="Salvar Backup dos Funcionários">
+                <i class="fas fa-download text-gray-400 group-hover:text-white transition-colors"></i> <span class="hidden md:inline font-semibold">Backup</span>
             </button>
 
-            <label class="btn btn-secondary btn-sm cursor-pointer" title="Restaurar Backup de Funcionários">
-                <i class="fas fa-file-import text-gray-800"></i> <span class="hidden md:inline font-semibold">Restaurar</span>
+            <label class="btn btn-secondary btn-sm cursor-pointer group bg-navy-800 text-white border-navy-700 hover:bg-navy-700" title="Restaurar Backup de Funcionários">
+                <i class="fas fa-upload text-gray-400 group-hover:text-white transition-colors"></i> <span class="hidden md:inline font-semibold">Restaurar</span>
                 <input type="file" id="input-importar" class="hidden" accept=".json">
             </label>
         </div>
     </header>
 
-    <div class="dashboard-container" id="dashboard-container">
+    <div class="dashboard-container relative" id="dashboard-container">
         
-        <aside class="sidebar-left panel" id="sidebar-left">
-            <div class="panel-header">
-                <span class="font-bold text-gray-800 text-xs tracking-wide"><i class="fas fa-chart-bar text-gray-500 mr-2"></i>RESUMO</span>
-                <span class="text-[9px] bg-gray-200 text-gray-700 px-2 py-1 rounded-sm font-bold tracking-wider" id="total-dias-badge">0 DIAS</span>
+        <!-- SIDEBAR ESQUERDA (RESUMO) -->
+        <aside class="sidebar-left panel shard-panel" id="sidebar-left">
+            <div class="panel-header border-b-2 border-navy-900">
+                <span class="font-bold text-navy-900 text-[10px] tracking-widest font-mono uppercase"><i class="fas fa-chart-pie text-crimson-600 mr-2"></i>Data Overview</span>
+                <span class="text-[9px] bg-navy-900 text-white px-2 py-1 font-mono font-bold tracking-wider" style="clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);" id="total-dias-badge">0 DIAS</span>
             </div>
-            <div class="panel-content resumo-table-container custom-scrollbar bg-white">
+            <div class="panel-content resumo-table-container custom-scrollbar">
                 <table class="resumo-table">
-                    <thead class="text-[9px] text-gray-600 sticky top-0 z-20">
+                    <thead class="text-[9px] sticky top-0 z-20">
                         <tr id="resumo-header">
                             </tr>
                     </thead>
-                    <tbody id="lista-resumo" class="text-[10px] bg-white">
+                    <tbody id="lista-resumo" class="text-[10px]">
                         </tbody>
                 </table>
             </div>
         </aside>
 
-        <main class="main-panel relative flex flex-col border-l border-r border-gray-200" id="painel-central">
-            <div class="panel-header flex-wrap gap-2 py-2 flex-shrink-0">
-                <div class="flex items-center bg-white border border-gray-300 rounded-sm p-0.5">
-                    <button id="prev-month" class="w-6 h-6 flex items-center justify-center hover:bg-gray-100 text-gray-600"><i class="fas fa-chevron-left text-xs"></i></button>
-                    <div class="flex flex-col items-center px-2">
-                        <select id="mes-select" class="text-xs font-bold bg-transparent border-none cursor-pointer text-center p-0 outline-none text-gray-900 uppercase">
+        <!-- PAINEL CENTRAL (TABELA) -->
+        <main class="main-panel relative flex flex-col" id="painel-central">
+            <div class="panel-header flex-wrap gap-3 py-2 flex-shrink-0 bg-white border-b border-gray-200">
+                
+                <!-- Controle de Mês Angular -->
+                <div class="flex items-center bg-gray-50 border border-gray-200 p-0.5 shadow-inner" style="clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);">
+                    <button id="prev-month" class="w-7 h-7 flex items-center justify-center hover:bg-gray-200 text-gray-500 hover:text-navy-900 transition-colors"><i class="fas fa-chevron-left text-xs"></i></button>
+                    <div class="flex flex-col items-center px-3">
+                        <select id="mes-select" class="text-xs font-black bg-transparent border-none cursor-pointer text-center p-0 outline-none text-navy-900 uppercase tracking-widest font-mono">
                             <option value="0">JAN</option><option value="1">FEV</option><option value="2">MAR</option>
                             <option value="3">ABR</option><option value="4">MAI</option><option value="5">JUN</option>
                             <option value="6">JUL</option><option value="7">AGO</option><option value="8">SET</option>
                             <option value="9">OUT</option><option value="10">NOV</option><option value="11">DEZ</option>
                         </select>
-                        <input type="number" id="ano-input" class="text-[10px] text-gray-500 bg-transparent border-none w-10 text-center p-0 outline-none font-medium" value="2024">
+                        <input type="number" id="ano-input" class="text-[10px] text-crimson-600 bg-transparent border-none w-10 text-center p-0 outline-none font-mono font-bold" value="2024">
                     </div>
-                    <button id="next-month" class="w-6 h-6 flex items-center justify-center hover:bg-gray-100 text-gray-600"><i class="fas fa-chevron-right text-xs"></i></button>
+                    <button id="next-month" class="w-7 h-7 flex items-center justify-center hover:bg-gray-200 text-gray-500 hover:text-navy-900 transition-colors"><i class="fas fa-chevron-right text-xs"></i></button>
                 </div>
 
-                <div class="h-6 w-px bg-gray-200 mx-2 hidden sm:block"></div>
+                <div class="h-6 w-px bg-gray-200 mx-1 hidden sm:block"></div>
 
-                <button id="gerar-escala-btn" class="btn btn-primary"><i class="fas fa-bolt"></i> <span class="hidden lg:inline">Gerar Escala</span></button>
-                <button id="embaralhar-btn" class="btn btn-secondary" title="Gerar Aleatório"><i class="fas fa-random text-gray-500"></i></button>
-                <button id="btn-troca-rapida" class="btn btn-secondary" title="Modo Troca Rápida"><i class="fas fa-exchange-alt text-gray-500"></i></button>
+                <button id="gerar-escala-btn" class="btn btn-primary"><i class="fas fa-bolt text-crimson-500"></i> <span class="hidden lg:inline">Gerar Matriz</span></button>
+                <button id="embaralhar-btn" class="btn btn-secondary" title="Gerar Aleatório"><i class="fas fa-random text-navy-900"></i></button>
+                <button id="btn-troca-rapida" class="btn btn-secondary" title="Modo Troca Rápida"><i class="fas fa-exchange-alt text-navy-900"></i></button>
 
                 <div class="flex-1"></div>
 
+                <!-- Botão Exportar -->
                 <div class="relative">
-                    <button id="btn-export-toggle" class="btn btn-secondary font-semibold">Exportar <i class="fas fa-chevron-down text-[10px] ml-1"></i></button>
-                    <div id="export-menu" class="absolute right-0 mt-1 w-32 bg-white border border-gray-200 rounded-sm shadow-sm hidden z-50 py-1">
-                        <button onclick="exportarExcelOriginal()" class="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-gray-800 flex items-center gap-2 font-medium"><i class="fas fa-file-excel text-gray-400"></i> Excel</button>
-                        <button onclick="exportarPDFOriginal()" class="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-gray-800 flex items-center gap-2 font-medium"><i class="fas fa-file-pdf text-gray-400"></i> PDF</button>
+                    <button id="btn-export-toggle" class="btn btn-secondary font-bold">Exportar <i class="fas fa-chevron-down text-[10px] ml-1"></i></button>
+                    <div id="export-menu" class="absolute right-0 mt-2 w-32 bg-white border-2 border-navy-900 shadow-[8px_8px_0px_rgba(15,23,42,0.1)] hidden z-50 py-1" style="clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);">
+                        <button onclick="exportarExcelOriginal()" class="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-navy-900 flex items-center gap-2 font-bold transition-colors"><i class="fas fa-file-excel text-green-600"></i> Excel</button>
+                        <button onclick="exportarPDFOriginal()" class="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-navy-900 flex items-center gap-2 font-bold transition-colors"><i class="fas fa-file-pdf text-red-600"></i> PDF</button>
                     </div>
                 </div>
             </div>
 
-            <div class="flex-1 overflow-hidden relative bg-white flex flex-col">
+            <!-- TABELA PRINCIPAL -->
+            <div class="flex-1 overflow-hidden relative flex flex-col">
                 <table class="modern-table" id="tabela-principal">
                     <thead id="tabela-head"></thead>
                     <tbody id="tabela-escala"></tbody>
                 </table>
             </div>
 
-            <div class="bg-white border-t border-gray-200 flex-shrink-0 flex flex-col" style="height: 12vh; min-height: 60px; max-height: 120px;">
-                <div class="px-3 py-1 flex items-center justify-between border-b border-gray-100 bg-gray-50">
+            <!-- EDITOR DE OBSERVAÇÕES -->
+            <div class="bg-white border-t-2 border-navy-900 flex-shrink-0 flex flex-col relative z-20" style="height: 12vh; min-height: 60px; max-height: 120px;">
+                <div class="px-3 py-1.5 flex items-center justify-between border-b border-gray-200 bg-gray-50">
                     <div class="flex items-center gap-1">
                         <button onclick="execCmd('bold')" class="editor-btn" title="Negrito"><i class="fas fa-bold text-[10px]"></i></button>
                         <button onclick="execCmd('italic')" class="editor-btn" title="Itálico"><i class="fas fa-italic text-[10px]"></i></button>
@@ -294,76 +439,80 @@
                     </div>
                 </div>
                 <div id="editor-obs" 
-                     class="flex-1 p-2 text-xs text-gray-800 focus:outline-none overflow-y-auto bg-white flex flex-col" 
-                     contenteditable="true" 
-                     style="font-family: 'Inter', sans-serif;">
+                     class="flex-1 p-3 text-xs focus:outline-none overflow-y-auto flex flex-col font-mono font-medium" 
+                     contenteditable="true">
                 </div>
             </div>
         </main>
 
-        <aside class="sidebar-right panel" id="sidebar-right">
+        <!-- SIDEBAR DIREITA (ESTRUTURA) -->
+        <aside class="sidebar-right panel shard-panel" id="sidebar-right">
             
-            <div class="flex-shrink-0 border-b border-gray-200">
-                <div class="panel-header cursor-pointer hover:bg-gray-100 transition-colors" onclick="toggleSection('sec-modelos')">
-                    <span class="font-bold text-gray-800 text-[10px] tracking-wide"><i class="fas fa-save text-gray-400 mr-2"></i>MODELOS</span>
-                    <i class="fas fa-chevron-down text-gray-400 text-[10px]"></i>
+            <!-- MODELOS -->
+            <div class="flex-shrink-0 border-b-2 border-navy-900 bg-gray-50">
+                <div class="panel-header cursor-pointer hover:bg-gray-100 transition-colors bg-transparent border-none" onclick="toggleSection('sec-modelos')">
+                    <span class="font-bold text-navy-900 text-[10px] tracking-widest font-mono uppercase"><i class="fas fa-layer-group text-crimson-600 mr-2"></i>Presets</span>
+                    <i class="fas fa-chevron-down text-gray-500 text-[10px]"></i>
                 </div>
-                <div id="sec-modelos" class="p-3 bg-white space-y-3">
+                <div id="sec-modelos" class="p-4 space-y-3 hidden">
                     <div class="flex gap-2">
-                        <input type="text" id="novo-modelo-nome" class="input-std flex-1" placeholder="Nome do modelo...">
-                        <button onclick="salvarModelo()" class="btn btn-secondary font-semibold border-gray-300">Salvar</button>
+                        <input type="text" id="novo-modelo-nome" class="input-std flex-1 font-mono text-[10px] font-bold" placeholder="Nome do Preset...">
+                        <button onclick="salvarModelo()" class="btn btn-primary text-[10px]">Save</button>
                     </div>
-                    <div class="pt-2 border-t border-gray-100">
+                    <div class="pt-2 border-t border-gray-200">
                         <div id="lista-modelos" class="space-y-1 max-h-24 overflow-y-auto custom-scrollbar"></div>
                     </div>
                 </div>
             </div>
 
-            <div class="p-3 border-b border-gray-200 bg-gray-50">
-                <div class="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-2">Ferramentas Rápidas</div>
-                <div class="flex items-center gap-2 mb-2">
-                    <select id="busca-func" class="input-std h-8 text-xs"></select>
-                    <button onclick="limparDestaques()" class="btn btn-secondary h-8 w-8 justify-center p-0" title="Limpar"><i class="fas fa-eraser text-gray-500"></i></button>
+            <!-- FERRAMENTAS RÁPIDAS -->
+            <div class="p-4 border-b-2 border-navy-900 bg-white">
+                <div class="text-[9px] font-bold text-crimson-600 font-mono tracking-widest mb-3 uppercase">Overlay Tools</div>
+                <div class="flex items-center gap-2 mb-3">
+                    <select id="busca-func" class="input-std h-8 text-[10px] font-mono font-bold"></select>
+                    <button onclick="limparDestaques()" class="btn btn-secondary h-8 w-8 justify-center p-0" title="Limpar"><i class="fas fa-eraser text-navy-900"></i></button>
                 </div>
                 <div class="flex gap-2 justify-center">
-                    <button onclick="destacarCor('#fef08a')" class="w-5 h-5 rounded-sm bg-yellow-200 border border-yellow-400"></button>
-                    <button onclick="destacarCor('#bbf7d0')" class="w-5 h-5 rounded-sm bg-green-200 border border-green-400"></button>
-                    <button onclick="destacarCor('#fecaca')" class="w-5 h-5 rounded-sm bg-red-200 border border-red-400"></button>
+                    <button onclick="destacarCor('rgba(234, 179, 8, 0.2)')" class="w-6 h-6 bg-yellow-100 border border-yellow-400 hover:bg-yellow-200 transition-colors" style="clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);"></button>
+                    <button onclick="destacarCor('rgba(34, 197, 94, 0.2)')" class="w-6 h-6 bg-green-100 border border-green-400 hover:bg-green-200 transition-colors" style="clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);"></button>
+                    <button onclick="destacarCor('rgba(239, 68, 68, 0.2)')" class="w-6 h-6 bg-red-100 border border-red-400 hover:bg-red-200 transition-colors" style="clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);"></button>
                 </div>
             </div>
 
-            <div class="flex-shrink-0 border-b border-gray-200">
-                <div class="panel-header cursor-pointer hover:bg-gray-100 transition-colors" onclick="toggleSection('sec-travas')">
-                    <span class="font-bold text-gray-800 text-[10px] tracking-wide"><i class="fas fa-lock text-gray-400 mr-2"></i>TRAVAS</span>
-                    <i class="fas fa-chevron-down text-gray-400 text-[10px]"></i>
+            <!-- TRAVAS -->
+            <div class="flex-shrink-0 border-b-2 border-navy-900 bg-gray-50">
+                <div class="panel-header cursor-pointer hover:bg-gray-100 transition-colors bg-transparent border-none" onclick="toggleSection('sec-travas')">
+                    <span class="font-bold text-navy-900 text-[10px] tracking-widest font-mono uppercase"><i class="fas fa-lock text-crimson-600 mr-2"></i>Security Locks</span>
+                    <i class="fas fa-chevron-down text-gray-500 text-[10px]"></i>
                 </div>
-                <div id="sec-travas" class="p-3 bg-white space-y-3 hidden">
+                <div id="sec-travas" class="p-4 space-y-3 hidden">
                     <div class="space-y-2">
-                        <select id="config-func" class="input-std text-xs"></select>
-                        <select id="config-slot" class="input-std text-xs"></select>
-                        <button onclick="adicionarRegraFixa()" class="w-full btn btn-secondary justify-center text-xs font-semibold">
-                            Travar Posição
+                        <select id="config-func" class="input-std text-[10px] font-mono font-bold"></select>
+                        <select id="config-slot" class="input-std text-[10px] font-mono font-bold"></select>
+                        <button onclick="adicionarRegraFixa()" class="w-full btn btn-primary justify-center text-[10px] font-mono tracking-wider mt-2">
+                            Bloquear Posição
                         </button>
                     </div>
-                    <div class="pt-2 border-t border-gray-100">
+                    <div class="pt-3 border-t border-gray-200">
                         <div class="flex justify-between items-center mb-2">
-                             <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Ativas</span>
-                             <button onclick="limparTodasRegras()" class="text-[10px] text-red-600 font-bold hover:underline">Limpar</button>
+                             <span class="text-[9px] font-bold text-gray-500 font-mono tracking-widest">TRAVAS ATIVAS</span>
+                             <button onclick="limparTodasRegras()" class="text-[9px] font-mono font-bold text-crimson-600 hover:text-crimson-700 transition-colors">CLEAR</button>
                         </div>
                         <div id="lista-regras" class="space-y-1 max-h-20 overflow-y-auto pr-1 custom-scrollbar"></div>
                     </div>
                 </div>
             </div>
 
-            <div class="flex-1 overflow-hidden flex flex-col">
-                <div class="panel-header cursor-pointer hover:bg-gray-100 transition-colors" onclick="toggleSection('sec-estrutura')">
-                    <span class="font-bold text-gray-800 text-[10px] tracking-wide"><i class="fas fa-columns text-gray-400 mr-2"></i>ESTRUTURA</span>
-                    <i class="fas fa-chevron-down text-gray-400 text-[10px]"></i>
+            <!-- ESTRUTURA (DRAG AND DROP) -->
+            <div class="flex-1 overflow-hidden flex flex-col bg-white">
+                <div class="panel-header cursor-pointer hover:bg-gray-50 transition-colors bg-transparent border-none border-b border-gray-100" onclick="toggleSection('sec-estrutura')">
+                    <span class="font-bold text-navy-900 text-[10px] tracking-widest font-mono uppercase"><i class="fas fa-network-wired text-crimson-600 mr-2"></i>Data Structure</span>
+                    <i class="fas fa-chevron-down text-gray-500 text-[10px]"></i>
                 </div>
-                <div id="sec-estrutura" class="flex-1 overflow-y-auto p-3 bg-white space-y-3 custom-scrollbar">
+                <div id="sec-estrutura" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
                     <div id="editor-estrutura-lista" class="space-y-3"></div>
-                    <button onclick="adicionarGrupo()" class="w-full btn btn-secondary border-dashed justify-center text-gray-500 hover:text-gray-900 bg-gray-50 font-semibold text-xs py-2">
-                        + Novo Grupo
+                    <button onclick="adicionarGrupo()" class="w-full btn btn-secondary border-dashed border-gray-300 justify-center text-navy-900 hover:text-crimson-600 hover:border-crimson-600 font-mono font-bold text-[10px] tracking-wider py-2 transition-all mt-4" style="background: transparent;">
+                        + INSERIR CLUSTER
                     </button>
                 </div>
             </div>
@@ -371,46 +520,62 @@
 
     </div>
 
+    <!-- MODAL EDIÇÃO -->
     <div id="modal-edicao" class="fixed inset-0 modal-backdrop hidden flex items-center justify-center z-50">
-        <div class="bg-white p-6 border border-gray-300 shadow-sm rounded-sm w-80">
-            <h4 class="font-bold text-gray-900 mb-4">Editar Célula</h4>
-            <select id="modal-select" class="input-std mb-6 hidden text-sm py-2"></select>
-            <input type="text" id="modal-input" class="input-std mb-6 hidden text-sm py-2" placeholder="Digite o novo valor...">
-            <div class="flex justify-end gap-3">
-                <button onclick="fecharModal()" class="btn btn-secondary font-medium">Cancelar</button>
-                <button onclick="salvarEdicaoManual()" class="btn btn-primary font-medium">Salvar</button>
+        <div class="modal-content p-6 w-80">
+            <h4 class="font-bold text-navy-900 mb-5 font-mono tracking-widest text-sm flex items-center gap-2"><i class="fas fa-terminal text-crimson-600"></i> OVERRIDE VALUE</h4>
+            <select id="modal-select" class="input-std mb-6 hidden text-sm py-2 font-bold font-mono"></select>
+            <input type="text" id="modal-input" class="input-std mb-6 hidden text-sm py-2 font-mono font-bold" placeholder="INPUT_DATA...">
+            <div class="flex justify-end gap-3 mt-2">
+                <button onclick="fecharModal()" class="btn btn-secondary text-xs">Abortar</button>
+                <button onclick="salvarEdicaoManual()" class="btn btn-primary text-xs">Executar</button>
             </div>
         </div>
     </div>
 
+    <!-- MODAL MESTRE -->
     <div id="modal-mestre" class="fixed inset-0 modal-backdrop hidden flex items-center justify-center z-50">
-        <div class="bg-white border border-gray-300 shadow-sm rounded-sm w-[900px] h-[70vh] flex flex-col overflow-hidden">
-            <div class="p-5 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                <h3 class="font-bold text-gray-900 text-lg flex items-center gap-2">Dados Mestre</h3>
-                <button onclick="document.getElementById('modal-mestre').classList.add('hidden')" class="text-gray-400 hover:text-gray-900"><i class="fas fa-times text-lg"></i></button>
+        <div class="modal-content w-[900px] h-[70vh] flex flex-col overflow-hidden">
+            <div class="p-5 border-b-2 border-navy-900 flex justify-between items-center bg-gray-50">
+                <h3 class="font-bold text-navy-900 text-lg flex items-center gap-3 font-mono tracking-widest uppercase"><i class="fas fa-database text-crimson-600"></i> Master DB_CORE</h3>
+                <button onclick="document.getElementById('modal-mestre').classList.add('hidden')" class="text-gray-400 hover:text-crimson-600 transition-colors"><i class="fas fa-times text-lg"></i></button>
             </div>
-            <div class="p-6 overflow-y-auto flex-1 space-y-8 custom-scrollbar">
+            <div class="p-6 overflow-y-auto flex-1 space-y-8 custom-scrollbar bg-white">
+                
                 <div>
-                    <h4 class="font-bold text-gray-500 text-xs uppercase tracking-wider mb-3">Funcionários</h4>
-                    <table class="w-full text-sm text-left border-collapse">
-                        <thead class="bg-gray-100 text-gray-600 border-y border-gray-300"><tr><th class="p-2 font-semibold">Nome</th><th class="p-2 font-semibold">Cargo</th><th class="p-2 font-semibold">Almoço</th></tr></thead>
-                        <tbody id="mestre-funcs" class="text-gray-800 divide-y divide-gray-100"></tbody>
-                    </table>
-                </div>
-                <div class="grid grid-cols-2 gap-8">
-                    <div>
-                        <h4 class="font-bold text-gray-500 text-xs uppercase tracking-wider mb-3">Férias</h4>
+                    <h4 class="font-bold text-crimson-600 text-[10px] font-mono tracking-widest mb-3">TABELA: ENTIDADES</h4>
+                    <div class="border border-gray-200 bg-white overflow-hidden" style="clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);">
                         <table class="w-full text-sm text-left border-collapse">
-                            <thead class="bg-gray-100 text-gray-600 border-y border-gray-300"><tr><th class="p-2 font-semibold">Func</th><th class="p-2 font-semibold">Início</th><th class="p-2 font-semibold">Fim</th></tr></thead>
-                            <tbody id="mestre-ferias" class="text-gray-800 divide-y divide-gray-100"></tbody>
+                            <thead class="bg-navy-900 text-white font-mono text-xs">
+                                <tr><th class="p-3 font-semibold">IDENTIFICAÇÃO</th><th class="p-3 font-semibold">FUNÇÃO</th><th class="p-3 font-semibold">PAUSA/CICLO</th></tr>
+                            </thead>
+                            <tbody id="mestre-funcs" class="text-navy-900 divide-y divide-gray-100 font-mono text-xs font-medium"></tbody>
                         </table>
                     </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-8">
                     <div>
-                        <h4 class="font-bold text-gray-500 text-xs uppercase tracking-wider mb-3">Feriados</h4>
-                        <table class="w-full text-sm text-left border-collapse">
-                            <thead class="bg-gray-100 text-gray-600 border-y border-gray-300"><tr><th class="p-2 font-semibold">Data</th><th class="p-2 font-semibold">Nome</th></tr></thead>
-                            <tbody id="mestre-feriados" class="text-gray-800 divide-y divide-gray-100"></tbody>
-                        </table>
+                        <h4 class="font-bold text-crimson-600 text-[10px] font-mono tracking-widest mb-3">TABELA: SUSPENSÃO (FÉRIAS)</h4>
+                        <div class="border border-gray-200 bg-white overflow-hidden" style="clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);">
+                            <table class="w-full text-sm text-left border-collapse">
+                                <thead class="bg-navy-900 text-white font-mono text-xs">
+                                    <tr><th class="p-2 font-semibold">ENTIDADE</th><th class="p-2 font-semibold">INÍCIO</th><th class="p-2 font-semibold">FIM</th></tr>
+                                </thead>
+                                <tbody id="mestre-ferias" class="text-navy-900 divide-y divide-gray-100 font-mono text-xs font-medium"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-crimson-600 text-[10px] font-mono tracking-widest mb-3">TABELA: ANOMALIAS (FERIADOS)</h4>
+                        <div class="border border-gray-200 bg-white overflow-hidden" style="clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);">
+                            <table class="w-full text-sm text-left border-collapse">
+                                <thead class="bg-navy-900 text-white font-mono text-xs">
+                                    <tr><th class="p-2 font-semibold">TIMESTAMP</th><th class="p-2 font-semibold">DESCRIÇÃO</th></tr>
+                                </thead>
+                                <tbody id="mestre-feriados" class="text-navy-900 divide-y divide-gray-100 font-mono text-xs font-medium"></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -418,7 +583,7 @@
     </div>
 
     <script>
-        // --- ESTADO ---
+        // --- ESTADO (MANTIDO INTACTO) ---
         const MASTER_DB_KEY = 'limeira_dados_integrados_v6';
         const CONFIG_DB_KEY = 'escala_config_v23';
         const MODELS_DB_KEY = 'escala_modelos_v1';
@@ -517,12 +682,12 @@
             const btn = document.getElementById(`btn-toggle-${side}`);
             if (forceClose || !el.classList.contains('collapsed')) {
                 el.classList.add('collapsed');
-                btn.classList.add('bg-gray-200', 'text-gray-900');
+                btn.classList.add('bg-navy-800', 'text-white');
                 if (side === 'left') appState.ui.leftPanel = false;
                 if (side === 'right') appState.ui.rightPanel = false;
             } else {
                 el.classList.remove('collapsed');
-                btn.classList.remove('bg-gray-200', 'text-gray-900');
+                btn.classList.remove('bg-navy-800', 'text-white');
                 if (side === 'left') appState.ui.leftPanel = true;
                 if (side === 'right') appState.ui.rightPanel = true;
             }
@@ -545,8 +710,8 @@
             const selectFunc = document.getElementById('config-func');
             const selectBusca = document.getElementById('busca-func');
             const selFunc = selectFunc.value; const selBusca = selectBusca.value;
-            selectFunc.innerHTML = '<option value="">Funcionário...</option>';
-            selectBusca.innerHTML = '<option value="">Selecionar...</option>';
+            selectFunc.innerHTML = '<option value="">ENTIDADE...</option>';
+            selectBusca.innerHTML = '<option value="">BUSCAR...</option>';
             getFuncionariosEscala().forEach(f => {
                 const n = f.apelido || f.nome;
                 selectFunc.add(new Option(n, n));
@@ -634,11 +799,11 @@
             lista.innerHTML = '';
             appState.models.forEach((m, idx) => {
                 lista.innerHTML += `
-                    <div class="flex justify-between items-center border-b border-gray-100 py-1.5 text-xs">
-                        <span class="font-medium text-gray-800 truncate">${m.name}</span>
-                        <div class="flex gap-2">
-                            <button onclick="carregarModelo(${idx})" class="text-gray-500 hover:text-gray-900" title="Carregar"><i class="fas fa-upload"></i></button>
-                            <button onclick="excluirModelo(${idx})" class="text-red-500 hover:text-red-700" title="Excluir"><i class="fas fa-trash"></i></button>
+                    <div class="flex justify-between items-center border-b border-gray-200 py-2 text-xs font-mono">
+                        <span class="text-navy-900 font-bold truncate">${m.name}</span>
+                        <div class="flex gap-3">
+                            <button onclick="carregarModelo(${idx})" class="text-navy-900 hover:text-crimson-600 transition-colors" title="Load"><i class="fas fa-upload"></i></button>
+                            <button onclick="excluirModelo(${idx})" class="text-gray-400 hover:text-red-600 transition-colors" title="Delete"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>`;
             });
@@ -658,11 +823,11 @@
             localStorage.setItem(MODELS_DB_KEY, JSON.stringify(appState.models));
             nomeInput.value = '';
             renderModelos();
-            alert("Modelo salvo!");
+            alert("Preset Salvo no Core!");
         }
 
         function carregarModelo(idx) {
-            if(!confirm("Carregar este modelo substituirá a estrutura atual. Continuar?")) return;
+            if(!confirm("Atenção: Carregar este preset substituirá a matriz atual. Confirmar sobrescrita?")) return;
             const modelo = appState.models[idx];
             appState.structure = JSON.parse(JSON.stringify(modelo.structure));
             salvarEstado();
@@ -670,7 +835,7 @@
         }
 
         function excluirModelo(idx) {
-            if(!confirm("Excluir modelo?")) return;
+            if(!confirm("Excluir preset do banco de dados?")) return;
             appState.models.splice(idx, 1);
             localStorage.setItem(MODELS_DB_KEY, JSON.stringify(appState.models));
             renderModelos();
@@ -744,7 +909,8 @@
 
             appState.structure.forEach((group, gIdx) => {
                 const groupEl = document.createElement('div');
-                groupEl.className = "bg-white border border-gray-200 rounded-sm overflow-hidden drop-target-group mb-2";
+                // Estilo Surreal Shard
+                groupEl.className = "bg-white border-2 border-navy-900 drop-target-group mb-4 shadow-[4px_4px_0px_rgba(15,23,42,0.1)]";
                 
                 groupEl.setAttribute('draggable', 'true');
                 groupEl.addEventListener('dragstart', (e) => handleDragStart(e, 'group', gIdx));
@@ -755,31 +921,33 @@
                 });
 
                 const headerEl = document.createElement('div');
-                headerEl.className = "bg-gray-50 p-2 flex gap-2 items-center border-b border-gray-200 cursor-grab active:cursor-grabbing";
+                headerEl.className = "bg-gray-50 p-2.5 flex gap-2 items-center border-b-2 border-navy-900 cursor-grab active:cursor-grabbing";
                 headerEl.innerHTML = `
-                    <i class="fas fa-grip-vertical text-gray-300 text-xs"></i>
-                    <i class="fas fa-folder text-gray-400 text-xs"></i>
+                    <i class="fas fa-grip-vertical text-gray-400 text-xs"></i>
+                    <i class="fas fa-folder-open text-navy-900 text-xs"></i>
                     <input type="text" value="${group.title}" 
                         onchange="updateGroupTitle(${gIdx}, this.value)"
-                        class="bg-transparent text-xs font-bold text-gray-800 w-full focus:outline-none focus:bg-white border border-transparent focus:border-gray-300 rounded-sm px-1" placeholder="Título do Grupo">
+                        class="bg-transparent text-xs font-black text-navy-900 w-full focus:outline-none focus:bg-white border border-transparent focus:border-crimson-600 px-1 transition-colors uppercase tracking-widest font-mono" placeholder="NOME DO CLUSTER">
                     
                     <button onclick="toggleGroupGray(${gIdx})" 
-                        class="text-[10px] px-2 py-0.5 rounded-sm border ${group.grayTitle ? 'bg-gray-700 text-white border-gray-800' : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300'}"
-                        title="Pintar Título"><i class="fas fa-fill-drip"></i></button>
+                        class="text-[10px] px-2 py-1 border transition-colors ${group.grayTitle ? 'bg-navy-900 text-white border-navy-900' : 'bg-white text-gray-400 border-gray-300 hover:border-navy-900 hover:text-navy-900'}"
+                        title="Ativar Marcação Visual" style="clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);"><i class="fas fa-fill-drip"></i></button>
 
-                    <button onclick="removerGrupo(${gIdx})" class="text-gray-400 hover:text-red-600 px-1"><i class="fas fa-trash-alt text-[10px]"></i></button>
+                    <button onclick="removerGrupo(${gIdx})" class="text-gray-400 hover:text-crimson-600 px-1 transition-colors"><i class="fas fa-trash-alt text-[10px]"></i></button>
                 `;
                 groupEl.appendChild(headerEl);
 
                 const bodyEl = document.createElement('div');
-                bodyEl.className = "p-2 space-y-1.5";
+                bodyEl.className = "p-2.5 space-y-2";
 
                 const colsContainer = document.createElement('div');
                 colsContainer.className = "space-y-1.5";
                 
                 group.cols.forEach((col, cIdx) => {
                     const colEl = document.createElement('div');
-                    colEl.className = "flex gap-1.5 items-center draggable-item col-item";
+                    // Item Shard Estilo Angular
+                    colEl.className = "flex gap-1.5 items-center draggable-item col-item bg-gray-50 p-1.5 border border-gray-200 hover:border-crimson-600 transition-colors";
+                    colEl.style.clipPath = "polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)";
                     
                     colEl.setAttribute('draggable', 'true');
                     colEl.addEventListener('dragstart', (e) => {
@@ -795,30 +963,31 @@
 
                     const isFixo = col.type === 'fixo';
                     const isSystem = col.type === 'system';
-                    let btnClass = 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50';
+                    
+                    let btnClass = 'bg-white text-gray-500 border-gray-300 hover:bg-gray-100 hover:text-navy-900';
                     let btnText = 'SUP';
-                    if(isFixo) { btnClass = 'bg-gray-100 text-gray-800 border-gray-300 font-bold hover:bg-gray-200'; btnText = 'FIXO'; }
-                    if(isSystem) { btnClass = 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed'; btnText = 'SIS'; }
+                    if(isFixo) { btnClass = 'bg-crimson-600 text-white border-crimson-600 font-bold hover:bg-crimson-700'; btnText = 'FIXO'; }
+                    if(isSystem) { btnClass = 'bg-gray-200 text-gray-400 border-gray-300 cursor-not-allowed'; btnText = 'SYS'; }
 
                     colEl.innerHTML = `
-                        <i class="fas fa-grip-vertical text-gray-300 text-[10px] cursor-grab active:cursor-grabbing"></i>
+                        <i class="fas fa-grip-vertical text-gray-300 text-[10px] cursor-grab active:cursor-grabbing px-1"></i>
                         <input type="text" value="${col.label}" 
                             onchange="updateColLabel(${gIdx}, ${cIdx}, this.value)"
-                            class="flex-1 w-16 bg-white border border-gray-200 rounded-sm text-gray-700 text-[10px] px-1.5 py-0.5 focus:border-kyro-orange-500 outline-none">
+                            class="flex-1 w-16 bg-white border border-gray-300 text-navy-900 text-[10px] font-mono font-bold px-2 py-1 focus:border-crimson-600 outline-none transition-colors" style="clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);">
                         
                         <button onclick="toggleColHeaderGray(${gIdx}, ${cIdx})" 
-                            class="text-[10px] px-1.5 py-0.5 rounded-sm border ${col.grayHeader ? 'bg-gray-600 text-white border-gray-700' : 'bg-white text-gray-400 border-gray-200 hover:bg-gray-50'}"
-                            title="Pintar Header"><i class="fas fa-heading"></i></button>
+                            class="text-[10px] px-2 py-1 border transition-colors ${col.grayHeader ? 'bg-navy-900 text-white border-navy-900' : 'bg-white text-gray-400 border-gray-300 hover:text-navy-900 hover:border-navy-900'}"
+                            title="Highlight Header" style="clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);"><i class="fas fa-heading"></i></button>
 
                         <button onclick="toggleColBodyGray(${gIdx}, ${cIdx})" 
-                            class="text-[10px] px-1.5 py-0.5 rounded-sm border ${col.grayBody ? 'bg-gray-400 text-white border-gray-500' : 'bg-white text-gray-400 border-gray-200 hover:bg-gray-50'}"
-                            title="Pintar Coluna"><i class="fas fa-fill-drip"></i></button>
+                            class="text-[10px] px-2 py-1 border transition-colors ${col.grayBody ? 'bg-navy-800 text-white border-navy-800' : 'bg-white text-gray-400 border-gray-300 hover:text-navy-900 hover:border-navy-900'}"
+                            title="Highlight Body" style="clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);"><i class="fas fa-fill-drip"></i></button>
 
                         <button onclick="${isSystem ? '' : `toggleColType(${gIdx}, ${cIdx})`}" 
-                            class="text-[9px] px-1.5 py-0.5 rounded-sm border min-w-[32px] ${btnClass}"
-                            title="Alternar Tipo">${btnText}</button>
+                            class="text-[9px] px-2 py-1 border min-w-[36px] font-mono tracking-wider transition-colors ${btnClass}"
+                            title="Toggle Type" style="clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);">${btnText}</button>
                         
-                        <button onclick="removerColuna(${gIdx}, ${cIdx})" class="text-gray-300 hover:text-red-500 px-1"><i class="fas fa-times"></i></button>
+                        <button onclick="removerColuna(${gIdx}, ${cIdx})" class="text-gray-400 hover:text-crimson-600 px-1.5 transition-colors"><i class="fas fa-times"></i></button>
                     `;
                     colsContainer.appendChild(colEl);
                 });
@@ -826,8 +995,9 @@
                 bodyEl.appendChild(colsContainer);
 
                 const addBtn = document.createElement('button');
-                addBtn.className = "w-full mt-1.5 text-[10px] text-gray-500 hover:text-gray-800 bg-gray-50 py-1 rounded-sm border border-gray-200 transition-colors";
-                addBtn.innerHTML = '+ Adicionar Coluna';
+                addBtn.className = "w-full mt-2 text-[10px] font-mono tracking-widest text-navy-900 font-bold hover:text-crimson-600 bg-white hover:bg-gray-50 py-1.5 border-2 border-navy-900 hover:border-crimson-600 transition-all uppercase";
+                addBtn.style.clipPath = "polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)";
+                addBtn.innerHTML = '+ INSERT NODE';
                 addBtn.onclick = () => adicionarColuna(gIdx);
                 bodyEl.appendChild(addBtn);
 
@@ -885,10 +1055,10 @@
         function toggleColType(gIdx, cIdx) { const t = appState.structure[gIdx].cols[cIdx].type; if(t === 'system') return; appState.structure[gIdx].cols[cIdx].type = (t === 'fixo' ? 'suplente' : 'fixo'); salvarEstado(); atualizarUI(); }
         function toggleColHeaderGray(gIdx, cIdx) { appState.structure[gIdx].cols[cIdx].grayHeader = !appState.structure[gIdx].cols[cIdx].grayHeader; salvarEstado(); atualizarUI(); }
         function toggleColBodyGray(gIdx, cIdx) { appState.structure[gIdx].cols[cIdx].grayBody = !appState.structure[gIdx].cols[cIdx].grayBody; salvarEstado(); atualizarUI(); }
-        function removerGrupo(gIdx) { if(!confirm('Remover grupo?')) return; appState.structure.splice(gIdx, 1); salvarEstado(); atualizarUI(); }
+        function removerGrupo(gIdx) { if(!confirm('Desconectar cluster inteiro?')) return; appState.structure.splice(gIdx, 1); salvarEstado(); atualizarUI(); }
         function removerColuna(gIdx, cIdx) { appState.structure[gIdx].cols.splice(cIdx, 1); salvarEstado(); atualizarUI(); }
-        function adicionarGrupo() { appState.structure.push({ title: "NOVO GRUPO", grayTitle: false, cols: [] }); salvarEstado(); atualizarUI(); }
-        function adicionarColuna(gIdx) { const key = 'col_' + Date.now() + Math.floor(Math.random()*1000); appState.structure[gIdx].cols.push({ key: key, label: "Nova", type: 'suplente', grayHeader: false, grayBody: false }); salvarEstado(); atualizarUI(); }
+        function adicionarGrupo() { appState.structure.push({ title: "NOVO CLUSTER", grayTitle: false, cols: [] }); salvarEstado(); atualizarUI(); }
+        function adicionarColuna(gIdx) { const key = 'col_' + Date.now() + Math.floor(Math.random()*1000); appState.structure[gIdx].cols.push({ key: key, label: "NODE", type: 'suplente', grayHeader: false, grayBody: false }); salvarEstado(); atualizarUI(); }
         
         // --- GERAÇÃO DE ESCALA ---
         function gerarEscala(embaralhar) {
@@ -896,7 +1066,7 @@
             const feriadosStr = masterData.feriados.map(f => f.data); 
             const pool = getFuncionariosEscala();
             
-            if(pool.length === 0) return alert("Sem funcionários!");
+            if(pool.length === 0) return alert("Sem dados no Master DB.");
             
             const flatCols = getFlatColumns(); 
             const slotsKeys = flatCols.filter(c => c.type !== 'system').map(c => c.key); 
@@ -1026,12 +1196,57 @@
         function atualizarUI() { renderEditorEstrutura(); renderModelos(); renderTabela(); renderResumo(); renderRegras(); carregarObservacaoAtual(); aplicarEstadoUI(); }
         
         function renderTabela() {
-            const thead = document.getElementById('tabela-head'); let h1 = `<tr>`; appState.structure.forEach(g => { if(g.cols.length > 0) { let bgClass = "bg-gray-100 text-gray-700"; if (g.grayTitle) bgClass = "bg-custom-gray-group"; h1 += `<th class="${bgClass} text-center text-[10px] font-bold" colspan="${g.cols.length}">${g.title}</th>`; } }); h1 += `</tr>`;
-            let h2 = `<tr class="text-[10px]">`; appState.structure.forEach(g => { g.cols.forEach((c, idx) => { let color = 'text-gray-600 font-medium'; if(c.type === 'fixo') color = 'text-gray-900 font-bold'; const headerClass = c.grayHeader ? 'bg-custom-gray-header' : ''; h2 += `<th class="top-[38px] z-[9] ${color} ${headerClass}">${c.label}</th>`; }); }); h2 += `</tr>`; thead.innerHTML = h1 + h2;
-            const tbody = document.getElementById('tabela-escala'); tbody.innerHTML = ''; const dias = appState.escala.filter(l => l.data.getMonth() === appState.mes && l.data.getFullYear() === appState.ano); const hoje = new Date(); document.getElementById('total-dias-badge').innerText = `${dias.length} DIAS`;
+            const thead = document.getElementById('tabela-head'); 
+            let h1 = `<tr>`; 
+            appState.structure.forEach(g => { 
+                if(g.cols.length > 0) { 
+                    let bgClass = "bg-gray-50 text-navy-900"; 
+                    if (g.grayTitle) bgClass = "bg-custom-gray-group"; 
+                    h1 += `<th class="${bgClass} text-center text-[10px] font-black font-mono tracking-widest uppercase border-b-2 border-crimson-600" colspan="${g.cols.length}">${g.title}</th>`; 
+                } 
+            }); 
+            h1 += `</tr>`;
+            
+            let h2 = `<tr class="text-[10px]">`; 
+            appState.structure.forEach(g => { 
+                g.cols.forEach((c, idx) => { 
+                    let color = 'text-gray-500 font-bold'; 
+                    if(c.type === 'fixo') color = 'text-navy-900 font-black tracking-widest'; 
+                    const headerClass = c.grayHeader ? 'bg-custom-gray-header' : ''; 
+                    h2 += `<th class="top-[38px] z-[9] ${color} ${headerClass} font-mono">${c.label}</th>`; 
+                }); 
+            }); 
+            h2 += `</tr>`; 
+            thead.innerHTML = h1 + h2;
+            
+            const tbody = document.getElementById('tabela-escala'); tbody.innerHTML = ''; 
+            const dias = appState.escala.filter(l => l.data.getMonth() === appState.mes && l.data.getFullYear() === appState.ano); 
+            const hoje = new Date(); 
+            document.getElementById('total-dias-badge').innerText = `${dias.length} DIAS`;
+            
             dias.forEach((linha, idx) => {
-                const tr = document.createElement('tr'); if(linha.data.getDate() === hoje.getDate() && linha.data.getMonth() === hoje.getMonth()) tr.classList.add('dia-hoje'); let html = ``;
-                appState.structure.forEach(g => { g.cols.forEach((c, cIdx) => { let val = linha[c.key] || ''; if(c.key === 'dataLabel' && !val) val = linha.data.toLocaleDateString('pt-BR'); if(c.key === 'semLabel' && !val) val = linha.diaSemana.toLocaleDateString('pt-BR', {weekday: 'short'}).toUpperCase(); if(c.key === 'senha' && !val) val = linha.senha || '-'; const isLocked = appState.regrasFixas.some(r => r.func === val && r.slot === c.key); const bgDest = appState.destaques[val] ? `style="background-color: ${appState.destaques[val]} !important"` : ''; const lockedClass = isLocked ? 'celula-travada' : ''; let extraClass = ''; if(c.type === 'system') extraClass += ' font-semibold bg-gray-50 text-gray-500'; if(c.grayBody) extraClass += ' bg-custom-gray'; html += `<td class="editable ${lockedClass} ${extraClass}" ${bgDest} data-idx="${idx}" data-key="${c.key}">${val || '<span class="text-gray-300">-</span>'}</td>`; }); });
+                const tr = document.createElement('tr'); 
+                if(linha.data.getDate() === hoje.getDate() && linha.data.getMonth() === hoje.getMonth()) tr.classList.add('dia-hoje'); 
+                
+                let html = ``;
+                appState.structure.forEach(g => { 
+                    g.cols.forEach((c, cIdx) => { 
+                        let val = linha[c.key] || ''; 
+                        if(c.key === 'dataLabel' && !val) val = linha.data.toLocaleDateString('pt-BR'); 
+                        if(c.key === 'semLabel' && !val) val = linha.diaSemana.toLocaleDateString('pt-BR', {weekday: 'short'}).toUpperCase(); 
+                        if(c.key === 'senha' && !val) val = linha.senha || '-'; 
+                        
+                        const isLocked = appState.regrasFixas.some(r => r.func === val && r.slot === c.key); 
+                        const bgDest = appState.destaques[val] ? `style="background-color: ${appState.destaques[val]} !important; color: #0f172a; font-weight: bold;"` : ''; 
+                        const lockedClass = isLocked ? 'celula-travada' : ''; 
+                        let extraClass = ''; 
+                        
+                        if(c.type === 'system') extraClass += ' font-bold bg-gray-50 text-gray-500 font-mono'; 
+                        if(c.grayBody) extraClass += ' bg-custom-gray'; 
+                        
+                        html += `<td class="editable ${lockedClass} ${extraClass}" ${bgDest} data-idx="${idx}" data-key="${c.key}">${val || '<span class="text-gray-300">-</span>'}</td>`; 
+                    }); 
+                });
                 tr.innerHTML = html; tbody.appendChild(tr);
             });
         }
@@ -1056,18 +1271,18 @@
             const colsOutros = flatCols.filter(c => c.type !== 'fixo' && c.type !== 'suplente');
             const sortedCols = [...colsFixos, ...colsSuplentes, ...colsOutros];
             
-            let headerHTML = `<th class="resumo-col-nome font-semibold text-gray-700 p-1.5">NOME</th>`;
+            let headerHTML = `<th class="resumo-col-nome font-mono font-black p-1.5 tracking-widest uppercase">NOME</th>`;
             
             sortedCols.forEach(c => {
                 let label = c.label || '';
                 let shortLabel = label.substring(0, 3).toUpperCase();
-                let colorClass = 'text-gray-500 bg-white';
-                if(c.type === 'fixo') colorClass = 'text-gray-900 bg-gray-100';
+                let colorClass = 'text-gray-500 font-mono bg-white';
+                if(c.type === 'fixo') colorClass = 'text-navy-900 font-mono bg-gray-100';
                 
                 headerHTML += `<th class="p-1.5 font-bold ${colorClass}" title="${label}">${shortLabel}</th>`;
             });
 
-            headerHTML += `<th class="p-1.5 font-bold text-gray-900 bg-gray-200">T</th>`;
+            headerHTML += `<th class="p-1.5 font-bold text-white bg-navy-900 font-mono">T</th>`;
             headerRow.innerHTML = headerHTML;
 
             const stats = {}; 
@@ -1092,16 +1307,16 @@
 
             nomesOrdenados.forEach(n => {
                 const s = stats[n];
-                let rowHTML = `<tr class="hover:bg-gray-50">`;
-                rowHTML += `<td class="resumo-col-nome font-medium text-gray-800 p-1 truncate" title="${n}">${n}</td>`;
+                let rowHTML = `<tr>`;
+                rowHTML += `<td class="resumo-col-nome font-bold p-1 text-[11px] truncate text-navy-900" title="${n}">${n}</td>`;
 
                 sortedCols.forEach(c => {
                     const count = s[c.key];
-                    const valClass = count > 0 ? 'text-gray-900 font-semibold' : 'text-gray-300';
-                    rowHTML += `<td class="p-1 text-center ${valClass}">${count}</td>`;
+                    const valClass = count > 0 ? 'text-crimson-600 font-bold' : 'text-gray-300';
+                    rowHTML += `<td class="p-1 text-center font-mono ${valClass}">${count}</td>`;
                 });
 
-                rowHTML += `<td class="p-1 text-center font-bold text-gray-900 bg-gray-100">${s.total}</td>`;
+                rowHTML += `<td class="p-1 text-center font-bold text-white bg-navy-800 font-mono border-l border-navy-700">${s.total}</td>`;
                 rowHTML += `</tr>`;
                 tbody.innerHTML += rowHTML;
             });
@@ -1121,37 +1336,37 @@
                         localStorage.setItem(MASTER_DB_KEY, JSON.stringify(j)); 
                         masterData = j; 
                         atualizarUI(); 
-                        alert("Dados Importados com Sucesso!"); 
-                    } else { alert("Arquivo inválido."); }
-                } catch(e) { alert("Erro ao ler arquivo."); }
+                        alert("Database Core Restaurado!"); 
+                    } else { alert("Arquivo corrompido."); }
+                } catch(e) { alert("Erro de parsing."); }
             }; 
             r.readAsText(f); 
         }
 
         function exportarBackupMestre() {
             const rawMaster = localStorage.getItem(MASTER_DB_KEY);
-            if (!rawMaster) return alert("Não há dados para exportar.");
+            if (!rawMaster) return alert("DB vazio.");
             const blob = new Blob([rawMaster], {type: "application/json;charset=utf-8"});
-            saveAs(blob, "backup_funcionarios_limeira.json");
+            saveAs(blob, "backup_core_limeira.json");
         }
 
-        function renderRegras() { const div = document.getElementById('lista-regras'); div.innerHTML = ''; appState.regrasFixas.forEach((r, idx) => { const col = getFlatColumns().find(c => c.key === r.slot); const colLabel = col ? col.label : r.slot; div.innerHTML += `<div class="flex justify-between items-center py-1 border-b border-gray-100 text-[10px]"><span class="truncate max-w-[140px] text-gray-700"><b>${r.func}</b> <span class="text-gray-400 mx-1">/</span> ${colLabel}</span><button onclick="removerRegra(${idx})" class="text-red-500 hover:text-red-700 px-1"><i class="fas fa-times"></i></button></div>`; }); }
+        function renderRegras() { const div = document.getElementById('lista-regras'); div.innerHTML = ''; appState.regrasFixas.forEach((r, idx) => { const col = getFlatColumns().find(c => c.key === r.slot); const colLabel = col ? col.label : r.slot; div.innerHTML += `<div class="flex justify-between items-center py-1.5 border-b border-gray-200 text-[10px] font-mono"><span class="truncate max-w-[140px] text-navy-900"><b class="text-crimson-600">${r.func}</b> <span class="text-gray-400 mx-1">-></span> ${colLabel}</span><button onclick="removerRegra(${idx})" class="text-red-500 hover:text-red-700 px-1"><i class="fas fa-times"></i></button></div>`; }); }
         function removerRegra(idx) { appState.regrasFixas.splice(idx, 1); salvarEstado(); atualizarUI(); }
         function adicionarRegraFixa() { const func = document.getElementById('config-func').value; const slot = document.getElementById('config-slot').value; if(!func || !slot) return; appState.regrasFixas = appState.regrasFixas.filter(r => !(r.func === func || r.slot === slot)); appState.regrasFixas.push({ func, slot }); salvarEstado(); atualizarUI(); }
-        function limparTodasRegras() { if(confirm('Limpar todas as regras?')) { appState.regrasFixas = []; salvarEstado(); atualizarUI(); } }
+        function limparTodasRegras() { if(confirm('Limpar todas as travas ativas?')) { appState.regrasFixas = []; salvarEstado(); atualizarUI(); } }
         function destacarCor(cor) { const n = document.getElementById('busca-func').value; if(n) { appState.destaques[n] = cor; salvarEstado(); atualizarUI(); } }
         function limparDestaques() { appState.destaques = {}; salvarEstado(); atualizarUI(); }
         function toggleTrocaRapida() { modoTrocaRapida = !modoTrocaRapida; const btn = document.getElementById('btn-troca-rapida'); const p = document.getElementById('painel-central'); trocaOrigem = null; document.querySelectorAll('.celula-troca-origem').forEach(el => el.classList.remove('celula-troca-origem')); if(modoTrocaRapida) { btn.classList.add('btn-active'); p.classList.add('cursor-troca'); } else { btn.classList.remove('btn-active'); p.classList.remove('cursor-troca'); } }
         function handleTroca(cell) { if(!trocaOrigem) { trocaOrigem = { idx: cell.dataset.idx, key: cell.dataset.key, el: cell }; cell.classList.add('celula-troca-origem'); } else { const dest = { idx: cell.dataset.idx, key: cell.dataset.key }; const v1 = appState.escala[trocaOrigem.idx][trocaOrigem.key]; const v2 = appState.escala[dest.idx][dest.key]; appState.escala[trocaOrigem.idx][trocaOrigem.key] = v2; appState.escala[dest.idx][dest.key] = v1; trocaOrigem.el.classList.remove('celula-troca-origem'); trocaOrigem = null; toggleTrocaRapida(); salvarEstado(); atualizarUI(); } }
-        function abrirModalMestre() { const funcBody = document.getElementById('mestre-funcs'); funcBody.innerHTML = ''; masterData.funcionarios.forEach(f => { const almoco = (f.saida1 && f.entrada2) ? `${f.saida1} - ${f.entrada2}` : '-'; funcBody.innerHTML += `<tr><td class="p-2 border-b border-gray-100">${f.apelido||f.nome}</td><td class="p-2 border-b border-gray-100">${f.cargo}</td><td class="p-2 border-b border-gray-100">${almoco}</td></tr>`; }); const feriasBody = document.getElementById('mestre-ferias'); feriasBody.innerHTML = ''; masterData.ferias.forEach(f => { feriasBody.innerHTML += `<tr><td class="p-2 border-b border-gray-100">${f.funcionario}</td><td class="p-2 border-b border-gray-100">${f.inicio}</td><td class="p-2 border-b border-gray-100">${f.fim}</td></tr>`; }); const feriadosBody = document.getElementById('mestre-feriados'); feriadosBody.innerHTML = ''; masterData.feriados.forEach(f => { feriadosBody.innerHTML += `<tr><td class="p-2 border-b border-gray-100">${f.data}</td><td class="p-2 border-b border-gray-100">${f.nome}</td></tr>`; }); document.getElementById('modal-mestre').classList.remove('hidden'); }
-        function abrirModal(idx, key) { editando = { idx, key }; const linha = appState.escala[idx]; const modalSelect = document.getElementById('modal-select'); const modalInput = document.getElementById('modal-input'); modalSelect.classList.add('hidden'); modalInput.classList.add('hidden'); let valorAtual = linha[key]; if(key === 'dataLabel' && !valorAtual) valorAtual = linha.data.toLocaleDateString('pt-BR'); if(key === 'semLabel' && !valorAtual) valorAtual = linha.diaSemana.toLocaleDateString('pt-BR', {weekday: 'short'}).toUpperCase(); if(key === 'senha' && !valorAtual) valorAtual = linha.senha; const isSystemCol = key === 'dataLabel' || key === 'semLabel'; if (isSystemCol) { modalInput.value = valorAtual || ''; modalInput.classList.remove('hidden'); } else { modalSelect.innerHTML = '<option value="">(Vazio)</option>'; let list = []; if(key === 'senha') { list = masterData.funcionarios.map(f => (f.apelido || f.nome)); } else { list = getFuncionariosEscala().map(f => (f.apelido || f.nome)); } list.sort(); list.forEach(nome => { const opt = new Option(nome, nome); if(nome === valorAtual) opt.selected = true; modalSelect.add(opt); }); modalSelect.classList.remove('hidden'); } document.getElementById('modal-edicao').classList.remove('hidden'); }
+        function abrirModalMestre() { const funcBody = document.getElementById('mestre-funcs'); funcBody.innerHTML = ''; masterData.funcionarios.forEach(f => { const almoco = (f.saida1 && f.entrada2) ? `${f.saida1} - ${f.entrada2}` : '-'; funcBody.innerHTML += `<tr><td class="p-3 border-b border-gray-100 text-navy-900 font-bold">${f.apelido||f.nome}</td><td class="p-3 border-b border-gray-100">${f.cargo}</td><td class="p-3 border-b border-gray-100 text-gray-500">${almoco}</td></tr>`; }); const feriasBody = document.getElementById('mestre-ferias'); feriasBody.innerHTML = ''; masterData.ferias.forEach(f => { feriasBody.innerHTML += `<tr><td class="p-2 border-b border-gray-100 text-navy-900 font-bold">${f.funcionario}</td><td class="p-2 border-b border-gray-100">${f.inicio}</td><td class="p-2 border-b border-gray-100">${f.fim}</td></tr>`; }); const feriadosBody = document.getElementById('mestre-feriados'); feriadosBody.innerHTML = ''; masterData.feriados.forEach(f => { feriadosBody.innerHTML += `<tr><td class="p-2 border-b border-gray-100 text-crimson-600 font-bold">${f.data}</td><td class="p-2 border-b border-gray-100">${f.nome}</td></tr>`; }); document.getElementById('modal-mestre').classList.remove('hidden'); }
+        function abrirModal(idx, key) { editando = { idx, key }; const linha = appState.escala[idx]; const modalSelect = document.getElementById('modal-select'); const modalInput = document.getElementById('modal-input'); modalSelect.classList.add('hidden'); modalInput.classList.add('hidden'); let valorAtual = linha[key]; if(key === 'dataLabel' && !valorAtual) valorAtual = linha.data.toLocaleDateString('pt-BR'); if(key === 'semLabel' && !valorAtual) valorAtual = linha.diaSemana.toLocaleDateString('pt-BR', {weekday: 'short'}).toUpperCase(); if(key === 'senha' && !valorAtual) valorAtual = linha.senha; const isSystemCol = key === 'dataLabel' || key === 'semLabel'; if (isSystemCol) { modalInput.value = valorAtual || ''; modalInput.classList.remove('hidden'); } else { modalSelect.innerHTML = '<option value="">(NULL)</option>'; let list = []; if(key === 'senha') { list = masterData.funcionarios.map(f => (f.apelido || f.nome)); } else { list = getFuncionariosEscala().map(f => (f.apelido || f.nome)); } list.sort(); list.forEach(nome => { const opt = new Option(nome, nome); if(nome === valorAtual) opt.selected = true; modalSelect.add(opt); }); modalSelect.classList.remove('hidden'); } document.getElementById('modal-edicao').classList.remove('hidden'); }
         function salvarEdicaoManual() { if(!editando) return; const modalSelect = document.getElementById('modal-select'); const modalInput = document.getElementById('modal-input'); let novoValor = !modalSelect.classList.contains('hidden') ? modalSelect.value : modalInput.value; appState.escala[editando.idx][editando.key] = novoValor; salvarEstado(); atualizarUI(); fecharModal(); }
         function fecharModal() { document.getElementById('modal-edicao').classList.add('hidden'); editando = null; }
         
         async function exportarExcelOriginal() {
-            if (appState.escala.length === 0) return alert("Gere a escala primeiro.");
+            if (appState.escala.length === 0) return alert("Matriz vazia.");
             const mesNome = document.getElementById('mes-select').options[appState.mes].text.toUpperCase(); const ano = appState.ano;
-            const wb = new ExcelJS.Workbook(); const ws = wb.addWorksheet('Escala');
+            const wb = new ExcelJS.Workbook(); const ws = wb.addWorksheet('Matrix');
             ws.pageSetup = { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 1, horizontalCentered: true, verticalCentered: true, margins: { left: 0.2, right: 0.2, top: 0.2, bottom: 0.2, header: 0.1, footer: 0.1 } };
             const borderStyle = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} }; const center = { alignment: { horizontal: 'center', vertical: 'middle', wrapText: true }, border: borderStyle }; const gray = { ...center, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } } }; const fontData = { name: 'Calibri', size: 8 }; const fontHeader = { bold: true, name: 'Calibri', size: 9 }; const fontTitle = { bold: true, name: 'Calibri', size: 12 };
             const flatCols = getFlatColumns(); const totalCols = flatCols.length; const processText = (text) => text ? text.toString().replace(/\|/g, '\n') : '';
@@ -1167,7 +1382,7 @@
         }
 
         function exportarPDFOriginal() {
-            if (appState.escala.length === 0) return alert("Gere a escala primeiro.");
+            if (appState.escala.length === 0) return alert("Matriz vazia.");
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('landscape');
             const mesNome = document.getElementById('mes-select').options[appState.mes].text.toUpperCase(); 

@@ -3,22 +3,31 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Kyro - Gestão Pessoal</title>
-    <link rel="shortcut icon" href="https://placehold.co/32x32/ea580c/FFFFFF?text=K" type="image/x-icon">
+    <title>Kyro - Portal RH</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="shortcut icon" href="../imagens/favicon.ico" type="image/x-icon">
+    <script src="https://unpkg.com/lucide@latest"></script>
     
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                    },
                     colors: {
-                        'kyro-orange': {
-                            500: '#f97316',
-                            600: '#ea580c',
-                            700: '#c2410c',
+                        navy: {
+                            700: '#334155',
+                            800: '#1e293b', 
+                            900: '#0f172a',
+                            950: '#020617',
+                        },
+                        crimson: {
+                            500: '#ef4444',
+                            600: '#dc2626',
+                            700: '#b91c1c',
                         }
                     }
                 }
@@ -27,336 +36,449 @@
     </script>
 
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #fafafa; color: #111827; }
-        
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.2s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        
-        /* Navegação Minimalista */
-        .tab-nav {
-            display: flex;
-            justify-content: center;
+        body {
             background-color: #ffffff;
-            border-bottom: 1px solid #e5e7eb;
-            position: sticky;
-            top: 0;
-            z-index: 50;
+            color: #0f172a; 
+            overflow-x: hidden;
+            background-image: radial-gradient(#0f172a 0.5px, transparent 0.5px);
+            background-size: 32px 32px;
+            background-position: -19px -19px;
         }
 
-        .tab-link {
-            padding: 14px 20px;
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f8fafc; }
+        ::-webkit-scrollbar-thumb { background: #0f172a; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Abas (Tabs) do Sistema Kyro */
+        .cyber-tab {
+            position: relative;
+            padding: 8px 16px;
+            border: 1px solid #e2e8f0;
+            background-color: #ffffff;
+            color: #64748b;
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            transition: all 0.3s ease;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
             cursor: pointer;
-            border: none;
-            background-color: transparent;
-            color: #6b7280;
-            font-weight: 500;
-            font-size: 14px;
-            transition: all 0.2s;
-            border-bottom: 2px solid transparent;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 8px;
         }
-
-        .tab-link:hover { color: #111827; background-color: #f9fafb; }
-        .tab-link.active { color: #ea580c; border-bottom: 2px solid #ea580c; font-weight: 600; background-color: #fff7ed; }
         
-        /* Controles Planos */
-        .input-padrao {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #d1d5db;
-            border-radius: 2px;
-            outline: none;
-            font-size: 0.875rem;
-            background-color: #ffffff;
-            color: #111827;
+        .cyber-tab:hover {
+            border-color: #dc2626;
+            color: #0f172a;
         }
-        .input-padrao:focus { border-color: #ea580c; }
-        .input-padrao:disabled { background-color: #f3f4f6; color: #9ca3af; cursor: not-allowed; }
-        
+
+        .cyber-tab.active {
+            background-color: #dc2626;
+            color: #ffffff;
+            border-color: #dc2626;
+        }
+
+        /* Botões Primários Kyro */
         .btn-primary {
-            background-color: #ea580c;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 2px;
-            font-weight: 600;
-            font-size: 0.875rem;
-            transition: background-color 0.2s;
+            background-color: #dc2626;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
-            border: 1px solid #c2410c;
+            gap: 8px;
         }
-        .btn-primary:hover { background-color: #c2410c; }
+        .btn-primary:hover {
+            background-color: #0f172a;
+        }
 
-        /* Tabela Flat */
-        .table-container {
-            border-radius: 2px;
-            overflow: hidden;
-            border: 1px solid #e5e7eb;
+        /* Controles de Formulário Kyro */
+        .input-padrao {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 0;
+            outline: none;
+            font-size: 0.875rem;
             background-color: #ffffff;
+            color: #0f172a;
+            transition: all 0.2s;
         }
-        th { background-color: #f9fafb; font-weight: 600; text-transform: uppercase; font-size: 0.75rem; color: #4b5563; border-bottom: 1px solid #e5e7eb; }
-        td { border-bottom: 1px solid #f3f4f6; }
-        
-        /* Badges Sólidas/Básicas */
-        .badge { padding: 2px 6px; border-radius: 2px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; border: 1px solid #e5e7eb; background-color: #f9fafb; color: #374151; }
+        .input-padrao:focus { 
+            border-color: #dc2626; 
+            box-shadow: -4px 0 0 0 #dc2626;
+        }
+        .input-padrao:disabled { background-color: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
+
+        /* Estilo de Tabela Kyro */
+        .table-container {
+            border: 1px solid #e2e8f0;
+            background-color: #ffffff;
+            border-left: 4px solid #0f172a;
+        }
+        th { 
+            background-color: #0f172a; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            font-size: 0.7rem; 
+            letter-spacing: 0.05em;
+            color: #ffffff; 
+            padding: 12px;
+        }
+        td { 
+            border-bottom: 1px solid #f1f5f9; 
+            padding: 12px;
+        }
+        tr:hover td {
+            background-color: #f8fafc;
+        }
+
+        /* Estilos dos Cards "Shards" (Integração) */
+        .shard-wrapper {
+            filter: drop-shadow(0 10px 15px rgba(15, 23, 42, 0.05));
+            transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .shard-card {
+            background-color: #0f172a;
+            color: #ffffff;
+            clip-path: polygon(24px 0, 100% 0, 100% calc(100% - 24px), calc(100% - 24px) 100%, 0 100%, 0 24px);
+            position: relative;
+            height: 100%;
+        }
+        .icon-hexagon {
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            transition: all 0.4s ease;
+        }
+        .shard-wrapper:hover {
+            transform: translateY(-8px);
+            filter: drop-shadow(0 15px 25px rgba(220, 38, 38, 0.3));
+        }
+        .shard-wrapper:hover .icon-hexagon {
+            background-color: rgba(220, 38, 38, 0.15);
+            transform: rotate(90deg) scale(1.1);
+        }
+        .shard-wrapper:hover .shard-icon {
+            color: #dc2626;
+            transform: rotate(-90deg);
+        }
+        .shard-wrapper:hover .shard-accent {
+            width: 100%;
+        }
+        .shard-accent {
+            position: absolute;
+            top: 0; left: 24px;
+            width: 40px; height: 3px;
+            background-color: #dc2626;
+            transition: width 0.4s ease;
+        }
     </style>
 </head>
-<body class="flex flex-col min-h-screen">
+<body class="flex flex-col min-h-screen selection:bg-crimson-600 selection:text-white">
 
-    <header class="bg-white border-b border-gray-200 w-full h-16 flex-shrink-0 z-40 relative">
-        <div class="container mx-auto px-4 md:px-6 h-full flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="bg-kyro-orange-600 text-white w-8 h-8 rounded-sm flex items-center justify-center font-bold text-sm">
-                    <i class="fas fa-landmark"></i>
+    <!-- HEADER ESTILO KYRO OS -->
+    <header class="bg-navy-900 border-b border-navy-950 w-full h-16 flex-shrink-0 z-40 relative sticky top-0">
+        <div class="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <!-- Logo Abstrata Surreal -->
+                <div class="w-8 h-8 relative flex items-center justify-center">
+                    <img src="../imagens/logo.png" alt="logo">
                 </div>
                 <div>
-                    <h1 class="text-sm font-bold text-gray-900 leading-tight">Prefeitura de Limeira</h1>
-                    <p class="text-[10px] text-gray-500 font-medium tracking-wide uppercase">Centro de Gestão de Pessoal</p>
+                    <h1 class="text-sm font-black text-white uppercase tracking-wider leading-tight">Kyro</h1>
+                    <p class="text-[10px] text-gray-400 font-bold tracking-widest uppercase">Gestão & RH</p>
                 </div>
             </div>
-            <div class="text-[10px] font-bold px-2 py-1 bg-gray-100 border border-gray-200 rounded-sm text-gray-500" id="status-db">
-                Sincronizado (v6)
-            </div>
+            
         </div>
     </header>
         
-    <nav class="tab-nav">
-        <button onclick="switchTab('funcionarios-ponto')" class="tab-link active" id="tab-btn-funcionarios-ponto">
-            <i class="fas fa-clock"></i> <span>Equipe Ponto</span>
-        </button>
-        <button onclick="switchTab('funcionarios-escala')" class="tab-link" id="tab-btn-funcionarios-escala">
-            <i class="fas fa-calendar-alt"></i> <span>Equipe Escala</span>
-        </button>
-        <button onclick="switchTab('ferias')" class="tab-link" id="tab-btn-ferias">
-            <i class="fas fa-umbrella-beach"></i> <span>Férias</span>
-        </button>
-        <button onclick="switchTab('feriados')" class="tab-link" id="tab-btn-feriados">
-            <i class="fas fa-calendar-day"></i> <span>Feriados</span>
-        </button>
-        <button onclick="switchTab('integracao')" class="tab-link" id="tab-btn-integracao">
-            <i class="fas fa-th-large"></i> <span>Sistemas</span>
-        </button>
-    </nav>
+    <!-- NAV ESTILO CYBER-TABS -->
+    <section class="max-w-7xl mx-auto px-6 mt-10 mb-6 w-full">
+        <div class="flex flex-col md:flex-row justify-between items-end gap-6 border-b-2 border-gray-200 pb-4">
+            <div>
+                <h2 class="text-2xl font-black text-navy-900 uppercase tracking-tight">Portal RH</h2>
+                <p class="text-[11px] text-gray-500 font-bold tracking-widest uppercase mt-1">Gerenciamento Operacional de Servidores</p>
+            </div>
 
-    <main class="container mx-auto px-4 py-8 flex-grow max-w-6xl">
+            <nav class="flex flex-wrap gap-3" id="tab-container">
+                <button onclick="switchTab('funcionarios-ponto')" class="cyber-tab active" id="tab-btn-funcionarios-ponto">
+                    <i data-lucide="clock" class="w-4 h-4"></i> Equipe Ponto
+                </button>
+                <button onclick="switchTab('funcionarios-escala')" class="cyber-tab" id="tab-btn-funcionarios-escala">
+                    <i data-lucide="calendar-days" class="w-4 h-4"></i> Equipe Escala
+                </button>
+                <button onclick="switchTab('ferias')" class="cyber-tab" id="tab-btn-ferias">
+                    <i data-lucide="palmtree" class="w-4 h-4"></i> Férias
+                </button>
+                <button onclick="switchTab('feriados')" class="cyber-tab" id="tab-btn-feriados">
+                    <i data-lucide="calendar" class="w-4 h-4"></i> Feriados
+                </button>
+                <button onclick="switchTab('integracao')" class="cyber-tab" id="tab-btn-integracao">
+                    <i data-lucide="layout-grid" class="w-4 h-4"></i> Sistemas
+                </button>
+            </nav>
+        </div>
+    </section>
 
+    <!-- ÁREA PRINCIPAL -->
+    <main class="max-w-7xl mx-auto px-6 pb-24 flex-grow w-full">
+
+        <!-- TAB: FUNCIONÁRIOS PONTO -->
         <div id="funcionarios-ponto" class="tab-content active">
-            <div class="bg-white p-6 rounded-sm border border-gray-200 mb-6">
-                <h2 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">
-                    <i class="fas fa-user-clock text-gray-400"></i> Funcionários do Ponto
+            <!-- Painel com estilo Pódio Kyro -->
+            <div class="bg-white p-8 border border-gray-200 shadow-xl mb-6 relative" style="clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);">
+                
+                <h2 class="text-lg font-black text-navy-900 mb-6 pb-2 border-b border-gray-100 flex items-center gap-2 uppercase tracking-wide">
+                    <i data-lucide="user-cog" class="text-crimson-600 w-5 h-5"></i> Funcionários do Ponto
                 </h2>
                 
-                <form id="form-funcionario-ponto" class="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6 bg-gray-50 p-4 rounded-sm border border-gray-200 relative">
+                <form id="form-funcionario-ponto" class="grid grid-cols-1 md:grid-cols-12 gap-5 mb-8 bg-gray-50 p-6 border-l-4 border-crimson-600 relative">
                     <input type="hidden" id="ponto-id-hidden">
+                    
                     <div class="md:col-span-5">
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nome Completo</label>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Nome Completo</label>
                         <input type="text" id="ponto-nome" class="input-padrao" required placeholder="Ex: João da Silva">
                     </div>
                     <div class="md:col-span-3">
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Vínculo</label>
-                        <select id="ponto-vinculo" class="input-padrao bg-white">
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Vínculo</label>
+                        <select id="ponto-vinculo" class="input-padrao">
                             <option value="Funcionário">Funcionário</option>
                             <option value="Estagiário">Estagiário</option>
                         </select>
                     </div>
                     <div class="md:col-span-2">
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Matrícula</label>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Matrícula</label>
                         <input type="text" id="ponto-matricula" class="input-padrao">
                     </div>
                     <div class="md:col-span-2 flex items-end">
-                        <button type="submit" id="btn-salvar-ponto" class="w-full btn-primary"><i class="fas fa-save"></i> Salvar</button>
+                        <button type="submit" id="btn-salvar-ponto" class="w-full btn-primary">
+                            <i data-lucide="save" class="w-4 h-4"></i> Salvar
+                        </button>
                     </div>
-                    <button type="button" onclick="limparFormPonto()" class="absolute top-2 right-2 text-[10px] text-gray-400 hover:text-gray-900 uppercase font-bold">Limpar</button>
+                    <button type="button" onclick="limparFormPonto()" class="absolute top-2 right-4 text-[10px] text-gray-400 hover:text-crimson-600 uppercase font-bold tracking-widest transition-colors">Limpar</button>
                 </form>
 
                 <div class="table-container">
                     <table class="w-full text-left text-sm">
-                        <thead><tr><th class="p-3">Nome</th><th class="p-3">Vínculo</th><th class="p-3">Matrícula</th><th class="p-3 text-right">Ações</th></tr></thead>
-                        <tbody id="lista-funcionarios-ponto" class="bg-white text-gray-700"></tbody>
+                        <thead><tr><th>Nome</th><th>Vínculo</th><th>Matrícula</th><th class="text-right">Ações</th></tr></thead>
+                        <tbody id="lista-funcionarios-ponto" class="text-navy-800 font-medium"></tbody>
                     </table>
                 </div>
             </div>
         </div>
 
+        <!-- TAB: FUNCIONÁRIOS ESCALA -->
         <div id="funcionarios-escala" class="tab-content">
-            <div class="bg-white p-6 rounded-sm border border-gray-200 mb-6">
-                <div class="mb-4 pb-2 border-b border-gray-100">
-                    <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
-                        <i class="fas fa-users-cog text-gray-400"></i> Funcionários da Escala
+            <div class="bg-white p-8 border border-gray-200 shadow-xl mb-6 relative" style="clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);">
+                
+                <div class="mb-6 pb-2 border-b border-gray-100">
+                    <h2 class="text-lg font-black text-navy-900 flex items-center gap-2 uppercase tracking-wide">
+                        <i data-lucide="users" class="text-crimson-600 w-5 h-5"></i> Funcionários da Escala
                     </h2>
-                    <p class="text-xs text-gray-500 mt-1">Selecione um funcionário já cadastrado no Ponto para adicionar à Escala.</p>
+                    <p class="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Vincule um funcionário ativo do Ponto à Escala Operacional.</p>
                 </div>
                 
-                <form id="form-funcionario-escala" class="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6 bg-gray-50 p-4 rounded-sm border border-gray-200 relative">
+                <form id="form-funcionario-escala" class="grid grid-cols-1 md:grid-cols-12 gap-5 mb-8 bg-gray-50 p-6 border-l-4 border-crimson-600 relative">
                     <input type="hidden" id="escala-id-hidden">
                     
                     <div class="md:col-span-4">
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Funcionário (do Ponto)</label>
-                        <select id="escala-funcionario-select" class="input-padrao bg-white" required>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Selecione (Base Ponto)</label>
+                        <select id="escala-funcionario-select" class="input-padrao" required>
                             <option value="">Selecione...</option>
                         </select>
                     </div>
 
                     <div class="md:col-span-3">
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nome na Escala</label>
-                        <input type="text" id="escala-apelido" class="input-padrao" placeholder="Apelido/Nome Curto">
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Nome na Escala</label>
+                        <input type="text" id="escala-apelido" class="input-padrao" placeholder="Apelido / Reduzido">
                     </div>
 
                     <div class="md:col-span-3">
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Cargo</label>
-                        <select id="escala-cargo" class="input-padrao bg-white">
-                            <option value="">Selecione...</option>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Cargo</label>
+                        <select id="escala-cargo" class="input-padrao">
+                            <option value="">Nenhum...</option>
                             <option value="Agente Fiscal">Agente Fiscal</option>
                             <option value="Assistente Administrativo">Assistente Administrativo</option>
                         </select>
                     </div>
                     
                     <div class="md:col-span-2">
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Categoria</label>
-                        <select id="escala-categoria" class="input-padrao bg-white" onchange="toggleCargo(this)">
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Categoria</label>
+                        <select id="escala-categoria" class="input-padrao" onchange="toggleCargo(this)">
                             <option value="Funcionário">Geral</option>
                             <option value="Funcionário da Senha">Senha</option>
                         </select>
                     </div>
                     
-                    <div class="md:col-span-12 grid grid-cols-2 md:grid-cols-4 gap-4 border-t border-gray-200 pt-4 mt-2">
+                    <div class="md:col-span-12 grid grid-cols-2 md:grid-cols-4 gap-5 border-t border-gray-200 pt-5 mt-2">
                          <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Saída 1 (Almoço)</label>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Saída (Almoço)</label>
                             <input type="time" id="escala-saida1" class="input-padrao">
                          </div>
                          <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Entrada 2 (Retorno)</label>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Entrada (Retorno)</label>
                             <input type="time" id="escala-entrada2" class="input-padrao">
                          </div>
                          <div class="col-span-2 flex items-end">
-                            <button type="submit" id="btn-salvar-escala" class="w-full btn-primary"><i class="fas fa-plus"></i> Adicionar à Escala</button>
+                            <button type="submit" id="btn-salvar-escala" class="w-full btn-primary">
+                                <i data-lucide="plus" class="w-4 h-4"></i> Adicionar à Escala
+                            </button>
                          </div>
                     </div>
                     
-                    <button type="button" onclick="limparFormEscala()" class="absolute top-2 right-2 text-[10px] text-gray-400 hover:text-gray-900 uppercase font-bold">Limpar</button>
+                    <button type="button" onclick="limparFormEscala()" class="absolute top-2 right-4 text-[10px] text-gray-400 hover:text-crimson-600 uppercase font-bold tracking-widest transition-colors">Limpar</button>
                 </form>
 
                 <div class="table-container">
                     <table class="w-full text-left text-sm">
                         <thead>
-                            <tr>
-                                <th class="p-3">Nome na Escala</th>
-                                <th class="p-3">Cargo / Categoria</th>
-                                <th class="p-3">Horários (Ref.)</th>
-                                <th class="p-3 text-right">Ações</th>
-                            </tr>
+                            <tr><th>Nome na Escala</th><th>Cargo / Categoria</th><th>Horários (Ref.)</th><th class="text-right">Ações</th></tr>
                         </thead>
-                        <tbody id="lista-funcionarios-escala" class="bg-white text-gray-700"></tbody>
+                        <tbody id="lista-funcionarios-escala" class="text-navy-800 font-medium"></tbody>
                     </table>
                 </div>
             </div>
         </div>
 
+        <!-- TAB: FÉRIAS -->
         <div id="ferias" class="tab-content">
-            <div class="bg-white p-6 rounded-sm border border-gray-200">
-                <h2 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">
-                    <i class="fas fa-plane-departure text-gray-400"></i> Agendamento de Férias
+            <div class="bg-white p-8 border border-gray-200 shadow-xl mb-6 relative" style="clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);">
+                
+                <h2 class="text-lg font-black text-navy-900 mb-6 pb-2 border-b border-gray-100 flex items-center gap-2 uppercase tracking-wide">
+                    <i data-lucide="plane" class="text-crimson-600 w-5 h-5"></i> Agendamento de Férias
                 </h2>
                 
-                <form id="form-ferias" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 bg-gray-50 p-4 rounded-sm border border-gray-200">
+                <form id="form-ferias" class="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8 bg-gray-50 p-6 border-l-4 border-crimson-600 relative">
                     <div class="md:col-span-2">
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Funcionário</label>
-                        <select id="ferias-func-select" class="input-padrao bg-white" required></select>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Funcionário</label>
+                        <select id="ferias-func-select" class="input-padrao" required></select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Início</label>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Início</label>
                         <input type="date" id="ferias-inicio" class="input-padrao" required>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Duração (Dias)</label>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Duração (Dias)</label>
                         <div class="flex gap-2">
                             <input type="number" id="ferias-dias" min="1" value="30" class="input-padrao" required>
-                            <button type="submit" class="btn-primary px-4"><i class="fas fa-check"></i></button>
+                            <button type="submit" class="btn-primary px-4"><i data-lucide="check" class="w-4 h-4"></i></button>
                         </div>
                     </div>
                 </form>
 
                 <div class="table-container">
                     <table class="w-full text-left text-sm">
-                        <thead><tr><th class="p-3">Funcionário</th><th class="p-3">Início</th><th class="p-3">Fim</th><th class="p-3 text-right">Ações</th></tr></thead>
-                        <tbody id="lista-ferias" class="bg-white text-gray-700"></tbody>
+                        <thead><tr><th>Funcionário</th><th>Início</th><th>Fim</th><th class="text-right">Ações</th></tr></thead>
+                        <tbody id="lista-ferias" class="text-navy-800 font-medium"></tbody>
                     </table>
                 </div>
             </div>
         </div>
 
+        <!-- TAB: FERIADOS -->
         <div id="feriados" class="tab-content">
-            <div class="bg-white p-6 rounded-sm border border-gray-200">
-                <div class="flex flex-col md:flex-row justify-between items-end mb-4 pb-2 border-b border-gray-100 gap-4">
-                    <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
-                        <i class="fas fa-calendar-check text-gray-400"></i> Feriados (Banco Central)
+            <div class="bg-white p-8 border border-gray-200 shadow-xl mb-6 relative" style="clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);">
+                
+                <div class="flex flex-col md:flex-row justify-between items-end mb-6 pb-2 border-b border-gray-100 gap-4">
+                    <h2 class="text-lg font-black text-navy-900 flex items-center gap-2 uppercase tracking-wide">
+                        <i data-lucide="calendar-check" class="text-crimson-600 w-5 h-5"></i> Calendário Oficial (Bacen)
                     </h2>
                     <div class="flex items-center gap-3">
-                         <div class="flex items-center bg-white border border-gray-300 rounded-sm p-1">
-                            <label class="text-xs font-bold text-gray-500 uppercase px-2">Ano Base:</label>
-                            <input type="number" id="filtro-ano-feriado" class="bg-transparent border-none w-16 text-center font-bold text-gray-900 outline-none text-sm" onchange="renderFeriados()" placeholder="2024">
+                         <div class="flex items-center bg-gray-50 border border-gray-200 p-1 pl-3" style="clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);">
+                            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Ano Base:</label>
+                            <input type="number" id="filtro-ano-feriado" class="bg-transparent border-none w-20 text-center font-black text-navy-900 outline-none text-base" onchange="renderFeriados()" placeholder="2024">
                          </div>
                     </div>
                 </div>
                 
-                <form id="form-feriados" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 bg-gray-50 p-4 rounded-sm border border-gray-200">
+                <form id="form-feriados" class="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8 bg-gray-50 p-6 border-l-4 border-crimson-600 relative">
                     <div class="md:col-span-2">
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nome do Feriado</label>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Nome do Feriado</label>
                         <input type="text" id="feriado-nome" class="input-padrao" required>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Data</label>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Data</label>
                         <input type="date" id="feriado-data" class="input-padrao" required>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Tipo</label>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Tipo</label>
                         <div class="flex gap-2">
-                            <select id="feriado-tipo" class="input-padrao bg-white w-full">
+                            <select id="feriado-tipo" class="input-padrao w-full">
                                 <option value="Nacional">Nacional</option>
                                 <option value="Municipal">Municipal</option>
                                 <option value="Estadual">Estadual</option>
                                 <option value="Ponto Facultativo">Ponto Facultativo</option>
                             </select>
-                            <button type="submit" class="btn-primary px-4"><i class="fas fa-plus"></i></button>
+                            <button type="submit" class="btn-primary px-4"><i data-lucide="plus" class="w-4 h-4"></i></button>
                         </div>
                     </div>
                 </form>
 
                 <div class="table-container">
                     <table class="w-full text-left text-sm">
-                        <thead><tr><th class="p-3">Data</th><th class="p-3">Nome</th><th class="p-3">Tipo</th><th class="p-3 text-right">Ações</th></tr></thead>
-                        <tbody id="lista-feriados" class="bg-white text-gray-700"></tbody>
+                        <thead><tr><th>Data</th><th>Nome</th><th>Tipo</th><th class="text-right">Ações</th></tr></thead>
+                        <tbody id="lista-feriados" class="text-navy-800 font-medium"></tbody>
                     </table>
                 </div>
             </div>
         </div>
 
+        <!-- TAB: SISTEMAS (Estilo Shard Grid Kyro) -->
         <div id="integracao" class="tab-content">
-            <div class="bg-white p-10 rounded-sm border border-gray-200 text-center">
-                <h2 class="text-2xl font-bold text-gray-900 mb-2">Sistemas Integrados</h2>
-                <p class="text-gray-500 mb-10 text-sm">Painel base de dados. Alterações aqui refletem nos apps abaixo.</p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-                    
-                    <a href="../escala/escala.html" target="_blank" class="group block bg-white border border-gray-200 p-6 rounded-sm hover:border-kyro-orange-500 transition-colors text-left">
-                        <div class="text-2xl mb-3 text-gray-800"><i class="fas fa-table"></i></div>
-                        <h3 class="text-lg font-bold text-gray-900 mb-1">Sistema de Escala</h3>
-                        <p class="text-gray-500 mb-4 text-xs">Gera escala baseada nos dados deste painel.</p>
-                        <span class="text-kyro-orange-600 font-bold text-xs uppercase group-hover:underline">Acessar &rarr;</span>
-                    </a>
+            <div class="mb-10 text-center">
+                <h2 class="text-3xl font-black text-navy-900 uppercase tracking-tight mb-2">Sistemas Integrados</h2>
+                <p class="text-[11px] text-gray-500 font-bold uppercase tracking-widest">Painel central de dados. Alterações refletem em tempo real.</p>
+            </div>
 
-                    <a href="../ponto-digital/ponto-digital.html" target="_blank" class="group block bg-white border border-gray-200 p-6 rounded-sm hover:border-kyro-orange-500 transition-colors text-left">
-                        <div class="text-2xl mb-3 text-gray-800"><i class="fas fa-clipboard-list"></i></div>
-                        <h3 class="text-lg font-bold text-gray-900 mb-1">Controle de Ponto</h3>
-                        <p class="text-gray-500 mb-4 text-xs">Folhas de frequência e relatórios.</p>
-                        <span class="text-kyro-orange-600 font-bold text-xs uppercase group-hover:underline">Acessar &rarr;</span>
-                    </a>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto h-56">
+                
+                <!-- Card Escala -->
+                <a href="../escala/escala.html" class="shard-wrapper block h-full group">
+                    <div class="shard-card p-6 flex flex-col justify-between">
+                        <div class="shard-accent"></div>
+                        <div class="flex justify-between items-start">
+                            <div class="w-14 h-14 bg-navy-800 flex items-center justify-center icon-hexagon border border-navy-700">
+                                <i data-lucide="layout-dashboard" class="w-6 h-6 text-white shard-icon transition-colors"></i>
+                            </div>
+                            <span class="text-[9px] font-bold text-white bg-crimson-600 px-2 py-1 uppercase tracking-widest" style="clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);">ATIVO</span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white mb-1 uppercase tracking-wide">Sistema de Escala</h3>
+                            <p class="text-xs text-gray-400 font-light">Geração de escala operacional baseada nos dados RH.</p>
+                        </div>
+                    </div>
+                </a>
 
-                </div>
+                <!-- Card Ponto -->
+                <a href="../ponto-digital/ponto-digital.html" class="shard-wrapper block h-full group">
+                    <div class="shard-card p-6 flex flex-col justify-between">
+                        <div class="shard-accent"></div>
+                        <div class="flex justify-between items-start">
+                            <div class="w-14 h-14 bg-navy-800 flex items-center justify-center icon-hexagon border border-navy-700">
+                                <i data-lucide="fingerprint" class="w-6 h-6 text-white shard-icon transition-colors"></i>
+                            </div>
+                            <span class="text-[9px] font-bold text-white bg-crimson-600 px-2 py-1 uppercase tracking-widest" style="clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);">ATIVO</span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white mb-1 uppercase tracking-wide">Controle de Ponto</h3>
+                            <p class="text-xs text-gray-400 font-light">Folhas de frequência, biometria e relatórios.</p>
+                        </div>
+                    </div>
+                </a>
+
             </div>
         </div>
 
@@ -403,136 +525,72 @@
             feriados: []
         };
         
+        // Utilitários de Data para Feriados (mantidos idênticos)
         function getPascoa(ano) {
-            const f = Math.floor,
-                G = ano % 19,
-                C = f(ano / 100),
-                H = (C - f(C / 4) - f((8 * C + 13) / 25) + 19 * G + 15) % 30,
-                I = H - f(H / 28) * (1 - f(29 / (H + 1)) * f((21 - G) / 11)),
-                J = (ano + f(ano / 4) + I + 2 - C + f(C / 4)) % 7,
-                L = I - J,
-                mes = 3 + f((L + 40) / 44),
-                dia = L + 28 - 31 * f(mes / 4);
+            const f = Math.floor, G = ano % 19, C = f(ano / 100), H = (C - f(C / 4) - f((8 * C + 13) / 25) + 19 * G + 15) % 30, I = H - f(H / 28) * (1 - f(29 / (H + 1)) * f((21 - G) / 11)), J = (ano + f(ano / 4) + I + 2 - C + f(C / 4)) % 7, L = I - J, mes = 3 + f((L + 40) / 44), dia = L + 28 - 31 * f(mes / 4);
             return new Date(ano, mes - 1, dia);
         }
-
-        function addDays(date, days) {
-            const result = new Date(date);
-            result.setDate(result.getDate() + days);
-            return result;
-        }
-
-        function formatYMD(date) {
-            return date.toISOString().split('T')[0];
-        }
+        function addDays(date, days) { const result = new Date(date); result.setDate(result.getDate() + days); return result; }
+        function formatYMD(date) { return date.toISOString().split('T')[0]; }
 
         function gerarFeriadosPadrao(ano) {
             const pascoa = getPascoa(ano);
-            const carnavalSeg = addDays(pascoa, -48);
-            const carnavalTer = addDays(pascoa, -47);
-            const cinzas = addDays(pascoa, -46);
-            const sextaSanta = addDays(pascoa, -2);
-            const corpusChristi = addDays(pascoa, 60);
+            const carnavalSeg = addDays(pascoa, -48); const carnavalTer = addDays(pascoa, -47); const cinzas = addDays(pascoa, -46); const sextaSanta = addDays(pascoa, -2); const corpusChristi = addDays(pascoa, 60);
 
             return [
                 { data: `${ano}-01-01`, nome: 'Confraternização Universal', tipo: 'Nacional' },
                 { data: formatYMD(carnavalSeg), nome: 'Carnaval (Segunda-feira)', tipo: 'Ponto Facultativo' },
                 { data: formatYMD(carnavalTer), nome: 'Carnaval (Terça-feira)', tipo: 'Ponto Facultativo' },
                 { data: formatYMD(cinzas), nome: 'Quarta-feira de Cinzas (até 14h)', tipo: 'Ponto Facultativo' },
-                { data: formatYMD(sextaSanta), nome: 'Sexta-feira Santa (Paixão de Cristo)', tipo: 'Municipal' },
+                { data: formatYMD(sextaSanta), nome: 'Sexta-feira Santa', tipo: 'Municipal' },
                 { data: `${ano}-04-21`, nome: 'Tiradentes', tipo: 'Nacional' },
                 { data: `${ano}-05-01`, nome: 'Dia do Trabalho', tipo: 'Nacional' },
                 { data: formatYMD(corpusChristi), nome: 'Corpus Christi', tipo: 'Municipal' },
                 { data: `${ano}-07-09`, nome: 'Revolução Constitucionalista', tipo: 'Estadual' },
                 { data: `${ano}-09-07`, nome: 'Independência do Brasil', tipo: 'Nacional' },
-                { data: `${ano}-09-15`, nome: 'N. Sra. das Dores (Aniversário de Limeira)', tipo: 'Municipal' },
+                { data: `${ano}-09-15`, nome: 'N. Sra. das Dores', tipo: 'Municipal' },
                 { data: `${ano}-10-12`, nome: 'Nossa Senhora Aparecida', tipo: 'Nacional' },
                 { data: `${ano}-10-28`, nome: 'Dia do Servidor Público', tipo: 'Ponto Facultativo' },
                 { data: `${ano}-11-02`, nome: 'Finados', tipo: 'Nacional' },
                 { data: `${ano}-11-15`, nome: 'Proclamação da República', tipo: 'Nacional' },
                 { data: `${ano}-11-20`, nome: 'Dia da Consciência Negra', tipo: 'Nacional' },
-                { data: `${ano}-12-24`, nome: 'Véspera de Natal (pós 13h)', tipo: 'Ponto Facultativo' },
+                { data: `${ano}-12-24`, nome: 'Véspera de Natal', tipo: 'Ponto Facultativo' },
                 { data: `${ano}-12-25`, nome: 'Natal', tipo: 'Nacional' },
                 { data: `${ano}-12-26`, nome: 'Pós Natal', tipo: 'Ponto Facultativo' },
-                { data: `${ano}-12-31`, nome: 'Véspera de Ano Novo (pós 13h)', tipo: 'Ponto Facultativo' }
+                { data: `${ano}-12-31`, nome: 'Véspera de Ano Novo', tipo: 'Ponto Facultativo' }
             ];
         }
 
         function aplicarRegrasDeEmenda(feriados, ano) {
             let novosFeriados = [...feriados];
             let mudou = false;
-            
             const feriadosReais = feriados.filter(f => f.data.startsWith(ano) && f.tipo !== 'Ponto Facultativo');
             
             feriadosReais.forEach(f => {
                 const dataFeriado = new Date(f.data + 'T00:00:00');
                 const diaSemana = dataFeriado.getDay();
-                
                 if (diaSemana === 4) {
-                    const dataSexta = addDays(dataFeriado, 1);
-                    const strSexta = formatYMD(dataSexta);
-                    if (!novosFeriados.some(exist => exist.data === strSexta)) {
-                        novosFeriados.push({ data: strSexta, nome: `Emenda: ${f.nome}`, tipo: 'Ponto Facultativo' });
-                        mudou = true;
-                    }
+                    const strSexta = formatYMD(addDays(dataFeriado, 1));
+                    if (!novosFeriados.some(exist => exist.data === strSexta)) { novosFeriados.push({ data: strSexta, nome: `Emenda: ${f.nome}`, tipo: 'Ponto Facultativo' }); mudou = true; }
                 }
                 if (diaSemana === 2) {
-                    const dataSegunda = addDays(dataFeriado, -1);
-                    const strSegunda = formatYMD(dataSegunda);
-                    if (!novosFeriados.some(exist => exist.data === strSegunda)) {
-                        novosFeriados.push({ data: strSegunda, nome: `Emenda: ${f.nome}`, tipo: 'Ponto Facultativo' });
-                        mudou = true;
-                    }
+                    const strSegunda = formatYMD(addDays(dataFeriado, -1));
+                    if (!novosFeriados.some(exist => exist.data === strSegunda)) { novosFeriados.push({ data: strSegunda, nome: `Emenda: ${f.nome}`, tipo: 'Ponto Facultativo' }); mudou = true; }
                 }
             });
-
-            let listaAnalise = novosFeriados
-                .filter(f => f.data.startsWith(ano))
-                .sort((a,b) => a.data.localeCompare(b.data));
-
-            for(let i=0; i < listaAnalise.length - 1; i++) {
-                const fAtual = listaAnalise[i];
-                const fProx = listaAnalise[i+1];
-                
-                const dAtual = new Date(fAtual.data + 'T00:00:00');
-                const dProx = new Date(fProx.data + 'T00:00:00');
-                
-                const diffTime = Math.abs(dProx - dAtual);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                
-                if (diffDays === 2) {
-                    const diaMeio = addDays(dAtual, 1);
-                    const strMeio = formatYMD(diaMeio);
-                    
-                    if (!novosFeriados.some(exist => exist.data === strMeio)) {
-                        novosFeriados.push({ data: strMeio, nome: `Ponte (Entre Feriados)`, tipo: 'Ponto Facultativo' });
-                        mudou = true;
-                    }
-                }
-            }
-
             return { lista: novosFeriados, mudou };
         }
 
         function garantirFeriadosParaAno(ano) {
             const feriadosDoAno = data.feriados.filter(f => f.data.startsWith(ano));
             let houveMudanca = false;
-
             if (feriadosDoAno.length < 5) {
-                const padroes = gerarFeriadosPadrao(ano);
-                padroes.forEach(padrao => {
-                    if (!data.feriados.some(f => f.data === padrao.data)) {
-                        data.feriados.push(padrao);
-                        houveMudanca = true;
-                    }
+                gerarFeriadosPadrao(ano).forEach(padrao => {
+                    if (!data.feriados.some(f => f.data === padrao.data)) { data.feriados.push(padrao); houveMudanca = true; }
                 });
             }
-
             const res = aplicarRegrasDeEmenda(data.feriados, ano);
-            if (res.mudou) {
-                data.feriados = res.lista;
-                houveMudanca = true;
-            }
+            if (res.mudou) { data.feriados = res.lista; houveMudanca = true; }
             return houveMudanca;
         }
 
@@ -540,11 +598,11 @@
             const anoAtual = new Date().getFullYear();
             let mudou = garantirFeriadosParaAno(anoAtual);
             if (garantirFeriadosParaAno(anoAtual + 1)) mudou = true;
-
             if (mudou) salvarDados(true);
         }
 
         function init() {
+            lucide.createIcons();
             carregarDados();
             document.getElementById('filtro-ano-feriado').value = new Date().getFullYear();
             inicializarBancoDeFeriados();
@@ -556,7 +614,7 @@
 
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-link').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.cyber-tab').forEach(b => b.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             document.getElementById('tab-btn-' + tabId).classList.add('active');
             if(tabId === 'funcionarios-escala') updateEscalaSelectOptions();
@@ -592,6 +650,7 @@
             renderFerias();
             renderFeriados();
             updateFeriasSelect();
+            lucide.createIcons(); // Recriar ícones após injeção no DOM
         }
 
         function renderFuncs(tipo) {
@@ -602,23 +661,36 @@
 
             lista.forEach(f => {
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-gray-50 transition-colors";
                 let nomeDisplay = '', extras = '';
                 
                 if(tipo === 'ponto') {
-                    nomeDisplay = `<div class="font-semibold text-gray-900">${f.nome}</div>`;
-                    extras = `<td class="p-3"><span class="badge">${f.vinculo}</span></td><td class="p-3 font-mono text-xs">${f.matricula||'-'}</td>`;
+                    nomeDisplay = `<div class="font-bold text-navy-900">${f.nome}</div>`;
+                    
+                    const badgeClass = f.vinculo === 'Estagiário' ? 'bg-gray-200 text-navy-900' : 'bg-navy-900 text-white';
+                    const badgeBadge = `<span class="${badgeClass} text-[9px] font-bold px-2 py-1 uppercase tracking-widest" style="clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);">${f.vinculo}</span>`;
+
+                    extras = `<td>${badgeBadge}</td><td class="font-mono text-xs text-gray-500">${f.matricula||'-'}</td>`;
                 } else {
-                    const apelido = f.apelido ? `<span class="font-bold text-gray-900">${f.apelido}</span>` : `<span class="italic text-gray-400">Sem apelido</span>`;
-                    const nomeReal = `<div class="text-[10px] text-gray-500 uppercase">${f.nome}</div>`;
+                    const apelido = f.apelido ? `<span class="font-black text-navy-900">${f.apelido}</span>` : `<span class="italic text-gray-400">Sem apelido</span>`;
+                    const nomeReal = `<div class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mt-1">${f.nome}</div>`;
                     nomeDisplay = `<div>${apelido}${nomeReal}</div>`;
-                    const catBadge = f.categoria === 'Funcionário da Senha' ? '<span class="badge bg-gray-200">Senha</span>' : '<span class="badge">Geral</span>';
-                    const horarios = (f.saida1 || f.entrada2) ? `<span class="text-xs text-gray-600">${f.saida1 || '?'} - ${f.entrada2 || '?'}</span>` : '<span class="text-xs text-gray-300">-</span>';
-                    const cargoDisplay = f.cargo || '<span class="text-gray-400 text-xs italic">Sem cargo</span>';
-                    extras = `<td class="p-3"><div class="text-xs text-gray-700">${cargoDisplay}</div><div class="mt-1">${catBadge}</div></td><td class="p-3">${horarios}</td>`;
+                    
+                    const catBadgeClass = f.categoria === 'Funcionário da Senha' ? 'bg-gray-200 text-navy-900' : 'bg-navy-900 text-white';
+                    const catBadgeText = f.categoria === 'Funcionário da Senha' ? 'Senha' : 'Geral';
+                    const catBadge = `<span class="${catBadgeClass} text-[9px] font-bold px-2 py-1 uppercase tracking-widest" style="clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);">${catBadgeText}</span>`;
+                    
+                    const horarios = (f.saida1 || f.entrada2) ? `<span class="text-xs font-bold text-gray-600 bg-gray-100 px-2 py-1">${f.saida1 || '?'} - ${f.entrada2 || '?'}</span>` : '<span class="text-xs text-gray-300">-</span>';
+                    const cargoDisplay = f.cargo ? `<div class="text-[11px] font-bold text-gray-700 uppercase tracking-widest mb-2">${f.cargo}</div>` : '<div class="text-gray-400 text-[10px] uppercase tracking-widest mb-2 italic">Sem cargo</div>';
+                    
+                    extras = `<td>${cargoDisplay}${catBadge}</td><td>${horarios}</td>`;
                 }
 
-                tr.innerHTML = `<td class="p-3">${nomeDisplay}</td>${extras}<td class="p-3 text-right"><button onclick="editar('${f.id}', '${tipo}')" class="text-gray-400 hover:text-gray-900 p-1 mx-1"><i class="fas fa-edit"></i></button><button onclick="excluir('${f.id}')" class="text-gray-400 hover:text-red-600 p-1 mx-1"><i class="fas fa-trash-alt"></i></button></td>`;
+                tr.innerHTML = `
+                    <td>${nomeDisplay}</td>${extras}
+                    <td class="text-right">
+                        <button onclick="editar('${f.id}', '${tipo}')" class="text-gray-400 hover:text-navy-900 transition-colors p-2"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                        <button onclick="excluir('${f.id}')" class="text-gray-400 hover:text-crimson-600 transition-colors p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </td>`;
                 tbody.appendChild(tr);
             });
         }
@@ -682,8 +754,9 @@
         function limparForm(tipo) {
             document.getElementById(`form-funcionario-${tipo}`).reset();
             document.getElementById(`${tipo}-id-hidden`).value = '';
-            document.getElementById(`btn-salvar-${tipo}`).innerHTML = tipo === 'escala' ? '<i class="fas fa-plus"></i> Adicionar à Escala' : '<i class="fas fa-save"></i> Salvar';
+            document.getElementById(`btn-salvar-${tipo}`).innerHTML = tipo === 'escala' ? '<i data-lucide="plus" class="w-4 h-4"></i> Adicionar à Escala' : '<i data-lucide="save" class="w-4 h-4"></i> Salvar';
             if(tipo === 'escala') document.getElementById('escala-cargo').disabled = false;
+            lucide.createIcons();
         }
         window.limparFormPonto = () => limparForm('ponto');
         window.limparFormEscala = () => limparForm('escala');
@@ -711,16 +784,18 @@
                 document.getElementById('escala-saida1').value = f.saida1 || '';
                 document.getElementById('escala-entrada2').value = f.entrada2 || '';
             }
-            document.getElementById(`btn-salvar-${tipo}`).innerHTML = '<i class="fas fa-check"></i> Atualizar';
+            document.getElementById(`btn-salvar-${tipo}`).innerHTML = '<i data-lucide="check" class="w-4 h-4"></i> Atualizar';
+            lucide.createIcons();
             document.getElementById(`form-funcionario-${tipo}`).scrollIntoView({behavior: 'smooth'});
         }
 
         function excluir(id) {
-            if(confirm('Excluir funcionário?')) {
+            if(confirm('Excluir funcionário permanentemente do banco?')) {
                 data.funcionarios = data.funcionarios.filter(func => func.id != id);
                 salvarDados();
             }
         }
+        
         function toggleCargo(selectEl) {
             const cargoSelect = document.getElementById('escala-cargo');
             if (selectEl.value === 'Funcionário da Senha') { cargoSelect.value = ''; cargoSelect.disabled = true; } 
@@ -745,7 +820,7 @@
             const func = document.getElementById('ferias-func-select').value;
             const inicio = document.getElementById('ferias-inicio').value;
             const dias = parseInt(document.getElementById('ferias-dias').value);
-            if(data.ferias.some(f => f.funcionario === func)) return alert('Funcionário já tem férias.');
+            if(data.ferias.some(f => f.funcionario === func)) return alert('Funcionário já tem férias cadastradas.');
             const fimDate = new Date(new Date(inicio + 'T00:00:00').setDate(new Date(inicio + 'T00:00:00').getDate() + dias - 1));
             data.ferias.push({ funcionario: func, inicio, fim: fimDate.toISOString().split('T')[0], dias });
             document.getElementById('form-ferias').reset(); document.getElementById('ferias-dias').value = 30;
@@ -756,10 +831,21 @@
             const tbody = document.getElementById('lista-ferias'); tbody.innerHTML = '';
             if(data.ferias.length === 0) { tbody.innerHTML = `<tr><td colspan="4" class="p-3 text-center italic text-gray-400">Nenhum registro.</td></tr>`; return; }
             data.ferias.sort((a,b) => a.inicio.localeCompare(b.inicio)).forEach((f, i) => {
-                tbody.innerHTML += `<tr class="hover:bg-gray-50"><td class="p-3 font-medium">${f.funcionario}</td><td class="p-3 text-xs">${new Date(f.inicio+'T00:00:00').toLocaleDateString('pt-BR')}</td><td class="p-3 text-xs">${new Date(f.fim+'T00:00:00').toLocaleDateString('pt-BR')} (${f.dias}d)</td><td class="p-3 text-right"><button onclick="excluirFerias(${i})" class="text-gray-400 hover:text-red-600"><i class="fas fa-trash-alt"></i></button></td></tr>`;
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="font-bold text-navy-900">${f.funcionario}</td>
+                        <td class="text-xs font-mono text-gray-500 bg-gray-50 px-2">${new Date(f.inicio+'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                        <td>
+                            <span class="text-xs font-mono text-gray-500 bg-gray-50 px-2">${new Date(f.fim+'T00:00:00').toLocaleDateString('pt-BR')}</span>
+                            <span class="text-[10px] font-bold text-crimson-600 ml-2 uppercase tracking-widest">${f.dias} dias</span>
+                        </td>
+                        <td class="text-right">
+                            <button onclick="excluirFerias(${i})" class="text-gray-400 hover:text-crimson-600 transition p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </td>
+                    </tr>`;
             });
         }
-        function excluirFerias(i) { if(confirm('Excluir férias?')) { data.ferias.splice(i, 1); salvarDados(); } }
+        function excluirFerias(i) { if(confirm('Excluir agendamento de férias?')) { data.ferias.splice(i, 1); salvarDados(); } }
 
         document.getElementById('form-feriados').addEventListener('submit', (e) => {
             e.preventDefault();
@@ -778,8 +864,7 @@
         function renderFeriados() {
             const anoInput = document.getElementById('filtro-ano-feriado').value;
             if (anoInput) {
-                const anoNum = parseInt(anoInput);
-                const mudou = garantirFeriadosParaAno(anoNum);
+                const mudou = garantirFeriadosParaAno(parseInt(anoInput));
                 if (mudou) salvarDados(true); 
             }
 
@@ -793,18 +878,23 @@
             
             lista.forEach(f => {
                 const idx = data.feriados.indexOf(f);
+                const badgeClass = f.tipo === 'Nacional' ? 'bg-navy-900 text-white' : (f.tipo === 'Ponto Facultativo' ? 'bg-gray-200 text-gray-700' : 'bg-crimson-600 text-white');
+                const badge = `<span class="${badgeClass} text-[9px] font-bold px-2 py-1 uppercase tracking-widest" style="clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);">${f.tipo}</span>`;
+
                 tbody.innerHTML += `
-                    <tr class="hover:bg-gray-50 transition-colors">
-                        <td class="p-3 font-mono text-xs text-gray-600">${new Date(f.data+'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                        <td class="p-3 font-medium text-gray-800">${f.nome}</td>
-                        <td class="p-3"><span class="badge">${f.tipo}</span></td>
-                        <td class="p-3 text-right"><button onclick="excluirFeriado(${idx})" class="text-gray-400 hover:text-red-600 transition"><i class="fas fa-trash-alt"></i></button></td>
+                    <tr>
+                        <td class="font-mono text-xs font-bold text-gray-500">${new Date(f.data+'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                        <td class="font-bold text-navy-900">${f.nome}</td>
+                        <td>${badge}</td>
+                        <td class="text-right">
+                            <button onclick="excluirFeriado(${idx})" class="text-gray-400 hover:text-crimson-600 transition p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </td>
                     </tr>`;
             });
         }
-        function excluirFeriado(i) { if(confirm('Excluir feriado?')) { data.feriados.splice(i, 1); salvarDados(); } }
+        function excluirFeriado(i) { if(confirm('Excluir feriado do banco?')) { data.feriados.splice(i, 1); salvarDados(); } }
 
-        init();
+        window.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
